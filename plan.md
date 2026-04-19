@@ -282,8 +282,8 @@
 - Flow 2.11 Reporting and Analytics: `Completed`
 - Flow 2.12 Audit, Compliance, and Security: `Completed`
 - Flow 2.13 System Configuration and Master Data: `Completed`
-- Flow 2.14 Support and Incident Tools: `Not started`
-- Flow 2.15 Financial Operations and Settlement Management: `Not started`
+- Flow 2.14 Support and Incident Tools: `Completed`
+- Flow 2.15 Financial Operations and Settlement Management: `Completed`
 - Flow 2.16 Settlement Account (Payout Method) Review and Security Controls: `Not started`
 - Flow 2.17 Admin User Management and Access Governance: `Not started`
 
@@ -547,6 +547,9 @@ Alignment rule for this section:
 - Success criteria:
   - Support and incident workflows are operationally clear and traceable.
   - Notes, escalation, and diagnostics remain safe and role-aware.
+- Status:
+  - Completed.
+  - Implemented with a support and incidents workspace covering partner issue triage, internal note capture, incident flagging, escalation workflow, resolution logging, and safe diagnostics snapshots. Seeded cross-surface context links connect cases to partner accounts, moderation, verification, and finance follow-up. Role-aware behavior: `support`, `operations`, and `super_admin` can log notes, flag incidents, escalate, resolve, and run diagnostics; `reviewer` and `finance` remain read-only on the route. URL-synced queue filters (`q`, `status`, `severity`, `queue`, `incident`, `case`) keep support state shareable. Diagnostics remain explicitly safe by recording masked operational checks only and no secrets. Added unit, integration, workspace, and Playwright coverage for end-to-end handling of a partner issue.
 
 ### Flow 2.15: Financial Operations and Settlement Management
 - Implementation steps:
@@ -560,6 +563,9 @@ Alignment rule for this section:
 - Success criteria:
   - Admin back-office settlement operations correctly supervise partner settlement flows.
   - Financial audit logs and reconciliation evidence are complete and test-covered.
+- Status:
+  - Completed.
+  - Implemented with a finance-only financial operations workspace covering partner-facing settlement status supervision, admin settlement run tracking, reconciliation evidence, retry tooling, settlement statement generation, and refund follow-up/recovery. The flow keeps partner settlement statuses (`pending_completion`, `processing`, `paid`, `failed`, `reversed`) separate from admin run statuses (`queued`, `processing`, `completed`, `partial`, `failed`) and refund statuses (`requested`, `partner_notified`, `refunded`, `disputed`, `recovered`) in line with `AGENTS.md`. Seeded linked context connects finance work to partner accounts, support incidents, commercial controls, and payout review. Added unit, integration, workspace, and Playwright coverage for retry, reconciliation, statement generation, and refund follow-up handling.
 
 ### Flow 2.16: Settlement Account (Payout Method) Review and Security Controls
 - Implementation steps:

@@ -1,18 +1,31 @@
-import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
 
-export default function FinancialOpsPage() {
+import { AdminShell } from "@/components/common/admin-shell";
+import { getAdminSession } from "@/modules/auth/session";
+import { getFinancialOpsRecords } from "@/modules/financial-ops/data";
+import { FinancialOpsWorkspace } from "@/modules/financial-ops/workspace";
+
+const allowedRoles = ["finance", "super_admin"] as const;
+
+export default async function FinancialOpsPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/financial-ops");
+  }
+
+  if (!(allowedRoles as readonly string[]).includes(session.user.role)) {
+    redirect("/auth/access-denied?next=/financial-ops");
+  }
+
   return (
     <AdminShell
       title="Financial Operations"
-      description="Scaffolded route for partner settlement supervision, admin settlement runs, reconciliation, refund follow-up, and finance controls."
+      description="Supervise partner settlement states, admin settlement runs, reconciliation evidence, statement generation, and refund follow-up from one finance route."
     >
-      <SectionPlaceholder
-        description="This route will supervise partner booking-completion settlement states, admin-operated settlement runs, failures, retries, statement generation, refunds, and reconciliation evidence."
-        primaryAction="Open settlement operations"
-        stage="Route scaffolded"
-        supportingNote="Financial operations is the back-office counterpart to the completed partner wallet and settlement flows, so partner-facing settlement statuses should remain aligned while admin run statuses stay explicitly separate."
-        title="Financial operations scaffold"
+      <FinancialOpsWorkspace
+        actor={session.user.name}
+        initialRecords={getFinancialOpsRecords()}
+        role={session.user.role}
       />
     </AdminShell>
   );

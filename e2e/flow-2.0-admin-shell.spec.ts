@@ -22,7 +22,7 @@ test.describe("TravelMate admin auth and shell flows", () => {
 
     await page.getByRole("link", { name: /Financial Operations/ }).click();
     await expect(page.getByRole("heading", { name: "Financial Operations" }).first()).toBeVisible();
-    await expect(page.getByText("Financial operations scaffold")).toBeVisible();
+    await expect(page.getByText("Settlement run failed for Nairobi premium-stay payout batch").first()).toBeVisible();
 
     await page.getByRole("link", { name: /Payout Review/ }).click();
     await expect(page.getByRole("heading", { name: "Payout Review" }).first()).toBeVisible();
