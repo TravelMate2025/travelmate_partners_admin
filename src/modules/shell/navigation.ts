@@ -22,6 +22,13 @@ export const adminNavItems: AdminNavItem[] = [
     description: "Session entry, role checks, and access scaffolding.",
   },
   {
+    href: "/admin-users",
+    label: "Admin Users",
+    shortLabel: "Admins",
+    section: "core",
+    description: "Invite admins, govern roles, and review MFA plus session access context.",
+  },
+  {
     href: "/verification-review",
     label: "Verification Review",
     shortLabel: "Verification",

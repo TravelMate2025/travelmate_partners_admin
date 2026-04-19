@@ -597,6 +597,9 @@ Alignment rule for this section:
   - Admin access is managed explicitly inside the back office instead of only through seeded or external account setup.
   - Role changes, invites, and account status changes are auditable and policy-aware.
   - Sensitive roles are protected by explicit confirmation or approval rules where required.
+- Status:
+  - Completed.
+  - Implemented with a super-admin-only admin governance workspace covering the admin directory, pending invites, activation and deactivation controls, resend and revoke invite actions, MFA posture, recent session context, permission policy summaries, and role assignment. Sensitive grants into `finance` and `super_admin` now require explicit confirmation in the workspace, while local audit history records invite, activation, deactivation, and role-change actions. Added unit, integration, workspace, route-access, and Playwright coverage for invite lifecycle, sensitive-role protection, role changes, and access-policy updates.
 
 ## 6. Test Strategy by Module
 

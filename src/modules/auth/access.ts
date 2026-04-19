@@ -12,6 +12,7 @@ type ProtectedRouteRule = {
 
 const protectedRouteRules: ProtectedRouteRule[] = [
   { prefix: "/" },
+  { prefix: "/admin-users", roles: ["super_admin"] },
   { prefix: "/verification-review" },
   { prefix: "/partners" },
   { prefix: "/moderation" },
