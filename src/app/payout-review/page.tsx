@@ -1,19 +1,28 @@
-import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
 
-export default function PayoutReviewPage() {
+import { AdminShell } from "@/components/common/admin-shell";
+import { getAdminSession } from "@/modules/auth/session";
+import { getPayoutReviewRecords } from "@/modules/payout-review/data";
+import { PayoutReviewWorkspace } from "@/modules/payout-review/workspace";
+
+const allowedRoles = ["finance", "super_admin"] as const;
+
+export default async function PayoutReviewPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/payout-review");
+  }
+
+  if (!(allowedRoles as readonly string[]).includes(session.user.role)) {
+    redirect("/auth/access-denied?next=/payout-review");
+  }
+
   return (
     <AdminShell
       title="Payout Review"
-      description="Scaffolded route for payout-method approvals, role-based masking, fraud flags, and settlement holds."
+      description="Review settlement-account submissions, masked payout details, risk flags, and settlement holds from one finance-governance route."
     >
-      <SectionPlaceholder
-        description="This route will review payout-method submissions, trigger re-verification, manage holds, and restrict sensitive payout data by role, especially for non-finance users."
-        primaryAction="Review payout cases"
-        stage="Route scaffolded"
-        supportingNote="Payout review is the admin-side counterpart to partner payout-method submission and verification from Flow 2.15, so the admin dashboard should govern the same payout-method lifecycle rather than create a separate partner-facing variant."
-        title="Payout review scaffold"
-      />
+      <PayoutReviewWorkspace actor={session.user.name} initialRecords={getPayoutReviewRecords()} role={session.user.role} />
     </AdminShell>
   );
 }

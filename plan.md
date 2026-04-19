@@ -579,6 +579,9 @@ Alignment rule for this section:
 - Success criteria:
   - Sensitive payout data is masked and role-restricted appropriately.
   - Admin review and hold controls integrate cleanly with partner payout-method flows.
+- Status:
+  - Completed.
+  - Implemented with a finance-governed payout review workspace covering partner-submitted settlement-account cases, finance-only unmasked field access, super-admin masked review visibility, fraud/risk flags, manual settlement hold controls, and approve/reject/reverify actions with reason codes. The flow now mirrors partner Flow 2.15 payout-method semantics by keeping verification states aligned to `pending`, `verified`, and `rejected`, while seeded cases reflect OTP-backed submission, name-match checks, re-verification after changes, and downstream settlement readiness impact. Added unit, integration, workspace, and Playwright coverage for role-based masking, reason validation, hold eligibility, approval, rejection, and re-verification handling.
 
 ### Flow 2.17: Admin User Management and Access Governance
 - Implementation steps:

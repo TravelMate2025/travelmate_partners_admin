@@ -26,7 +26,7 @@ test.describe("TravelMate admin auth and shell flows", () => {
 
     await page.getByRole("link", { name: /Payout Review/ }).click();
     await expect(page.getByRole("heading", { name: "Payout Review" }).first()).toBeVisible();
-    await expect(page.getByText("Payout review scaffold")).toBeVisible();
+    await expect(page.getByText("Pending bank-account update after rapid payout change").first()).toBeVisible();
   });
 
   test("drills down from dashboard metrics and queues into operational routes", async ({ page }) => {
