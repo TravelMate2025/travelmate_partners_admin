@@ -1,19 +1,27 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getCommercialControlRecords } from "@/modules/commercial-controls/data";
+import { CommercialControlsWorkspace } from "@/modules/commercial-controls/workspace";
 
-export default function CommercialControlsPage() {
+const allowedRoles = ["finance", "super_admin"] as const;
+
+export default async function CommercialControlsPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/commercial-controls");
+  }
+
+  if (!(allowedRoles as readonly string[]).includes(session.user.role)) {
+    redirect("/auth/access-denied?next=/commercial-controls");
+  }
+
   return (
     <AdminShell
       title="Commercial Controls"
-      description="Scaffolded route for pricing, commission, service fee, and adjustment control surfaces."
+      description="Configure commission rules, service fees, and manual financial adjustments with full audit trails."
     >
-      <SectionPlaceholder
-        description="This route will manage commission configuration, service fees, and manual financial adjustments with audit support."
-        primaryAction="Review fee controls"
-        stage="Route scaffolded"
-        supportingNote="Commercial settings should stay explicit, role-restricted, and auditable because they influence downstream financial operations."
-        title="Commercial controls scaffold"
-      />
+      <CommercialControlsWorkspace actor={session.user.name} initialRecords={getCommercialControlRecords()} role={session.user.role} />
     </AdminShell>
   );
 }

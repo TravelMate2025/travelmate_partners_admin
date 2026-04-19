@@ -1,0 +1,27 @@
+.DS_Store
+*.log
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Test and coverage artifacts
+coverage/
+test-results/
+playwright-report/
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TypeScript / tool caches
+*.tsbuildinfo
+.turbo/
+.cache/
+

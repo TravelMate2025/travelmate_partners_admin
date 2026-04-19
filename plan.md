@@ -272,15 +272,15 @@
 - Flow 2.1 Admin Authentication and Access Control: `Completed`
 - Flow 2.2 Admin Dashboard and Operations Overview: `Completed`
 - Flow 2.3 Partner Verification and Lifecycle Management: `Completed`
-- Flow 2.4 Partner Account Management: `Not started`
-- Flow 2.5 Listing Moderation (Stays and Transfers): `Not started`
-- Flow 2.6 Catalog and Content Quality Controls: `Not started`
-- Flow 2.7 Business API Client Management: `Not started`
-- Flow 2.8 API Governance and Monitoring: `Not started`
-- Flow 2.9 Pricing, Commission, and Commercial Controls: `Not started`
-- Flow 2.10 Notifications and Messaging: `Not started`
-- Flow 2.11 Reporting and Analytics: `Not started`
-- Flow 2.12 Audit, Compliance, and Security: `Not started`
+- Flow 2.4 Partner Account Management: `Completed`
+- Flow 2.5 Listing Moderation (Stays and Transfers): `Completed`
+- Flow 2.6 Catalog and Content Quality Controls: `Completed`
+- Flow 2.7 Business API Client Management: `Completed`
+- Flow 2.8 API Governance and Monitoring: `Completed`
+- Flow 2.9 Pricing, Commission, and Commercial Controls: `Completed`
+- Flow 2.10 Notifications and Messaging: `Completed`
+- Flow 2.11 Reporting and Analytics: `Completed`
+- Flow 2.12 Audit, Compliance, and Security: `Completed`
 - Flow 2.13 System Configuration and Master Data: `Not started`
 - Flow 2.14 Support and Incident Tools: `Not started`
 - Flow 2.15 Financial Operations and Settlement Management: `Not started`

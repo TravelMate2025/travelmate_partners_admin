@@ -1,19 +1,21 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getListingModerationRecords } from "@/modules/listing-moderation/data";
+import { ListingModerationWorkspace } from "@/modules/listing-moderation/workspace";
 
-export default function ModerationPage() {
+export default async function ModerationPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/moderation");
+  }
+
   return (
     <AdminShell
       title="Listing Moderation"
-      description="Scaffolded moderation space for reviewing stay and transfer submissions with consistent decision surfaces."
+      description="Review stay and transfer submissions, approve or reject listings, handle corrections, and manage emergency takedowns."
     >
-      <SectionPlaceholder
-        description="This route will become the shared moderation queue for stay and transfer content, with decision reasons, emergency takedowns, and correction loops aligned to the partner app's listing lifecycle."
-        primaryAction="Open moderation queue"
-        stage="Route scaffolded"
-        supportingNote="Moderation decisions must align with the partner app's listing lifecycle and data-quality correction flows."
-        title="Moderation shell scaffold"
-      />
+      <ListingModerationWorkspace actor={session.user.name} initialRecords={getListingModerationRecords()} role={session.user.role} />
     </AdminShell>
   );
 }

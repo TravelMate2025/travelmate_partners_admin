@@ -1,0 +1,252 @@
+import {
+  canApplyApiClientAction,
+  isEligibleApiPlan,
+  validateApiRateLimit,
+} from "@/modules/api-clients/rules";
+import type {
+  ApiClientAction,
+  ApiClientActionPayload,
+  ApiClientActionResult,
+  ApiClientRecord,
+} from "@/modules/api-clients/types";
+import type { AdminRole } from "@/modules/auth/types";
+
+function formatTimestamp(date: string) {
+  return new Date(date)
+    .toLocaleString("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    })
+    .replace(",", " UTC");
+}
+
+function buildHistoryAction(action: ApiClientAction) {
+  switch (action) {
+    case "approve_client":
+      return "Client approved";
+    case "reject_client":
+      return "Client rejected";
+    case "issue_key":
+      return "Key issued";
+    case "regenerate_key":
+      return "Key regenerated";
+    case "revoke_key":
+      return "Key revoked";
+    case "block_client":
+      return "Client blocked";
+    case "update_plan":
+      return "Plan updated";
+  }
+}
+
+function buildAuditSummary(actor: string, action: ApiClientAction, companyName: string) {
+  switch (action) {
+    case "approve_client":
+      return `${actor} approved API client ${companyName}.`;
+    case "reject_client":
+      return `${actor} rejected API client ${companyName}.`;
+    case "issue_key":
+      return `${actor} issued an API key for ${companyName}.`;
+    case "regenerate_key":
+      return `${actor} regenerated the API key for ${companyName}.`;
+    case "revoke_key":
+      return `${actor} revoked the API key for ${companyName}.`;
+    case "block_client":
+      return `${actor} blocked API client ${companyName}.`;
+    case "update_plan":
+      return `${actor} updated the API plan for ${companyName}.`;
+  }
+}
+
+function applyActionToRecord(record: ApiClientRecord, payload: ApiClientActionPayload) {
+  const timestamp = new Date().toISOString();
+  const note = payload.note.trim().length > 0 ? payload.note.trim() : record.note;
+
+  switch (payload.action) {
+    case "approve_client":
+      return {
+        ...record,
+        status: "approved" as const,
+        approvedAt: timestamp,
+        plan: payload.plan,
+        usage: {
+          ...record.usage,
+          rateLimitPerMinute: payload.rateLimitPerMinute,
+        },
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-approve-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+    case "reject_client":
+      return {
+        ...record,
+        status: "rejected" as const,
+        keyStatus: "not_issued" as const,
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-reject-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+    case "issue_key":
+      return {
+        ...record,
+        keyStatus: "active" as const,
+        usage: {
+          ...record.usage,
+          rateLimitPerMinute: payload.rateLimitPerMinute,
+        },
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-issue-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+    case "regenerate_key":
+      return {
+        ...record,
+        keyStatus: "active" as const,
+        usage: {
+          ...record.usage,
+          rateLimitPerMinute: payload.rateLimitPerMinute,
+        },
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-regenerate-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+    case "revoke_key":
+      return {
+        ...record,
+        keyStatus: "revoked" as const,
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-revoke-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+    case "block_client":
+      return {
+        ...record,
+        status: "blocked" as const,
+        keyStatus: record.keyStatus === "active" ? ("revoked" as const) : record.keyStatus,
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-block-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+    case "update_plan":
+      return {
+        ...record,
+        plan: payload.plan,
+        usage: {
+          ...record.usage,
+          rateLimitPerMinute: payload.rateLimitPerMinute,
+        },
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-plan-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
+  }
+}
+
+export type ApiClientsRepository = {
+  applyAction(
+    records: ApiClientRecord[],
+    payload: ApiClientActionPayload,
+    role: AdminRole,
+  ): Promise<ApiClientActionResult>;
+};
+
+export const mockApiClientsRepository: ApiClientsRepository = {
+  async applyAction(records, payload, role) {
+    const record = records.find((item) => item.id === payload.clientId);
+
+    if (!record) {
+      throw new Error("Selected API client was not found.");
+    }
+
+    if (!isEligibleApiPlan(record, payload.plan)) {
+      throw new Error(`Plan ${payload.plan} is not eligible for ${record.companyName}.`);
+    }
+
+    const rateLimitError = validateApiRateLimit(payload.plan, payload.rateLimitPerMinute);
+    if (rateLimitError) {
+      throw new Error(rateLimitError);
+    }
+
+    if (!canApplyApiClientAction(role, record, payload.action)) {
+      throw new Error(`Action ${payload.action} is not allowed for this API client.`);
+    }
+
+    const updatedRecord = {
+      ...applyActionToRecord(record, payload),
+      latestAuditRecord: {
+        eventId: `api-client-audit-${payload.action}-${Date.now()}`,
+        actor: payload.actor,
+        clientId: record.id,
+        action: payload.action,
+        summary: buildAuditSummary(payload.actor, payload.action, record.companyName),
+        status: "queued_for_backend" as const,
+      },
+    };
+
+    return {
+      records: records.map((item) => (item.id === record.id ? updatedRecord : item)),
+      updatedRecord,
+      auditRecord: updatedRecord.latestAuditRecord,
+    };
+  },
+};

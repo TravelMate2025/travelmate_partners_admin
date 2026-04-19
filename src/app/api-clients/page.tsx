@@ -1,19 +1,21 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getApiClientRecords } from "@/modules/api-clients/data";
+import { ApiClientsWorkspace } from "@/modules/api-clients/workspace";
 
-export default function ApiClientsPage() {
+export default async function ApiClientsPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/api-clients");
+  }
+
   return (
     <AdminShell
       title="API Clients"
-      description="Scaffolded governance route for reviewing API access applications, plans, and client key lifecycle."
+      description="Review API access applications, manage client keys, assign usage plans, and govern rate limits."
     >
-      <SectionPlaceholder
-        description="This route will manage API access reviews, key issuance, plan assignment, quota operations, and abuse controls."
-        primaryAction="Review API client queue"
-        stage="Route scaffolded"
-        supportingNote="This module is admin-owned and intentionally separate from the partner-facing product."
-        title="API governance scaffold"
-      />
+      <ApiClientsWorkspace actor={session.user.name} initialRecords={getApiClientRecords()} role={session.user.role} />
     </AdminShell>
   );
 }

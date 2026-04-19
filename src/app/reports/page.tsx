@@ -1,19 +1,21 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getInitialReportExports } from "@/modules/reports/data";
+import { ReportsWorkspace } from "@/modules/reports/workspace";
 
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/reports");
+  }
+
   return (
     <AdminShell
       title="Reports & Analytics"
-      description="Scaffolded reporting route for conversion, verification, supply, and platform operations analytics."
+      description="Track partner growth, verification funnels, listing conversion, regional supply, and API adoption. Export as CSV."
     >
-      <SectionPlaceholder
-        description="This route will host partner growth analytics, listing funnel reports, API usage, regional supply, and exports."
-        primaryAction="Generate platform report"
-        stage="Route scaffolded"
-        supportingNote="Admin reporting should summarize platform-wide signals while staying aligned with partner-facing reporting terminology where appropriate."
-        title="Reporting scaffold"
-      />
+      <ReportsWorkspace actor={session.user.name} initialExports={getInitialReportExports()} />
     </AdminShell>
   );
 }

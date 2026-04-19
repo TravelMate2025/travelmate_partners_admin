@@ -1,18 +1,25 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getCatalogIssueRecords, getTaxonomyRuleRecords } from "@/modules/catalog-controls/data";
+import { CatalogControlsWorkspace } from "@/modules/catalog-controls/workspace";
 
-export default function CatalogControlsPage() {
+export default async function CatalogControlsPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/catalog-controls");
+  }
+
   return (
     <AdminShell
       title="Catalog Controls"
-      description="Scaffolded quality-control surfaces for taxonomy, duplicate detection, and platform content integrity."
+      description="Resolve duplicate listings, standardize taxonomy, validate geo-data, and enforce platform content policy."
     >
-      <SectionPlaceholder
-        description="This route will host duplicate detection, taxonomy normalization, geo-data checks, and policy enforcement tools."
-        primaryAction="Review quality signals"
-        stage="Route scaffolded"
-        supportingNote="Catalog controls reinforce partner-side data-quality tooling and moderation rather than replacing them."
-        title="Catalog control scaffold"
+      <CatalogControlsWorkspace
+        actor={session.user.name}
+        initialRecords={getCatalogIssueRecords()}
+        initialRules={getTaxonomyRuleRecords()}
+        role={session.user.role}
       />
     </AdminShell>
   );

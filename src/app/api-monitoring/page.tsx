@@ -1,19 +1,21 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getApiMonitoringRecords } from "@/modules/api-monitoring/data";
+import { ApiMonitoringWorkspace } from "@/modules/api-monitoring/workspace";
 
-export default function ApiMonitoringPage() {
+export default async function ApiMonitoringPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/api-monitoring");
+  }
+
   return (
     <AdminShell
       title="API Monitoring"
-      description="Scaffolded route for operational API analytics, anomalies, latency, and abuse investigation."
+      description="Watch API traffic, error rates, latency signals, rate-limit violations, and client abuse patterns."
     >
-      <SectionPlaceholder
-        description="This route will visualize endpoint traffic, latency, error rates, rate-limit violations, and client access activity."
-        primaryAction="Open monitoring board"
-        stage="Route scaffolded"
-        supportingNote="API monitoring is a governance-only responsibility and should plug into the same audit and incident language as the rest of the admin shell."
-        title="API monitoring scaffold"
-      />
+      <ApiMonitoringWorkspace actor={session.user.name} initialRecords={getApiMonitoringRecords()} role={session.user.role} />
     </AdminShell>
   );
 }

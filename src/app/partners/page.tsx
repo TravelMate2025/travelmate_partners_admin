@@ -1,19 +1,21 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getPartnerRecords } from "@/modules/partner-operations/data";
+import { PartnerOperationsWorkspace } from "@/modules/partner-operations/workspace";
 
-export default function PartnersPage() {
+export default async function PartnersPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/partners");
+  }
+
   return (
     <AdminShell
       title="Partner Accounts"
-      description="Scaffolded partner account surfaces for search, lifecycle supervision, and portfolio inspection."
+      description="Search, inspect, lock, restore, and supervise partner records and portfolio state."
     >
-      <SectionPlaceholder
-        description="This route will host searchable partner records, lock and restore actions, limited metadata updates, and back-office visibility into partner portfolio state."
-        primaryAction="Inspect partner record"
-        stage="Route scaffolded"
-        supportingNote="Partner account management should supervise completed partner onboarding and portfolio states without recreating partner self-service UI, and route naming here should stay explicit because the scaffold uses `/partners` for this operational surface."
-        title="Partner operations scaffold"
-      />
+      <PartnerOperationsWorkspace actor={session.user.name} initialRecords={getPartnerRecords()} role={session.user.role} />
     </AdminShell>
   );
 }
