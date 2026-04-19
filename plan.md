@@ -281,7 +281,7 @@
 - Flow 2.10 Notifications and Messaging: `Completed`
 - Flow 2.11 Reporting and Analytics: `Completed`
 - Flow 2.12 Audit, Compliance, and Security: `Completed`
-- Flow 2.13 System Configuration and Master Data: `Not started`
+- Flow 2.13 System Configuration and Master Data: `Completed`
 - Flow 2.14 Support and Incident Tools: `Not started`
 - Flow 2.15 Financial Operations and Settlement Management: `Not started`
 - Flow 2.16 Settlement Account (Payout Method) Review and Security Controls: `Not started`
@@ -294,6 +294,16 @@ Current planning note:
 - Flow `2.1` is now completed with signed trusted-session handling, role-based middleware protection, MFA challenge flow, reset-password route, session/device management UI, and passing unit/build/E2E validation in place.
 - Flow `2.2` is now completed with role-aware dashboard metrics, operational queue widgets, alerts, activity feed, and route drill-down links aligned to back-office ownership.
 - Flow `2.3` is now completed with a verification review workspace, connected case detail surfaces, state-aware approve/reject/request-more-info/suspend actions, case-owned audit/notification prep metadata, review history, and partner-app-aligned verification-to-lifecycle outcomes.
+- Flow `2.4` is now completed with a searchable partner directory, account detail surface, metadata editing, lock/unlock/restore lifecycle controls, URL-synced filter state, role-based policy guards, and passing unit/integration/E2E validation in place.
+- Flow `2.5` is now completed with stay and transfer moderation queues, listing detail review surfaces, approve/reject/send-back/flag/emergency-unpublish actions, moderation reason capture, bulk-action support, and partner-app-aligned listing lifecycle semantics.
+- Flow `2.6` is now completed with a catalog quality control workspace, flagged-listing and taxonomy-issue queues, duplicate/geo/policy flag resolution, taxonomy-rule management, and content standardization controls.
+- Flow `2.7` is now completed with an API client review queue, key generation/revocation/regeneration, plan and rate-limit assignment, client blocking controls, and usage/quota visibility.
+- Flow `2.8` is now completed with API traffic, latency, and error-rate monitoring surfaces, rate-limit violation logs, per-client access history, and governance actions for abusive or failing clients.
+- Flow `2.9` is now completed with commission and service-fee rule management, manual financial adjustment workflow, and a full audit trail for all commercial-control changes.
+- Flow `2.10` is now completed with a partner-messaging composer, direct/transactional/broadcast channel support, audience targeting, delivery metadata, and message-audit records.
+- Flow `2.11` is now completed with partner-growth, verification-funnel, listing-conversion, regional-supply, and API-adoption reporting dashboards and CSV export support.
+- Flow `2.13` is now completed with a taxonomy and feature-toggle configuration workspace, role-gated publish/deprecate/toggle actions (super_admin full access, operations toggle-only), URL-synced filters, operator note validation, and full test coverage.
+- Flow `2.12` is now completed with a role-filtered audit log explorer, compliance evidence export, retention-config visibility (super_admin), access-policy panel (super_admin + operations), and role-restricted category visibility for finance, reviewer, and support roles.
 
 ## 5. Flow-Based Implementation Plan
 
@@ -386,6 +396,9 @@ Alignment rule for this section:
 - Success criteria:
   - Admin can locate and manage partner records efficiently.
   - Sensitive lifecycle actions are constrained by policy and role.
+- Status:
+  - Completed.
+  - Implemented with URL-synced partner directory, metadata editing (market owner, support tier, priority, note), lock/unlock/restore lifecycle controls, role-gated policy enforcement, and passing unit/integration/E2E validation.
 
 ### Flow 2.5: Listing Moderation (Stays and Transfers)
 - Implementation steps:
@@ -399,6 +412,9 @@ Alignment rule for this section:
 - Success criteria:
   - Moderation decisions align with partner listing lifecycle semantics.
   - Bulk and emergency actions are safe and auditable.
+- Status:
+  - Completed.
+  - Implemented with separate stay/transfer queues, listing detail review panels, approve/reject/send-back/flag/emergency-unpublish actions, moderation reason capture, bulk-action support, and partner-app-aligned listing lifecycle semantics.
 
 ### Flow 2.6: Catalog and Content Quality Controls
 - Implementation steps:
@@ -411,6 +427,9 @@ Alignment rule for this section:
 - Success criteria:
   - Content-quality controls reinforce partner data-quality workflows.
   - Taxonomy and validation actions are consistent across catalog surfaces.
+- Status:
+  - Completed.
+  - Implemented with a catalog quality workspace, flagged catalog-issue queue, taxonomy rule management panel, and flag resolution controls covering duplicates, geo-data, policy violations, and taxonomy mismatches.
 
 ### Flow 2.7: Business API Client Management
 - Implementation steps:
@@ -423,6 +442,9 @@ Alignment rule for this section:
 - Success criteria:
   - API clients can be governed end to end from the admin dashboard.
   - Key and plan operations are secure and traceable.
+- Status:
+  - Completed.
+  - Implemented with an API client directory, approval/rejection workflow, key generation/revocation/regeneration controls, usage-plan and rate-limit assignment, client blocking, and quota visibility.
 
 ### Flow 2.8: API Governance and Monitoring
 - Implementation steps:
@@ -435,6 +457,9 @@ Alignment rule for this section:
 - Success criteria:
   - API health and abuse signals are discoverable and actionable.
   - Governance actions are linked to client histories and logs.
+- Status:
+  - Completed.
+  - Implemented with endpoint-level traffic, latency, and error-rate monitoring, rate-limit violation logs, per-client access-history views, and governance actions for abusive or failing API clients.
 
 ### Flow 2.9: Pricing, Commission, and Commercial Controls
 - Implementation steps:
@@ -447,6 +472,9 @@ Alignment rule for this section:
 - Success criteria:
   - Commercial controls are explicit, auditable, and policy-safe.
   - Rule changes can be reasoned about and traced.
+- Status:
+  - Completed.
+  - Implemented with commission and service-fee rule management, manual financial adjustment workflow with required justification, full audit trail for all commercial-control changes, and role-gated finance/super_admin access.
 
 ### Flow 2.10: Notifications and Messaging
 - Implementation steps:
@@ -459,6 +487,9 @@ Alignment rule for this section:
 - Success criteria:
   - Messaging aligns with partner-side notifications and audit needs.
   - Broadcast actions are controlled and traceable.
+- Status:
+  - Completed.
+  - Implemented with a partner-messaging composer supporting direct, transactional, and broadcast channels, audience segment targeting, delivery-status tracking, and message-audit metadata.
 
 ### Flow 2.11: Reporting and Analytics
 - Implementation steps:
@@ -471,6 +502,9 @@ Alignment rule for this section:
 - Success criteria:
   - Reports answer operational and leadership questions clearly.
   - Exports reflect filtered/admin-selected reporting context.
+- Status:
+  - Completed.
+  - Implemented with partner-growth, verification-funnel, listing-conversion, regional-supply, and API-adoption dashboards, timeframe/region filter controls, and CSV export with export-record tracking.
 
 ### Flow 2.12: Audit, Compliance, and Security
 - Implementation steps:
@@ -483,6 +517,9 @@ Alignment rule for this section:
 - Success criteria:
   - Audit coverage is visible and trusted for high-risk workflows.
   - Compliance support data is exportable and role-restricted.
+- Status:
+  - Completed.
+  - Implemented with a role-filtered audit log explorer (8 event categories, 35+ actions), compliance evidence export with minimum-16-char justification, role-restricted category visibility (finance excludes admin_access; reviewer/support see verification, partner lifecycle, listing, and API governance only), retention-config panel (super_admin only), access-policy panel (super_admin + operations), and 21 unit / 5 service / 11 workspace / 6 E2E tests passing.
 
 ### Flow 2.13: System Configuration and Master Data
 - Implementation steps:
@@ -495,6 +532,9 @@ Alignment rule for this section:
 - Success criteria:
   - System configuration is centralized and test-covered.
   - Master data updates propagate predictably to partner/admin workflows.
+- Status:
+  - Completed.
+  - Implemented with a full five-section configuration workspace: taxonomy items, feature toggles, service regions (countries/cities/service areas), moderation templates, and static content (terms, policy, help docs, announcements). 31 seeded records across all sections. Role-gated actions: super_admin has full access (publish, deprecate, archive, activate/deactivate regions); operations can only toggle features. Dependency validation: city/service_area activation requires active parent region; moderation template archiving blocked when usageCount > 0; sole published terms/policy document cannot be archived. URL-synced filter state (q, section, category, area, status, item), operator note validation (min 12 chars), audit record with queued_for_backend status. Section-aware filter UI (category/area filters shown conditionally). 208 unit/integration/workspace tests passing, build clean.
 
 ### Flow 2.14: Support and Incident Tools
 - Implementation steps:

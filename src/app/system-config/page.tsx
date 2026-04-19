@@ -1,18 +1,29 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { SectionPlaceholder } from "@/components/common/section-placeholder";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/modules/auth/session";
+import { getSystemConfigRecords } from "@/modules/system-config/data";
+import { systemConfigAllowedRoles } from "@/modules/system-config/rules";
+import { SystemConfigWorkspace } from "@/modules/system-config/workspace";
 
-export default function SystemConfigPage() {
+export default async function SystemConfigPage() {
+  const session = await getAdminSession();
+  if (!session) {
+    redirect("/auth/login?next=/system-config");
+  }
+
+  if (!systemConfigAllowedRoles.includes(session.user.role)) {
+    redirect("/auth/access-denied?next=/system-config");
+  }
+
   return (
     <AdminShell
-      title="System Config"
-      description="Scaffolded route for platform configuration, taxonomies, templates, and master data."
+      title="System Configuration"
+      description="Manage platform taxonomies, feature toggles, service regions (countries, cities, service areas), moderation templates, and static content. Publish drafts, deprecate stale entries, activate regions, and control feature rollouts."
     >
-      <SectionPlaceholder
-        description="This route will manage countries, cities, service regions, moderation templates, feature toggles, and static content."
-        primaryAction="Review system config"
-        stage="Route scaffolded"
-        supportingNote="System configuration becomes the upstream source for multiple partner and admin flows, so it needs a stable shell and clear publish model."
-        title="Configuration scaffold"
+      <SystemConfigWorkspace
+        actor={session.user.name}
+        initialRecords={getSystemConfigRecords()}
+        role={session.user.role}
       />
     </AdminShell>
   );
