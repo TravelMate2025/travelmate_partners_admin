@@ -7,7 +7,7 @@ import { useState } from "react";
 import { StatusBadge } from "@/components/common/status-badge";
 import { signOutAction } from "@/modules/auth/actions";
 import { useAdminSession } from "@/modules/auth/admin-session-context";
-import { adminNavItems } from "@/modules/shell/navigation";
+import { getRoleAwareAdminNavItems } from "@/modules/shell/navigation";
 
 type AdminShellProps = {
   title: string;
@@ -28,6 +28,7 @@ export function AdminShell({ title, description, children, headerAside }: AdminS
   const [navOpen, setNavOpen] = useState(false);
   const session = useAdminSession();
   const roleLabel = session?.user.role.replace("_", " ") ?? "guest";
+  const navItems = getRoleAwareAdminNavItems(session?.user.role ?? null);
 
   return (
     <main className="tm-admin-page">
@@ -46,7 +47,7 @@ export function AdminShell({ title, description, children, headerAside }: AdminS
               <section key={section}>
                 <p className="tm-nav-section">{sectionLabels[section]}</p>
                 <ul className="mt-3 space-y-2">
-                  {adminNavItems
+                  {navItems
                     .filter((item) => item.section === section)
                     .map((item) => {
                       const active =
@@ -57,14 +58,20 @@ export function AdminShell({ title, description, children, headerAside }: AdminS
                       return (
                         <li key={item.href}>
                           <Link
-                            className={`tm-nav-link ${active ? "tm-nav-link-active" : "tm-nav-link-idle"}`}
-                            href={item.href}
+                            aria-label={item.accessible ? item.label : `${item.label} (${item.restrictionNote})`}
+                            className={`tm-nav-link ${
+                              active ? "tm-nav-link-active" : item.accessible ? "tm-nav-link-idle" : "tm-nav-link-locked"
+                            }`}
+                            href={item.destinationHref}
                             onClick={() => setNavOpen(false)}
                           >
-                            <span className="tm-nav-short">{item.shortLabel}</span>
+                            <span className={`tm-nav-short ${item.accessible ? "" : "tm-nav-short-locked"}`}>{item.shortLabel}</span>
                             <span className="tm-nav-copy">
                               <span className="font-semibold">{item.label}</span>
                               <span className="tm-muted block text-xs">{item.description}</span>
+                              {!item.accessible && item.restrictionNote ? (
+                                <span className="tm-nav-lock-note block text-xs">{item.restrictionNote}</span>
+                              ) : null}
                             </span>
                           </Link>
                         </li>

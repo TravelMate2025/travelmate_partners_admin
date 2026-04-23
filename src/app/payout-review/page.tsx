@@ -1,21 +1,12 @@
-import { redirect } from "next/navigation";
-
 import { AdminShell } from "@/components/common/admin-shell";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getPayoutReviewRecords } from "@/modules/payout-review/data";
 import { PayoutReviewWorkspace } from "@/modules/payout-review/workspace";
 
-const allowedRoles = ["finance", "super_admin"] as const;
-
 export default async function PayoutReviewPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/payout-review");
-  }
-
-  if (!(allowedRoles as readonly string[]).includes(session.user.role)) {
-    redirect("/auth/access-denied?next=/payout-review");
-  }
+  requireAdminRouteAccess("/payout-review", session);
 
   return (
     <AdminShell

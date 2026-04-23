@@ -1,8 +1,10 @@
 import { AdminShell } from "@/components/common/admin-shell";
 import { StatusBadge } from "@/components/common/status-badge";
-import { refreshSessionAction, requestPasswordResetAction, signOutAction } from "@/modules/auth/actions";
-import { getMockTrustedDevices } from "@/modules/auth/mock-devices";
-import { getAdminSession } from "@/modules/auth/session";
+import { SubmitButton } from "@/components/common/submit-button";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
+import { refreshSessionAction, requestPasswordResetAction, revokeAdminSessionAction, signOutAction } from "@/modules/auth/actions";
+import { getAdminSession, getAdminSessionInventoryFromApi, getStoredAdminSession } from "@/modules/auth/session";
+import { redirect } from "next/navigation";
 
 type AdminSessionsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -14,24 +16,29 @@ function getSingleParam(value: string | string[] | undefined) {
 
 export default async function AdminSessionsPage({ searchParams }: AdminSessionsPageProps) {
   const params = searchParams ? await searchParams : {};
-  const refreshed = getSingleParam(params.refreshed) === "1";
+  const rotated = getSingleParam(params.rotated) === "1";
+  const revoked = getSingleParam(params.revoked);
   const session = await getAdminSession();
+  const storedSession = await getStoredAdminSession();
 
-  if (!session) {
-    return null;
+  requireAdminRouteAccess("/auth/sessions", session);
+  if (!storedSession) {
+    redirect("/auth/login?error=session_expired");
   }
 
-  const devices = getMockTrustedDevices(session.user);
+  const inventory = await getAdminSessionInventoryFromApi(storedSession);
+  const sessions = inventory?.sessions ?? [];
 
   return (
     <AdminShell
       title="Session Management"
-      description="Protected admin access center for active session details, trusted devices, and route protection posture."
+      description="Protected admin access center for active session details, real API-backed session inventory, and route protection posture."
     >
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="tm-panel">
           <p className="tm-kicker">Current Session</p>
-          {refreshed ? <p className="tm-alert tm-alert-success mt-4">The trusted session was refreshed successfully.</p> : null}
+          {rotated ? <p className="tm-alert tm-alert-success mt-4">The current admin session was rotated successfully.</p> : null}
+          {revoked ? <p className="tm-alert tm-alert-success mt-4">Tracked session {revoked} was ended successfully.</p> : null}
           <h2 className="mt-2 text-2xl font-semibold text-slate-950">{session.user.name}</h2>
           <p className="tm-muted mt-3 text-sm">
             {session.user.email} · {session.user.team} · {session.deviceLabel}
@@ -51,25 +58,19 @@ export default async function AdminSessionsPage({ searchParams }: AdminSessionsP
             </div>
             <div className="tm-soft-band">
               <p className="tm-label">Validation model</p>
-              <p className="mt-2 text-sm text-slate-900">Middleware + signed, server-verified cookie + role gate</p>
+              <p className="mt-2 text-sm text-slate-900">API session bootstrap + signed dashboard cookie + role gate</p>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
             <form action={refreshSessionAction}>
-              <button className="tm-btn tm-btn-primary" type="submit">
-                Refresh trusted session
-              </button>
+              <SubmitButton label="Rotate current session" pendingLabel="Rotating…" className="tm-btn tm-btn-primary" />
             </form>
             <form action={signOutAction}>
-              <button className="tm-btn tm-btn-outline" type="submit">
-                End current session
-              </button>
+              <SubmitButton label="End current session" pendingLabel="Ending session…" className="tm-btn tm-btn-outline" />
             </form>
             <form action={requestPasswordResetAction}>
               <input name="email" type="hidden" value={session.user.email} />
-              <button className="tm-btn tm-btn-outline" type="submit">
-                Trigger password reset
-              </button>
+              <SubmitButton label="Trigger password reset" pendingLabel="Sending…" className="tm-btn tm-btn-outline" />
             </form>
           </div>
         </article>
@@ -88,20 +89,28 @@ export default async function AdminSessionsPage({ searchParams }: AdminSessionsP
       </section>
 
       <section className="tm-panel">
-        <p className="tm-kicker">Trusted Devices</p>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-950">Device and session inventory</h2>
+        <p className="tm-kicker">Active Sessions</p>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-950">API-backed session inventory</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          {devices.map((device) => (
+          {sessions.map((device) => (
             <article className="tm-soft-band" key={device.id}>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-lg font-semibold text-slate-950">{device.label}</p>
-                <StatusBadge label={device.status} tone={device.status === "Active now" ? "success" : "info"} />
+                <p className="text-lg font-semibold text-slate-950">{device.isCurrent ? "Current admin session" : `Session ${device.id}`}</p>
+                <StatusBadge label={device.isCurrent ? "Active now" : "Tracked"} tone={device.isCurrent ? "success" : "info"} />
               </div>
-              <p className="tm-muted mt-2 text-sm">{device.device}</p>
-              <p className="tm-muted mt-1 text-sm">{device.location}</p>
+              <p className="tm-muted mt-2 text-sm">{device.fingerprint}</p>
+              <p className="tm-muted mt-1 text-sm">Created {new Date(device.createdAt).toLocaleString()}</p>
+              <p className="tm-muted mt-1 text-sm">Last seen {new Date(device.lastSeenAt).toLocaleString()}</p>
+              {!device.isCurrent ? (
+                <form action={revokeAdminSessionAction} className="mt-4">
+                  <input name="session_id" type="hidden" value={device.id} />
+                  <SubmitButton label={`End session ${device.id}`} pendingLabel="Revoking…" className="tm-btn tm-btn-outline" />
+                </form>
+              ) : null}
             </article>
           ))}
         </div>
+        {sessions.length === 0 ? <p className="tm-muted mt-5 text-sm">No active admin sessions were returned by the API.</p> : null}
       </section>
     </AdminShell>
   );

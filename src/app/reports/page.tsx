@@ -1,14 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getInitialReportExports } from "@/modules/reports/data";
 import { ReportsWorkspace } from "@/modules/reports/workspace";
 
 export default async function ReportsPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/reports");
-  }
+  requireAdminRouteAccess("/reports", session);
 
   return (
     <AdminShell

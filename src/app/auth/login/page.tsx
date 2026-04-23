@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { signInAction, signOutAction, verifyMfaAction } from "@/modules/auth/actions";
 import { getAdminChallenge, getAdminSession } from "@/modules/auth/session";
+import { SubmitButton } from "@/components/common/submit-button";
 
 type LoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -11,10 +12,24 @@ function getSingleParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function formatExpiry(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 const errorCopy: Record<string, string> = {
-  invalid_credentials: "The email or password did not match a seeded admin account.",
-  invalid_mfa: "The MFA code did not match this admin session challenge.",
+  invalid_credentials: "The email or password is incorrect. Please try again.",
+  invalid_mfa: "The MFA code did not match. Please try again.",
   mfa_expired: "The MFA challenge expired. Sign in again to continue.",
+  session_expired: "The trusted admin session expired. Sign in again to continue.",
 };
 
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
@@ -24,10 +39,12 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const email = getSingleParam(params.email) ?? "";
   const error = getSingleParam(params.error) ?? "";
   const signedOut = getSingleParam(params.signed_out) === "1";
+  const passwordReset = getSingleParam(params.password_reset) === "1";
   const session = await getAdminSession();
   const challenge = await getAdminChallenge();
 
   const challengeEmail = challenge?.email ?? email;
+  const challengeExpiry = formatExpiry(challenge?.expiresAt);
 
   return (
     <main className="tm-admin-page">
@@ -36,21 +53,20 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
           <p className="tm-kicker">TravelMate Admin</p>
           <h1 className="mt-3 text-5xl font-semibold text-slate-950">Trusted access for back-office decisions.</h1>
           <p className="tm-muted mt-4 max-w-xl text-sm">
-            Flow 2.1 now enforces protected routes with seeded admin roles, MFA where required, and an auditable mock
-            session model that mirrors the real back-office shape.
+            Protected routes, role-based access, MFA where required, and auditable signed session cookies are active across all admin surfaces.
           </p>
 
           <div className="mt-8 grid gap-3">
             <div className="tm-soft-band">
               <p className="tm-label">Auth scope</p>
               <p className="mt-2 text-sm text-slate-900">
-                Role-aware access, MFA challenge flow, signed session cookies, and finance-only route protection are active.
+                Credentials are validated against the live API. Role-aware access, MFA challenge flow, and finance-only route protection are enforced.
               </p>
             </div>
             <div className="tm-soft-band">
-              <p className="tm-label">Mock environment note</p>
+              <p className="tm-label">Session model</p>
               <p className="mt-2 text-sm text-slate-900">
-                Local verification uses seeded admin fixtures, but credentials are intentionally not exposed on the sign-in surface.
+                Sessions are created by the API, then mirrored into a signed dashboard cookie so protected routes can bootstrap quickly.
               </p>
             </div>
           </div>
@@ -64,6 +80,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
 
           {signedOut ? (
             <p className="tm-alert tm-alert-success mt-4">The admin session was closed successfully.</p>
+          ) : null}
+          {passwordReset ? (
+            <p className="tm-alert tm-alert-success mt-4">Password updated — sign in with your new password.</p>
           ) : null}
           {error ? <p className="tm-alert tm-alert-danger mt-4">{errorCopy[error] ?? "Unable to complete sign in."}</p> : null}
 
@@ -99,6 +118,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                 <p className="mt-2 text-sm text-slate-900">
                   MFA is required for <span className="font-semibold">{challengeEmail || "this admin account"}</span>.
                 </p>
+                {challengeExpiry ? (
+                  <p className="tm-muted mt-2 text-xs">This MFA challenge expires at {challengeExpiry}.</p>
+                ) : null}
               </div>
               <label className="block">
                 <span className="tm-label">One-time code</span>
@@ -110,9 +132,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                   required
                 />
               </label>
-              <button className="tm-btn tm-btn-primary w-full" type="submit">
-                Verify MFA and continue
-              </button>
+              <SubmitButton label="Verify MFA and continue" pendingLabel="Verifying…" />
               <Link className="tm-btn tm-btn-outline w-full" href={`/auth/login?email=${encodeURIComponent(challengeEmail)}&next=${encodeURIComponent(next)}`}>
                 Start over
               </Link>
@@ -143,9 +163,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                   type="password"
                 />
               </label>
-              <button className="tm-btn tm-btn-primary w-full" type="submit">
-                Continue to admin shell
-              </button>
+              <SubmitButton label="Continue to admin shell" pendingLabel="Signing in…" />
               <div className="flex flex-wrap gap-3">
                 <Link className="tm-btn tm-btn-outline" href="/auth/reset-password">
                   Reset password

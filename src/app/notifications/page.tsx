@@ -1,19 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getNotificationRecords } from "@/modules/notifications/data";
-import { notificationsAllowedRoles } from "@/modules/notifications/rules";
 import { NotificationsWorkspace } from "@/modules/notifications/workspace";
 
 export default async function NotificationsPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/notifications");
-  }
-
-  if (!notificationsAllowedRoles.includes(session.user.role)) {
-    redirect("/auth/access-denied?next=/notifications");
-  }
+  requireAdminRouteAccess("/notifications", session);
 
   return (
     <AdminShell

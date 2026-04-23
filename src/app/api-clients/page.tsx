@@ -1,14 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getApiClientRecords } from "@/modules/api-clients/data";
 import { ApiClientsWorkspace } from "@/modules/api-clients/workspace";
 
 export default async function ApiClientsPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/api-clients");
-  }
+  requireAdminRouteAccess("/api-clients", session);
 
   return (
     <AdminShell

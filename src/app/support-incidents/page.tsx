@@ -1,15 +1,12 @@
-import { redirect } from "next/navigation";
-
 import { AdminShell } from "@/components/common/admin-shell";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getSupportIncidentRecords } from "@/modules/support-incidents/data";
 import { SupportIncidentsWorkspace } from "@/modules/support-incidents/workspace";
 
 export default async function SupportIncidentsPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/support-incidents");
-  }
+  requireAdminRouteAccess("/support-incidents", session);
 
   return (
     <AdminShell

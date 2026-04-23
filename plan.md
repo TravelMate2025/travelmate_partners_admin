@@ -285,7 +285,7 @@
 - Flow 2.14 Support and Incident Tools: `Completed`
 - Flow 2.15 Financial Operations and Settlement Management: `Completed`
 - Flow 2.16 Settlement Account (Payout Method) Review and Security Controls: `Not started`
-- Flow 2.17 Admin User Management and Access Governance: `Not started`
+- Flow 2.17 Admin User Management and Access Governance: `In progress` (frontend workspace complete with mock data; backend API and real wiring pending — Phase 2.5 in api/plan.md)
 
 Current planning note:
 - This file initializes the admin application scope using the baseline from `app_features.md`, with explicit alignment to the completed partner app so the admin dashboard can act as the back office without conflicting ownership.
@@ -598,8 +598,10 @@ Alignment rule for this section:
   - Role changes, invites, and account status changes are auditable and policy-aware.
   - Sensitive roles are protected by explicit confirmation or approval rules where required.
 - Status:
-  - Completed.
-  - Implemented with a super-admin-only admin governance workspace covering the admin directory, pending invites, activation and deactivation controls, resend and revoke invite actions, MFA posture, recent session context, permission policy summaries, and role assignment. Sensitive grants into `finance` and `super_admin` now require explicit confirmation in the workspace, while local audit history records invite, activation, deactivation, and role-change actions. Added unit, integration, workspace, route-access, and Playwright coverage for invite lifecycle, sensitive-role protection, role changes, and access-policy updates.
+  - In progress.
+  - Frontend workspace implemented: admin directory, pending invites, activation and deactivation controls, resend and revoke invite actions, MFA posture, recent session context, permission policy summaries, and role assignment. Sensitive grants into `finance` and `super_admin` require explicit confirmation in the workspace. Local audit history records governance actions.
+  - Currently wired to `mockAdminUsersRepository` in `src/modules/admin-users/service.ts`. Real backend (AdminInvitation model, invite/activate/deactivate/assign-role endpoints, accept-invite page) is pending implementation as Phase 2.5 in `api/plan.md`.
+  - Remaining work: replace `mockAdminUsersRepository` with real API calls, add `/auth/accept-invite` page, run end-to-end signoff once backend is live.
 
 ## 6. Test Strategy by Module
 

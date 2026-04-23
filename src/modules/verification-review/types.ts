@@ -7,7 +7,7 @@ export type VerificationDocument = {
   id: string;
   label: string;
   fileName: string;
-  documentType: "identity" | "business" | "address" | "compliance" | "banking";
+  documentType: "identity" | "business" | "address" | "compliance" | "banking" | "permit";
   mimeType: string;
   sizeLabel: string;
   pageCount: number;

@@ -1,14 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getCatalogIssueRecords, getTaxonomyRuleRecords } from "@/modules/catalog-controls/data";
 import { CatalogControlsWorkspace } from "@/modules/catalog-controls/workspace";
 
 export default async function CatalogControlsPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/catalog-controls");
-  }
+  requireAdminRouteAccess("/catalog-controls", session);
 
   return (
     <AdminShell

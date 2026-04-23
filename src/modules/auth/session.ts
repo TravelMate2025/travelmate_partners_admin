@@ -1,14 +1,163 @@
 import { cookies } from "next/headers";
 
 import { sanitizeNextPath } from "@/modules/auth/access";
-import { findMockAdminByEmail } from "@/modules/auth/mock-admins";
-import type { AdminChallenge, AdminSession, AdminUser, MockAdminRecord } from "@/modules/auth/types";
+import type { AdminChallenge, AdminRole, AdminSession, AdminSessionRecord, AdminUser } from "@/modules/auth/types";
+
+export function getAdminApiBaseUrl() {
+  return process.env.ADMIN_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
+}
 
 export const ADMIN_SESSION_COOKIE = "tm_admin_session";
 export const ADMIN_CHALLENGE_COOKIE = "tm_admin_challenge";
+export const ADMIN_API_SESSION_COOKIE = "tm_partner_api_session";
 const DEV_SESSION_SECRET = "travelmate-admin-dashboard-dev-session-secret";
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
+
+type StoredAdminSession = AdminSession & {
+  backendSessionKey: string;
+};
+
+type AdminApiUserPayload = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  team: string;
+  requiresMfa: boolean;
+};
+
+type AdminApiSessionPayload = {
+  id: number;
+  fingerprint: string;
+  createdAt: string;
+  lastSeenAt: string;
+  isCurrent: boolean;
+};
+
+type AdminApiSessionsResponse = {
+  data: {
+    user: AdminApiUserPayload;
+    currentSessionId: number | null;
+    sessions: AdminApiSessionPayload[];
+  };
+};
+
+type AdminLoginApiBody = {
+  data: {
+    status: "authenticated" | "mfa_required";
+    user: AdminApiUserPayload;
+    session?: AdminApiSessionPayload;
+    challenge?: {
+      id: number;
+      expiresAt: string;
+    };
+  };
+};
+
+function mapAdminRole(role: string): AdminRole {
+  return role as AdminRole;
+}
+
+function isFutureIsoTimestamp(value?: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return false;
+  }
+
+  return timestamp > Date.now();
+}
+
+function mapAdminUser(raw: AdminApiUserPayload): AdminUser {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    role: mapAdminRole(raw.role),
+    team: raw.team,
+    requiresMfa: raw.requiresMfa,
+  };
+}
+
+function mapAdminSessionRecord(raw: AdminApiSessionPayload): AdminSessionRecord {
+  return {
+    id: raw.id,
+    fingerprint: raw.fingerprint,
+    createdAt: raw.createdAt,
+    lastSeenAt: raw.lastSeenAt,
+    isCurrent: raw.isCurrent,
+  };
+}
+
+function buildDeviceLabel(currentSession: AdminSessionRecord | null) {
+  return currentSession?.fingerprint || "Admin dashboard session";
+}
+
+function buildStoredAdminSession({
+  user,
+  currentSession,
+  currentSessionId,
+  backendSessionKey,
+}: {
+  user: AdminUser;
+  currentSession: AdminSessionRecord | null;
+  currentSessionId: number | null;
+  backendSessionKey: string;
+}): StoredAdminSession {
+  return {
+    user,
+    sessionId: currentSession ? String(currentSession.id) : `${user.id}-bootstrap`,
+    currentSessionId,
+    issuedAt: currentSession?.createdAt ?? new Date().toISOString(),
+    lastValidatedAt: currentSession?.lastSeenAt ?? new Date().toISOString(),
+    deviceLabel: buildDeviceLabel(currentSession),
+    mfaSatisfied: true,
+    backendSessionKey,
+  };
+}
+
+function toPublicAdminSession(session: StoredAdminSession): AdminSession {
+  return {
+    user: session.user,
+    sessionId: session.sessionId,
+    currentSessionId: session.currentSessionId,
+    issuedAt: session.issuedAt,
+    lastValidatedAt: session.lastValidatedAt,
+    deviceLabel: session.deviceLabel,
+    mfaSatisfied: session.mfaSatisfied,
+  };
+}
+
+function getCurrentSession(sessions: AdminSessionRecord[], currentSessionId: number | null) {
+  return sessions.find((session) => session.id === currentSessionId) ?? sessions.find((session) => session.isCurrent) ?? null;
+}
+
+function readApiSessionKeyFromCookieHeader(cookieHeader: string | null) {
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const match = cookieHeader.match(new RegExp(`${ADMIN_API_SESSION_COOKIE}=([^;]+)`));
+  return match?.[1] ?? null;
+}
+
+function readApiSessionKeyFromResponse(response: Response) {
+  const getSetCookie = (response.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie;
+  if (typeof getSetCookie === "function") {
+    for (const header of getSetCookie.call(response.headers)) {
+      const sessionKey = readApiSessionKeyFromCookieHeader(header);
+      if (sessionKey) {
+        return sessionKey;
+      }
+    }
+  }
+
+  return readApiSessionKeyFromCookieHeader(response.headers.get("set-cookie"));
+}
 
 function getSessionSecret() {
   return process.env.ADMIN_SESSION_SECRET ?? DEV_SESSION_SECRET;
@@ -70,38 +219,6 @@ async function verifyPayloadSignature(encodedPayload: string, signature: string)
   }
 }
 
-function createAdminUser(record: MockAdminRecord): AdminUser {
-  return {
-    id: record.id,
-    name: record.name,
-    email: record.email,
-    role: record.role,
-    team: record.team,
-    requiresMfa: record.requiresMfa,
-  };
-}
-
-export function createAdminSession(record: MockAdminRecord): AdminSession {
-  const now = new Date().toISOString();
-
-  return {
-    user: createAdminUser(record),
-    sessionId: `${record.id}-${crypto.randomUUID()}`,
-    issuedAt: now,
-    lastValidatedAt: now,
-    deviceLabel: record.trustedDeviceLabel,
-    mfaSatisfied: record.requiresMfa,
-  };
-}
-
-export function refreshAdminSession(session: AdminSession): AdminSession {
-  return {
-    ...session,
-    sessionId: `${session.user.id}-${crypto.randomUUID()}`,
-    lastValidatedAt: new Date().toISOString(),
-  };
-}
-
 async function serializeSignedPayload(payload: object) {
   const encodedPayload = encodePayload(payload);
   const signature = await signPayload(encodedPayload);
@@ -123,12 +240,12 @@ async function parseSignedPayload<T>(value?: string | null) {
   return decodePayload<T>(encodedPayload);
 }
 
-export async function serializeAdminSession(session: AdminSession) {
+export async function serializeAdminSession(session: StoredAdminSession) {
   return serializeSignedPayload(session);
 }
 
 export async function parseAdminSession(value?: string | null) {
-  return parseSignedPayload<AdminSession>(value);
+  return parseSignedPayload<StoredAdminSession>(value);
 }
 
 export async function serializeAdminChallenge(challenge: AdminChallenge) {
@@ -141,6 +258,17 @@ export async function parseAdminChallenge(value?: string | null) {
 
 export async function getAdminSession() {
   const cookieStore = await cookies();
+  const session = await parseAdminSession(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
+  if (!session) {
+    return null;
+  }
+
+  const inventory = await getAdminSessionInventoryFromApi(session);
+  return inventory ? toPublicAdminSession(inventory.storedSession) : null;
+}
+
+export async function getStoredAdminSession() {
+  const cookieStore = await cookies();
   return await parseAdminSession(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
@@ -149,7 +277,7 @@ export async function getAdminChallenge() {
   return await parseAdminChallenge(cookieStore.get(ADMIN_CHALLENGE_COOKIE)?.value);
 }
 
-export async function setAdminSessionCookie(session: AdminSession) {
+export async function setAdminSessionCookie(session: StoredAdminSession) {
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_SESSION_COOKIE, await serializeAdminSession(session), {
     httpOnly: true,
@@ -181,34 +309,263 @@ export async function clearAdminChallengeCookie() {
   cookieStore.delete(ADMIN_CHALLENGE_COOKIE);
 }
 
-export function authenticateAdminCredentials(email: string, password: string) {
-  const record = findMockAdminByEmail(email);
-
-  if (!record || record.password !== password) {
-    return { status: "invalid" as const };
+async function readJson<T>(response: Response) {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
   }
-
-  if (record.requiresMfa) {
-    return { status: "mfa_required" as const, admin: record };
-  }
-
-  return { status: "authenticated" as const, admin: record, session: createAdminSession(record) };
 }
 
-export function verifyAdminMfaCode(email: string, code: string) {
-  const record = findMockAdminByEmail(email);
-
-  if (!record || !record.requiresMfa || record.mfaCode !== code.trim()) {
-    return { status: "invalid" as const };
+async function readAdminSessionInventoryFromResponse(response: Response, backendSessionKey: string) {
+  const body = await readJson<AdminApiSessionsResponse>(response);
+  if (!body) {
+    return null;
   }
 
-  return { status: "authenticated" as const, admin: record, session: createAdminSession(record) };
-}
+  const user = mapAdminUser(body.data.user);
+  const sessions = body.data.sessions.map(mapAdminSessionRecord);
+  const currentSession = getCurrentSession(sessions, body.data.currentSessionId);
 
-export function createChallengeForAdmin(email: string, nextPath?: string | null): AdminChallenge {
   return {
+    user,
+    currentSessionId: body.data.currentSessionId,
+    sessions,
+    storedSession: buildStoredAdminSession({
+      user,
+      currentSession,
+      currentSessionId: body.data.currentSessionId,
+      backendSessionKey,
+    }),
+  };
+}
+
+export async function authenticateAdminCredentials(email: string, password: string) {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return { status: "invalid" as const };
+    }
+
+    const body = await readJson<AdminLoginApiBody>(response);
+    if (!body) {
+      return { status: "invalid" as const };
+    }
+
+    const user = mapAdminUser(body.data.user);
+
+    if (body.data.status === "mfa_required") {
+      return {
+        status: "mfa_required" as const,
+        user,
+        challenge: {
+          challengeId: body.data.challenge?.id ?? null,
+          expiresAt: body.data.challenge?.expiresAt ?? null,
+        },
+      };
+    }
+
+    const backendSessionKey = readApiSessionKeyFromResponse(response);
+    if (!backendSessionKey || !body.data.session) {
+      return { status: "invalid" as const };
+    }
+
+    return {
+      status: "authenticated" as const,
+      user,
+      session: buildStoredAdminSession({
+        user,
+        currentSession: mapAdminSessionRecord(body.data.session),
+        currentSessionId: body.data.session.id,
+        backendSessionKey,
+      }),
+    };
+  } catch {
+    return { status: "invalid" as const };
+  }
+}
+
+export async function verifyAdminMfaCode(email: string, code: string) {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/mfa/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return { status: "invalid" as const };
+    }
+
+    const body = await readJson<AdminLoginApiBody>(response);
+    if (!body) {
+      return { status: "invalid" as const };
+    }
+
+    const backendSessionKey = readApiSessionKeyFromResponse(response);
+    if (!backendSessionKey || !body.data.session) {
+      return { status: "invalid" as const };
+    }
+
+    const user = mapAdminUser(body.data.user);
+    return {
+      status: "authenticated" as const,
+      user,
+      session: buildStoredAdminSession({
+        user,
+        currentSession: mapAdminSessionRecord(body.data.session),
+        currentSessionId: body.data.session.id,
+        backendSessionKey,
+      }),
+    };
+  } catch {
+    return { status: "invalid" as const };
+  }
+}
+
+export function createChallengeForAdmin(
+  email: string,
+  nextPath?: string | null,
+  expiresAt?: string | null,
+  challengeId?: number | null,
+): AdminChallenge {
+  return {
+    challengeId: challengeId ?? null,
     email,
     nextPath: sanitizeNextPath(nextPath),
     createdAt: new Date().toISOString(),
+    expiresAt: expiresAt ?? null,
   };
+}
+
+export function isAdminChallengeExpired(challenge: AdminChallenge | null) {
+  if (!challenge) {
+    return true;
+  }
+
+  if (!challenge.expiresAt) {
+    return false;
+  }
+
+  return !isFutureIsoTimestamp(challenge.expiresAt);
+}
+
+export async function getAdminSessionInventoryFromApi(session: StoredAdminSession) {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/sessions`, {
+      method: "GET",
+      headers: {
+        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await readAdminSessionInventoryFromResponse(response, session.backendSessionKey);
+  } catch {
+    return null;
+  }
+}
+
+export async function rotateAdminSession(session: StoredAdminSession) {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/sessions/refresh`, {
+      method: "POST",
+      headers: {
+        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const rotatedSessionKey = readApiSessionKeyFromResponse(response);
+    if (!rotatedSessionKey) {
+      return null;
+    }
+
+    return await readAdminSessionInventoryFromResponse(response, rotatedSessionKey);
+  } catch {
+    return null;
+  }
+}
+
+export async function revokeAdminSession(session: StoredAdminSession, sessionId: number) {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/sessions/${sessionId}`, {
+      method: "DELETE",
+      headers: {
+        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await readAdminSessionInventoryFromResponse(response, session.backendSessionKey);
+  } catch {
+    return null;
+  }
+}
+
+export async function requestAdminPasswordReset(email: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/request-password-reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function resetAdminPassword(email: string, code: string, newPassword: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, new_password: newPassword }),
+      cache: "no-store",
+    });
+    if (response.ok) {
+      return { ok: true };
+    }
+    const body = await readJson<{ message?: string }>(response);
+    return { ok: false, message: body?.message ?? "Reset failed." };
+  } catch {
+    return { ok: false, message: "Reset failed." };
+  }
+}
+
+export async function logoutAdminSession(session: StoredAdminSession) {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/logout`, {
+      method: "POST",
+      headers: {
+        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+      },
+      cache: "no-store",
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
 }

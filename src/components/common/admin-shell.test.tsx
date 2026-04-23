@@ -31,4 +31,19 @@ describe("AdminShell", () => {
     expect(screen.getByText("child content")).toBeInTheDocument();
     expect(screen.getAllByText("Moderation").length).toBeGreaterThan(0);
   });
+
+  it("shows locked navigation copy for restricted routes", () => {
+    render(
+      <AdminShell
+        description="Operational shell for admin routes."
+        title="Listing Moderation"
+      >
+        <div>child content</div>
+      </AdminShell>,
+    );
+
+    const lockedFinanceLink = screen.getByLabelText("Financial Operations (Requires finance or super admin)");
+    expect(lockedFinanceLink).toBeInTheDocument();
+    expect(screen.getAllByText("Requires finance or super admin").length).toBeGreaterThan(0);
+  });
 });

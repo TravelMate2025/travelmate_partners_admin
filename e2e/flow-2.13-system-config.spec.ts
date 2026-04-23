@@ -1,4 +1,26 @@
 import { expect, test, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+
+const apiDir = path.resolve(__dirname, "../../api");
+
+function readActiveAdminMfaCode(email: string) {
+  return execFileSync(
+    "python3",
+    [
+      "manage.py",
+      "shell",
+      "-c",
+      [
+        "from apps.users.models import AdminMfaChallenge, User",
+        `user = User.objects.get(email='${email}')`,
+        "challenge = AdminMfaChallenge.objects.filter(user=user, consumed_at__isnull=True).order_by('-created_at').first()",
+        "print(challenge.code if challenge else '')",
+      ].join("; "),
+    ],
+    { cwd: apiDir, encoding: "utf-8" },
+  ).trim();
+}
 
 async function signInAs(page: Page, email: string, password: string, mfaCode?: string) {
   await page.goto("/auth/login");
@@ -14,9 +36,20 @@ async function signInAs(page: Page, email: string, password: string, mfaCode?: s
   await expect(page.getByRole("heading", { name: "Operations Overview" }).first()).toBeVisible();
 }
 
+async function signInWithLiveMfa(page: Page, email: string, password: string) {
+  await page.goto("/auth/login");
+  await page.getByLabel("Admin email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Continue to admin shell" }).click();
+  await expect(page.getByRole("heading", { name: "Verify MFA" })).toBeVisible();
+  await page.getByLabel("One-time code").fill(readActiveAdminMfaCode(email));
+  await page.getByRole("button", { name: "Verify MFA and continue" }).click();
+  await expect(page.getByRole("heading", { name: "Operations Overview" }).first()).toBeVisible();
+}
+
 test.describe("Flow 2.13 system config", () => {
   test("super admin sees all five configuration sections in the workspace", async ({ page }) => {
-    await signInAs(page, "superadmin@travelmate.test", "TravelMate!2026", "111111");
+    await signInWithLiveMfa(page, "superadmin@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await expect(page.getByRole("heading", { name: "Configuration master data" }).first()).toBeVisible();
@@ -28,7 +61,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("super admin publishes a draft taxonomy item", async ({ page }) => {
-    await signInAs(page, "superadmin@travelmate.test", "TravelMate!2026", "111111");
+    await signInWithLiveMfa(page, "superadmin@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByText("Airport Parking").first().click();
@@ -39,7 +72,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("super admin activates a draft service region after dependency check passes", async ({ page }) => {
-    await signInAs(page, "superadmin@travelmate.test", "TravelMate!2026", "111111");
+    await signInWithLiveMfa(page, "superadmin@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByLabel("Configuration section").selectOption("regions");
@@ -51,7 +84,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("super admin publishes a draft moderation template", async ({ page }) => {
-    await signInAs(page, "superadmin@travelmate.test", "TravelMate!2026", "111111");
+    await signInWithLiveMfa(page, "superadmin@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByLabel("Configuration section").selectOption("templates");
@@ -63,7 +96,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("archiving an in-use moderation template is blocked with a dependency message", async ({ page }) => {
-    await signInAs(page, "superadmin@travelmate.test", "TravelMate!2026", "111111");
+    await signInWithLiveMfa(page, "superadmin@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByLabel("Configuration section").selectOption("templates");
@@ -75,7 +108,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("super admin publishes a draft static content announcement", async ({ page }) => {
-    await signInAs(page, "superadmin@travelmate.test", "TravelMate!2026", "111111");
+    await signInWithLiveMfa(page, "superadmin@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByLabel("Configuration section").selectOption("content");
@@ -87,7 +120,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("operations admin can toggle features but not publish taxonomy or manage regions", async ({ page }) => {
-    await signInAs(page, "ops@travelmate.test", "TravelMate!2026", "222222");
+    await signInWithLiveMfa(page, "ops@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByText("Airport Parking").first().click();
@@ -99,7 +132,7 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("operations admin enables a disabled feature toggle", async ({ page }) => {
-    await signInAs(page, "ops@travelmate.test", "TravelMate!2026", "222222");
+    await signInWithLiveMfa(page, "ops@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
     await page.getByText("Dynamic Pricing Engine").first().click();
@@ -110,9 +143,10 @@ test.describe("Flow 2.13 system config", () => {
   });
 
   test("reviewer is redirected away from the system config route", async ({ page }) => {
-    await signInAs(page, "reviewer@travelmate.test", "TravelMate!2026", "333333");
+    await signInWithLiveMfa(page, "reviewer@travelmate.test", "TravelMate!2026");
     await page.goto("/system-config");
 
-    await expect(page).toHaveURL(/\/auth\/access-denied\?next=%2Fsystem-config/);
+    await expect(page).toHaveURL(/\/auth\/access-denied\?next=%2Fsystem-config&required=super_admin%2Coperations/);
+    await expect(page.getByText(/Required roles: super_admin, operations/i)).toBeVisible();
   });
 });

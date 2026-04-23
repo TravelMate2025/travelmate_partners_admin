@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getAdminRouteDefinition } from "@/modules/auth/access";
 import { getAdminSession } from "@/modules/auth/session";
 
 type AccessDeniedPageProps = {
@@ -12,11 +13,12 @@ function getSingleParam(value: string | string[] | undefined) {
 
 export default async function AccessDeniedPage({ searchParams }: AccessDeniedPageProps) {
   const params = searchParams ? await searchParams : {};
-  const required = (getSingleParam(params.required) ?? "")
+  const next = getSingleParam(params.next) ?? "/";
+  const route = getAdminRouteDefinition(next);
+  const required = (getSingleParam(params.required) ?? route?.roles?.join(",") ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const next = getSingleParam(params.next) ?? "/";
   const session = await getAdminSession();
 
   return (
@@ -31,6 +33,13 @@ export default async function AccessDeniedPage({ searchParams }: AccessDeniedPag
               : "No admin session is active."}{" "}
             Required roles: {required.length ? required.join(", ") : "contact platform leadership"}.
           </p>
+          {route ? (
+            <div className="tm-soft-band mt-6">
+              <p className="tm-label">Requested route</p>
+              <p className="mt-2 text-lg font-semibold text-slate-950">{route.label}</p>
+              <p className="tm-muted mt-2 text-sm">{route.description}</p>
+            </div>
+          ) : null}
           <div className="mt-6 flex flex-wrap gap-3">
             <Link className="tm-btn tm-btn-primary" href="/">
               Return to overview

@@ -1,14 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getPartnerRecords } from "@/modules/partner-operations/data";
 import { PartnerOperationsWorkspace } from "@/modules/partner-operations/workspace";
 
 export default async function PartnersPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/partners");
-  }
+  requireAdminRouteAccess("/partners", session);
 
   return (
     <AdminShell

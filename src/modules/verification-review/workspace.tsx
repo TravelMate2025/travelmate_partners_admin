@@ -2,9 +2,13 @@
 
 import { useMemo, useState } from "react";
 
+import { SurfaceState } from "@/components/common/surface-state";
 import { StatusBadge } from "@/components/common/status-badge";
 import { isVerificationDecisionAllowed } from "@/modules/verification-review/reducer";
-import { mockVerificationReviewRepository } from "@/modules/verification-review/service";
+import {
+  mockVerificationReviewRepository,
+  realVerificationReviewRepository,
+} from "@/modules/verification-review/service";
 import type {
   VerificationCase,
   VerificationDecisionAction,
@@ -43,9 +47,11 @@ function labelForDocumentSource(source: VerificationCase["documents"][number]["s
 export function VerificationReviewWorkspace({
   initialCases,
   actor,
+  mode = "mock",
 }: {
   initialCases: VerificationCase[];
   actor: string;
+  mode?: "mock" | "real";
 }) {
   const [cases, setCases] = useState(initialCases);
   const [selectedId, setSelectedId] = useState(initialCases[0]?.id ?? "");
@@ -69,6 +75,8 @@ export function VerificationReviewWorkspace({
         suspend: isVerificationDecisionAllowed(selectedCase, "suspend"),
       }
     : null;
+  const repository =
+    mode === "real" ? realVerificationReviewRepository : mockVerificationReviewRepository;
 
   function handleSelect(caseId: string) {
     setSelectedId(caseId);
@@ -87,7 +95,7 @@ export function VerificationReviewWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockVerificationReviewRepository.submitDecision(cases, {
+      const result = await repository.submitDecision(cases, {
         caseId: selectedCase.id,
         action,
         note: note.trim() || "Admin action recorded without additional note.",
@@ -106,6 +114,20 @@ export function VerificationReviewWorkspace({
     } finally {
       setPendingAction(null);
     }
+  }
+
+  if (cases.length === 0) {
+    return (
+      <section className="grid gap-5">
+        <article className="tm-panel">
+          <SurfaceState
+            description="Submitted verification packets will appear here once partner cases enter the review queue."
+            title="Verification review workspace is empty"
+            tone="empty"
+          />
+        </article>
+      </section>
+    );
   }
 
   if (!selectedCase) {

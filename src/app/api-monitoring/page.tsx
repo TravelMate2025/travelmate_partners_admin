@@ -1,14 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getApiMonitoringRecords } from "@/modules/api-monitoring/data";
 import { ApiMonitoringWorkspace } from "@/modules/api-monitoring/workspace";
 
 export default async function ApiMonitoringPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/api-monitoring");
-  }
+  requireAdminRouteAccess("/api-monitoring", session);
 
   return (
     <AdminShell

@@ -1,19 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getSystemConfigRecords } from "@/modules/system-config/data";
-import { systemConfigAllowedRoles } from "@/modules/system-config/rules";
 import { SystemConfigWorkspace } from "@/modules/system-config/workspace";
 
 export default async function SystemConfigPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/system-config");
-  }
-
-  if (!systemConfigAllowedRoles.includes(session.user.role)) {
-    redirect("/auth/access-denied?next=/system-config");
-  }
+  requireAdminRouteAccess("/system-config", session);
 
   return (
     <AdminShell

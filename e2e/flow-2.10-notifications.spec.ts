@@ -1,4 +1,26 @@
 import { expect, test, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+
+const apiDir = path.resolve(__dirname, "../../api");
+
+function readActiveAdminMfaCode(email: string) {
+  return execFileSync(
+    "python3",
+    [
+      "manage.py",
+      "shell",
+      "-c",
+      [
+        "from apps.users.models import AdminMfaChallenge, User",
+        `user = User.objects.get(email='${email}')`,
+        "challenge = AdminMfaChallenge.objects.filter(user=user, consumed_at__isnull=True).order_by('-created_at').first()",
+        "print(challenge.code if challenge else '')",
+      ].join("; "),
+    ],
+    { cwd: apiDir, encoding: "utf-8" },
+  ).trim();
+}
 
 async function signInAs(page: Page, email: string, password: string, mfaCode?: string) {
   await page.goto("/auth/login");
@@ -11,6 +33,17 @@ async function signInAs(page: Page, email: string, password: string, mfaCode?: s
     await page.getByRole("button", { name: "Verify MFA and continue" }).click();
   }
 
+  await expect(page.getByRole("heading", { name: "Operations Overview" }).first()).toBeVisible();
+}
+
+async function signInWithLiveMfa(page: Page, email: string, password: string) {
+  await page.goto("/auth/login");
+  await page.getByLabel("Admin email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Continue to admin shell" }).click();
+  await expect(page.getByRole("heading", { name: "Verify MFA" })).toBeVisible();
+  await page.getByLabel("One-time code").fill(readActiveAdminMfaCode(email));
+  await page.getByRole("button", { name: "Verify MFA and continue" }).click();
   await expect(page.getByRole("heading", { name: "Operations Overview" }).first()).toBeVisible();
 }
 
@@ -35,9 +68,10 @@ test.describe("Flow 2.10 notifications", () => {
   });
 
   test("reviewers cannot access the notifications route", async ({ page }) => {
-    await signInAs(page, "reviewer@travelmate.test", "TravelMate!2026", "333333");
+    await signInWithLiveMfa(page, "reviewer@travelmate.test", "TravelMate!2026");
     await page.goto("/notifications");
 
-    await expect(page).toHaveURL(/\/auth\/access-denied\?next=%2Fnotifications/);
+    await expect(page).toHaveURL(/\/auth\/access-denied\?next=%2Fnotifications&required=super_admin%2Coperations%2Csupport%2Cfinance/);
+    await expect(page.getByText(/Required roles: super_admin, operations, support, finance/i)).toBeVisible();
   });
 });

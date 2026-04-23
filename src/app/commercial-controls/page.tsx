@@ -1,20 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getCommercialControlRecords } from "@/modules/commercial-controls/data";
 import { CommercialControlsWorkspace } from "@/modules/commercial-controls/workspace";
 
-const allowedRoles = ["finance", "super_admin"] as const;
-
 export default async function CommercialControlsPage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/commercial-controls");
-  }
-
-  if (!(allowedRoles as readonly string[]).includes(session.user.role)) {
-    redirect("/auth/access-denied?next=/commercial-controls");
-  }
+  requireAdminRouteAccess("/commercial-controls", session);
 
   return (
     <AdminShell

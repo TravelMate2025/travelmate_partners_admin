@@ -137,6 +137,19 @@ input {
   box-shadow: 0 16px 30px -32px rgba(25, 70, 62, 0.7);
 }
 
+.tm-nav-link-locked {
+  border-color: rgba(93, 108, 103, 0.18);
+  background:
+    linear-gradient(145deg, rgba(244, 241, 236, 0.94) 0%, rgba(235, 240, 237, 0.84) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.tm-nav-link-locked:hover {
+  transform: translateX(2px);
+  border-color: rgba(200, 91, 67, 0.28);
+  box-shadow: 0 16px 30px -36px rgba(93, 108, 103, 0.58);
+}
+
 .tm-nav-link-active {
   border-color: rgba(25, 70, 62, 0.26);
   background:
@@ -159,9 +172,19 @@ input {
   text-transform: uppercase;
 }
 
+.tm-nav-short-locked {
+  background: linear-gradient(145deg, #566965 0%, #70817d 100%);
+}
+
 .tm-nav-copy {
   font-size: 0.94rem;
   line-height: 1.35;
+}
+
+.tm-nav-lock-note {
+  color: var(--adm-alert);
+  font-weight: 700;
+  margin-top: 0.3rem;
 }
 
 .tm-main-shell {

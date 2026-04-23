@@ -6,12 +6,14 @@ import { QueueCard } from "@/components/common/queue-card";
 import { ReviewDrawer } from "@/components/common/review-drawer";
 import { StatCard } from "@/components/common/stat-card";
 import { StatusBadge } from "@/components/common/status-badge";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { formatDashboardMetric, getDashboardModel } from "@/modules/dashboard/data";
 import { adminShellHighlights } from "@/modules/shell/navigation";
 
 export default async function DashboardPage() {
   const session = await getAdminSession();
+  requireAdminRouteAccess("/", session);
   const role = session?.user.role ?? "super_admin";
   const dashboard = getDashboardModel(role);
 

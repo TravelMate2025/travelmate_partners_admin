@@ -1,19 +1,12 @@
 import { AdminShell } from "@/components/common/admin-shell";
-import { redirect } from "next/navigation";
+import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getAccessPolicyEntries, getAuditLogEntries, getRetentionConfig } from "@/modules/audit-compliance/data";
-import { auditComplianceAllowedRoles } from "@/modules/audit-compliance/rules";
 import { AuditComplianceWorkspace } from "@/modules/audit-compliance/workspace";
 
 export default async function AuditCompliancePage() {
   const session = await getAdminSession();
-  if (!session) {
-    redirect("/auth/login?next=/audit-compliance");
-  }
-
-  if (!auditComplianceAllowedRoles.includes(session.user.role)) {
-    redirect("/auth/access-denied?next=/audit-compliance");
-  }
+  requireAdminRouteAccess("/audit-compliance", session);
 
   return (
     <AdminShell

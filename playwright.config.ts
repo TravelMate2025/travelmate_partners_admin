@@ -16,7 +16,7 @@ export default defineConfig({
   webServer: {
     command: "npm run build && npm run start -- --port 3200",
     url: "http://127.0.0.1:3200",
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 240_000,
   },
   projects: [

@@ -12,6 +12,7 @@ export type AdminUser = {
 export type AdminSession = {
   user: AdminUser;
   sessionId: string;
+  currentSessionId: number | null;
   issuedAt: string;
   lastValidatedAt: string;
   deviceLabel: string;
@@ -19,9 +20,19 @@ export type AdminSession = {
 };
 
 export type AdminChallenge = {
+  challengeId: number | null;
   email: string;
   nextPath: string;
   createdAt: string;
+  expiresAt: string | null;
+};
+
+export type AdminSessionRecord = {
+  id: number;
+  fingerprint: string;
+  createdAt: string;
+  lastSeenAt: string;
+  isCurrent: boolean;
 };
 
 export type MockAdminRecord = AdminUser & {

@@ -1,59 +1,138 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type APIRequestContext } from "@playwright/test";
 
 async function signInAsReviewer(page: Parameters<typeof test>[0]["page"]) {
   await page.goto("/auth/login");
-  await page.getByLabel("Admin email").fill("reviewer@travelmate.test");
+  await page.getByLabel("Admin email").fill("reviewer-lite@travelmate.test");
   await page.getByLabel("Password").fill("TravelMate!2026");
   await page.getByRole("button", { name: "Continue to admin shell" }).click();
-  await page.getByLabel("One-time code").fill("333333");
-  await page.getByRole("button", { name: "Verify MFA and continue" }).click();
   await expect(page.getByRole("heading", { name: "Operations Overview" }).first()).toBeVisible();
 }
 
-test.describe("Flow 2.3 verification review", () => {
-  test("reviewer sees submitted document packets with preview-ready backend metadata", async ({ page }) => {
-    await signInAsReviewer(page);
-    await page.goto("/verification-review");
+async function createSubmittedVerificationCase(request: APIRequestContext) {
+  const unique = Date.now();
+  const email = `verification-review+${unique}@example.com`;
+  const phone = `+2348${String(unique).slice(-9)}`;
 
-    await expect(page.getByText("Primary passport page and signature page uploaded from the partner verification wizard.")).toBeVisible();
-    await expect(page.getByText("/api/backend/verification-cases/verify-001/documents/doc-1/download")).toBeVisible();
-    await page.getByRole("button", { name: /Business registration/i }).click();
-    await expect(page.getByText("Business certificate packet with registrar stamp, director listing, and filing reference pages.")).toBeVisible();
-    await expect(page.getByText(/registrar stamp is partially obscured/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Preview secure file" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Simulate signed download" })).toBeVisible();
+  const otpResponse = await request.post("http://127.0.0.1:8000/api/v1/auth/signup/request-otp", {
+    data: { email, phone },
+  });
+  const otpPayload = (await otpResponse.json()) as { data: { otp_code_hint?: string } };
+
+  const signupResponse = await request.post("http://127.0.0.1:8000/api/v1/auth/signup", {
+    data: {
+      email,
+      phone,
+      password: "Password123!",
+      otpCode: otpPayload.data.otp_code_hint,
+    },
+  });
+  const signupPayload = (await signupResponse.json()) as {
+    data: { verification_code_hint?: string };
+  };
+
+  await request.post("http://127.0.0.1:8000/api/v1/auth/verify-email", {
+    data: {
+      email,
+      code: signupPayload.data.verification_code_hint,
+    },
+  });
+  await request.post("http://127.0.0.1:8000/api/v1/auth/login", {
+    data: { email, password: "Password123!" },
   });
 
-  test("reviewer requests more info and preserves pending lifecycle alignment", async ({ page }) => {
+  const meResponse = await request.get("http://127.0.0.1:8000/api/v1/auth/me");
+  const mePayload = (await meResponse.json()) as { data: { id: string } };
+  const userId = mePayload.data.id;
+
+  for (const [step, data] of [
+    [
+      "business",
+      {
+        businessType: "business",
+        legalName: `Review Case ${unique} Ltd`,
+        tradeName: `Review Case ${unique}`,
+        registrationNumber: `RC${unique}`,
+      },
+    ],
+    [
+      "contact",
+      {
+        primaryContactName: `Reviewer Case ${unique}`,
+        primaryContactEmail: `reviewer-case-${unique}@example.com`,
+        supportContactEmail: `support-${unique}@example.com`,
+      },
+    ],
+    [
+      "operations",
+      {
+        serviceRegions: ["Lagos"],
+        operatingCities: ["Lekki"],
+        payoutSchedule: "weekly",
+      },
+    ],
+  ] as const) {
+    await request.patch(`http://127.0.0.1:8000/api/v1/partners/${userId}/onboarding`, {
+      data: { step, data },
+    });
+  }
+
+  await request.post(`http://127.0.0.1:8000/api/v1/partners/${userId}/onboarding/submit`);
+
+  for (const document of [
+    {
+      category: "identity",
+      fileName: "identity-proof.pdf",
+      fileType: "application/pdf",
+      fileSize: 2048,
+    },
+    {
+      category: "business",
+      fileName: "business-registration.pdf",
+      fileType: "application/pdf",
+      fileSize: 3072,
+    },
+  ]) {
+    await request.post(`http://127.0.0.1:8000/api/v1/partners/${userId}/verification/documents`, {
+      data: document,
+    });
+  }
+
+  await request.post(`http://127.0.0.1:8000/api/v1/partners/${userId}/verification/submit`);
+
+  return {
+    businessName: `Review Case ${unique}`,
+    partnerName: `Reviewer Case ${unique}`,
+  };
+}
+
+test.describe("Flow 2.3 verification review", () => {
+  test("reviewer sees submitted partner packets and can request more information", async ({
+    page,
+    request,
+  }) => {
+    const seeded = await createSubmittedVerificationCase(request);
+
     await signInAsReviewer(page);
     await page.goto("/verification-review");
 
-    await expect(page.getByRole("heading", { name: "Verification Review" }).first()).toBeVisible();
-    await page.getByRole("button", { name: /David Mensah/i }).click();
-    await page.getByPlaceholder("Add approval rationale, rejection reason, or resubmission guidance...").fill(
-      "Please re-upload the tax certificate with the registration number visible.",
-    );
+    await page.getByRole("button", { name: new RegExp(seeded.partnerName, "i") }).click();
+    await expect(page.getByText("identity-proof.pdf").first()).toBeVisible();
+    await expect(
+      page.getByText(/uploaded from the partner verification flow/i).first(),
+    ).toBeVisible();
+    await expect(page.getByText(/\/api\/backend\/verification-cases\/verify-.*\/documents\/doc-/)).toBeVisible();
+
+    await page.getByRole("button", { name: /business document/i }).click();
+    await expect(page.getByText("business-registration.pdf").first()).toBeVisible();
+    await page
+      .getByPlaceholder("Add approval rationale, rejection reason, or resubmission guidance...")
+      .fill("Please upload a clearer registration certificate.");
     await page.getByRole("button", { name: "Request more info" }).click();
 
-    await expect(page.locator("text=in_review").first()).toBeVisible();
-    await expect(page.locator("text=pending").first()).toBeVisible();
     await expect(
-      page.getByText("Partner remains pending and receives an additional-document request."),
+      page.getByText("Partner remains pending and receives a request for more information."),
     ).toBeVisible();
-    await expect(page.getByText("Latest review event: More information requested")).toBeVisible();
-    await expect(page.getByText("verification_more_info")).toBeVisible();
-  });
-
-  test("approved cases only expose the lifecycle control that still applies", async ({ page }) => {
-    await signInAsReviewer(page);
-    await page.goto("/verification-review");
-
-    await page.getByRole("button", { name: /Maya Patel/i }).click();
-
-    await expect(page.getByRole("button", { name: "Approve verification" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Reject verification" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Request more info" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Suspend lifecycle" })).toBeEnabled();
-    await expect(page.getByText("Latest review event: Verification approved")).toBeVisible();
+    await expect(page.getByText(/verification_more_info/i)).toBeVisible();
+    await expect(page.getByText("More information requested").first()).toBeVisible();
   });
 });

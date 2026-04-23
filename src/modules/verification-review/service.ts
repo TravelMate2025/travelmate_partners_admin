@@ -79,3 +79,46 @@ export const mockVerificationReviewRepository: VerificationReviewRepository = {
     };
   },
 };
+
+async function readJson<T>(response: Response) {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+type Envelope<T> = { data: T; message?: string; error?: { message?: string } };
+
+export const realVerificationReviewRepository: VerificationReviewRepository = {
+  async submitDecision(_cases, payload) {
+    const response = await fetch(`/api/backend/verification-cases/${payload.caseId}/decision`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: payload.action,
+        note: payload.note,
+      }),
+    });
+
+    const body = await readJson<Envelope<VerificationDecisionResult>>(response);
+    if (!response.ok || !body?.data) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to submit verification decision.");
+    }
+
+    return {
+      ...body.data,
+      cases: body.data.cases.map((item) =>
+        item.id === payload.caseId
+          ? {
+              ...item,
+              latestAuditRecord: body.data.auditRecord,
+              latestPartnerNotification: body.data.partnerNotification,
+            }
+          : item,
+      ),
+    };
+  },
+};
