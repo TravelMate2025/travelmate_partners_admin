@@ -160,7 +160,7 @@ export const adminRouteDefinitions: AdminRouteDefinition[] = [
   },
 ];
 
-const publicPrefixes = ["/auth/login", "/auth/reset-password", "/auth/access-denied"];
+const publicPrefixes = ["/auth/login", "/auth/reset-password", "/auth/access-denied", "/auth/accept-invite"];
 
 function isSameOrNestedPath(pathname: string, prefix: string) {
   return prefix === "/" ? pathname === "/" : pathname === prefix || pathname.startsWith(`${prefix}/`);

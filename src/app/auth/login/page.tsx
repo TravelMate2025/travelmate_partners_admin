@@ -40,6 +40,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const error = getSingleParam(params.error) ?? "";
   const signedOut = getSingleParam(params.signed_out) === "1";
   const passwordReset = getSingleParam(params.password_reset) === "1";
+  const inviteAccepted = getSingleParam(params.invite_accepted) === "1";
   const session = await getAdminSession();
   const challenge = await getAdminChallenge();
 
@@ -83,6 +84,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
           ) : null}
           {passwordReset ? (
             <p className="tm-alert tm-alert-success mt-4">Password updated — sign in with your new password.</p>
+          ) : null}
+          {inviteAccepted ? (
+            <p className="tm-alert tm-alert-success mt-4">Invitation accepted — sign in with your new admin password.</p>
           ) : null}
           {error ? <p className="tm-alert tm-alert-danger mt-4">{errorCopy[error] ?? "Unable to complete sign in."}</p> : null}
 

@@ -361,18 +361,23 @@ export async function authenticateAdminCredentials(email: string, password: stri
     const user = mapAdminUser(body.data.user);
 
     if (body.data.status === "mfa_required") {
+      const backendSessionKey = readApiSessionKeyFromResponse(response);
+      if (!backendSessionKey) {
+        return { status: "invalid" as const };
+      }
       return {
         status: "mfa_required" as const,
         user,
         challenge: {
           challengeId: body.data.challenge?.id ?? null,
           expiresAt: body.data.challenge?.expiresAt ?? null,
+          backendSessionKey,
         },
       };
     }
 
-    const backendSessionKey = readApiSessionKeyFromResponse(response);
-    if (!backendSessionKey || !body.data.session) {
+    const resolvedBackendSessionKey = readApiSessionKeyFromResponse(response);
+    if (!resolvedBackendSessionKey || !body.data.session) {
       return { status: "invalid" as const };
     }
 
@@ -383,7 +388,7 @@ export async function authenticateAdminCredentials(email: string, password: stri
         user,
         currentSession: mapAdminSessionRecord(body.data.session),
         currentSessionId: body.data.session.id,
-        backendSessionKey,
+        backendSessionKey: resolvedBackendSessionKey,
       }),
     };
   } catch {
@@ -391,12 +396,19 @@ export async function authenticateAdminCredentials(email: string, password: stri
   }
 }
 
-export async function verifyAdminMfaCode(email: string, code: string) {
+export async function verifyAdminMfaCode(email: string, code: string, challengeId: number | null, backendSessionKey: string | null) {
+  if (!challengeId || !backendSessionKey) {
+    return { status: "invalid" as const };
+  }
+
   try {
     const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/mfa/verify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code }),
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `${ADMIN_API_SESSION_COOKIE}=${backendSessionKey}`,
+      },
+      body: JSON.stringify({ email, code, challengeId }),
       cache: "no-store",
     });
 
@@ -409,8 +421,8 @@ export async function verifyAdminMfaCode(email: string, code: string) {
       return { status: "invalid" as const };
     }
 
-    const backendSessionKey = readApiSessionKeyFromResponse(response);
-    if (!backendSessionKey || !body.data.session) {
+    const resolvedBackendSessionKey = readApiSessionKeyFromResponse(response) ?? backendSessionKey;
+    if (!resolvedBackendSessionKey || !body.data.session) {
       return { status: "invalid" as const };
     }
 
@@ -422,7 +434,7 @@ export async function verifyAdminMfaCode(email: string, code: string) {
         user,
         currentSession: mapAdminSessionRecord(body.data.session),
         currentSessionId: body.data.session.id,
-        backendSessionKey,
+        backendSessionKey: resolvedBackendSessionKey,
       }),
     };
   } catch {
@@ -435,6 +447,7 @@ export function createChallengeForAdmin(
   nextPath?: string | null,
   expiresAt?: string | null,
   challengeId?: number | null,
+  backendSessionKey?: string | null,
 ): AdminChallenge {
   return {
     challengeId: challengeId ?? null,
@@ -442,6 +455,7 @@ export function createChallengeForAdmin(
     nextPath: sanitizeNextPath(nextPath),
     createdAt: new Date().toISOString(),
     expiresAt: expiresAt ?? null,
+    backendSessionKey: backendSessionKey ?? null,
   };
 }
 
@@ -533,6 +547,35 @@ export async function requestAdminPasswordReset(email: string): Promise<boolean>
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+export async function acceptAdminInvitation(
+  token: string,
+  password: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/accept-invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
+      cache: "no-store",
+    });
+
+    if (response.ok) {
+      return { ok: true };
+    }
+
+    const body = await readJson<{ data?: object; message?: string; error?: { message?: string } }>(response);
+    return {
+      ok: false,
+      message: body?.message ?? body?.error?.message ?? "Unable to accept the admin invitation.",
+    };
+  } catch {
+    return {
+      ok: false,
+      message: "Unable to accept the admin invitation.",
+    };
   }
 }
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { sanitizeNextPath } from "@/modules/auth/access";
 import {
+  acceptAdminInvitation,
   authenticateAdminCredentials,
   clearAdminChallengeCookie,
   clearAdminSessionCookie,
@@ -49,6 +50,7 @@ export async function signInAction(formData: FormData) {
         nextPath,
         result.challenge.expiresAt,
         result.challenge.challengeId,
+        result.challenge.backendSessionKey,
       ),
     );
 
@@ -80,7 +82,12 @@ export async function verifyMfaAction(formData: FormData) {
     redirect(loginUrl(params));
   }
 
-  const result = await verifyAdminMfaCode(email, code);
+  const result = await verifyAdminMfaCode(
+    email,
+    code,
+    challenge.challengeId,
+    challenge.backendSessionKey,
+  );
 
   if (result.status === "invalid") {
     const params = new URLSearchParams({
@@ -120,6 +127,29 @@ export async function resetAdminPasswordAction(formData: FormData) {
   }
 
   redirect("/auth/login?password_reset=1");
+}
+
+export async function acceptAdminInviteAction(formData: FormData) {
+  const token = String(formData.get("token") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!token) {
+    redirect("/auth/accept-invite?error=missing_token");
+  }
+
+  if (password !== confirmPassword) {
+    const params = new URLSearchParams({ token, error: "password_mismatch" });
+    redirect(`/auth/accept-invite?${params.toString()}`);
+  }
+
+  const result = await acceptAdminInvitation(token, password);
+  if (!result.ok) {
+    const params = new URLSearchParams({ token, error: result.message });
+    redirect(`/auth/accept-invite?${params.toString()}`);
+  }
+
+  redirect("/auth/login?invite_accepted=1");
 }
 
 export async function signOutAction() {

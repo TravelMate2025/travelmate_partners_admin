@@ -25,6 +25,7 @@ export type AdminChallenge = {
   nextPath: string;
   createdAt: string;
   expiresAt: string | null;
+  backendSessionKey: string | null;
 };
 
 export type AdminSessionRecord = {

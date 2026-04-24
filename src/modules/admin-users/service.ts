@@ -15,7 +15,23 @@ import type {
   InviteAdminResult,
 } from "@/modules/admin-users/types";
 
-function buildPermissionPolicies(role: AdminRole) {
+type Envelope<T> = {
+  data?: T;
+  message?: string;
+  error?: { message?: string };
+};
+
+type AdminUsersApiRecord = Omit<AdminAccessRecord, "permissionPolicies"> & {
+  inviteExpiresAt?: string;
+  dateJoined?: string;
+};
+
+type AdminUsersApiInviteResponse = {
+  record: AdminUsersApiRecord;
+  auditRecord: AdminGovernanceAuditRecord;
+};
+
+export function buildPermissionPolicies(role: AdminRole) {
   const labels = {
     super_admin: [
       { id: "perm-super-1", title: "Platform governance", detail: "Full control over admin access, finance, and governance routes.", tone: "success" as const },
@@ -86,6 +102,25 @@ function nowTimeLabel(timestamp: string) {
   return timestamp.slice(11, 16) + " UTC";
 }
 
+function mapRecord(record: AdminUsersApiRecord): AdminAccessRecord {
+  return {
+    ...record,
+    permissionPolicies: buildPermissionPolicies(record.role),
+  };
+}
+
+function readMessage(body: Envelope<unknown> | null, fallback: string) {
+  return body?.message ?? body?.error?.message ?? fallback;
+}
+
+async function readJson<T>(response: Response) {
+  try {
+    return (await response.json()) as Envelope<T>;
+  } catch {
+    return null;
+  }
+}
+
 export type AdminUsersRepository = {
   inviteAdmin(records: AdminAccessRecord[], input: InviteAdminInput, actor: string, role: AdminRole): Promise<InviteAdminResult>;
   applyAction(records: AdminAccessRecord[], payload: AdminGovernanceActionPayload, role: AdminRole): Promise<AdminGovernanceActionResult>;
@@ -105,8 +140,8 @@ export const mockAdminUsersRepository: AdminUsersRepository = {
       role: input.role,
       status: "pending_invite",
       inviteState: "pending",
-      requiresMfa: input.requiresMfa,
-      mfaState: input.requiresMfa ? "pending_setup" : "disabled",
+      requiresMfa: true,
+      mfaState: "pending_setup",
       sensitiveGrantProtected: isSensitiveAdminRole(input.role),
       recentRisk: "normal",
       pendingApprovalReason: isSensitiveAdminRole(input.role) ? "Sensitive role grant confirmed by super admin." : undefined,
@@ -179,17 +214,11 @@ export const mockAdminUsersRepository: AdminUsersRepository = {
               ? "inactive"
               : record.status,
       inviteState:
-        payload.action === "activate_admin"
-          ? "accepted"
-          : payload.action === "revoke_invite"
-            ? "revoked"
+        payload.action === "revoke_invite"
+          ? "revoked"
             : record.inviteState,
       mfaState:
-        payload.action === "activate_admin"
-          ? record.requiresMfa
-            ? "verified"
-            : "disabled"
-          : record.mfaState,
+        record.mfaState,
       sensitiveGrantProtected: isSensitiveAdminRole(nextRole),
       pendingApprovalReason:
         payload.action === "assign_role" && payload.targetRole && isSensitiveAdminRole(payload.targetRole)
@@ -197,27 +226,13 @@ export const mockAdminUsersRepository: AdminUsersRepository = {
           : payload.action === "activate_admin" || payload.action === "deactivate_admin"
             ? record.pendingApprovalReason
             : undefined,
-      lastSignInAt:
-        payload.action === "activate_admin" && record.status === "pending_invite"
-          ? timestamp
-          : record.lastSignInAt,
+      lastSignInAt: record.lastSignInAt,
       lastRoleChangedAt: payload.action === "assign_role" ? timestamp : record.lastRoleChangedAt,
       lastAccessedAt: timestamp,
       reviewOwner: payload.actor,
       operationalNote: payload.note.trim(),
       permissionPolicies: buildPermissionPolicies(nextRole),
-      recentSessions:
-        payload.action === "activate_admin" && record.recentSessions.length === 0
-          ? [
-              {
-                id: `${record.id}-session-activated`,
-                deviceLabel: "Accepted invite session",
-                locationLabel: "Onboarding browser",
-                lastSeenAt: timestamp,
-                risk: "normal",
-              },
-            ]
-          : record.recentSessions,
+      recentSessions: record.recentSessions,
       activity: [
         {
           id: `admin-governance-activity-${record.id}-${Date.now()}`,
@@ -244,6 +259,86 @@ export const mockAdminUsersRepository: AdminUsersRepository = {
       records: records.map((item) => (item.id === record.id ? updatedRecord : item)),
       updatedRecord,
       auditRecord,
+    };
+  },
+};
+
+export const realAdminUsersRepository: AdminUsersRepository = {
+  async inviteAdmin(records, input, actor, role) {
+    const validationError = validateInviteAdminInput(input, role);
+    if (validationError) throw new Error(validationError);
+
+    const response = await fetch("/api/backend/admin-users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: input.name.trim(),
+        email: input.email.trim().toLowerCase(),
+        team: input.team.trim(),
+        role: input.role,
+        note: input.note.trim(),
+        confirmSensitiveGrant: input.confirmSensitiveGrant,
+      }),
+    });
+
+    const body = await readJson<AdminUsersApiInviteResponse>(response);
+    if (!response.ok || !body?.data) {
+      throw new Error(readMessage(body, "Unable to send the admin invite."));
+    }
+
+    const createdRecord = mapRecord(body.data.record);
+    return {
+      records: [createdRecord, ...records.filter((record) => record.id !== createdRecord.id)],
+      createdRecord,
+      auditRecord: body.data.auditRecord,
+    };
+  },
+
+  async applyAction(records, payload, role) {
+    const record = records.find((item) => item.id === payload.adminId);
+    if (!record) {
+      throw new Error("Selected admin account was not found.");
+    }
+
+    const availableActions = getAvailableAdminGovernanceActions(record, role);
+    if (!availableActions.includes(payload.action)) {
+      throw new Error("This admin governance action is not available for the selected record and role.");
+    }
+
+    const validationError = validateAdminGovernanceAction(
+      records,
+      record,
+      payload.action,
+      role,
+      payload.note,
+      payload.targetRole,
+      payload.confirmSensitiveGrant,
+    );
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const response = await fetch(`/api/backend/admin-users/${payload.adminId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: payload.action,
+        note: payload.note.trim(),
+        targetRole: payload.targetRole,
+        confirmSensitiveGrant: payload.confirmSensitiveGrant ?? false,
+      }),
+    });
+
+    const body = await readJson<AdminUsersApiInviteResponse>(response);
+    if (!response.ok || !body?.data) {
+      throw new Error(readMessage(body, "Unable to update the admin governance record."));
+    }
+
+    const updatedRecord = mapRecord(body.data.record);
+    return {
+      records: records.map((item) => (item.id === updatedRecord.id ? updatedRecord : item)),
+      updatedRecord,
+      auditRecord: body.data.auditRecord,
     };
   },
 };

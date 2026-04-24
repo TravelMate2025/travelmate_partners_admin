@@ -23,7 +23,7 @@ test.describe("Flow 2.17 admin users", () => {
 
     await page.getByLabel("Invite admin name").fill("Lara Mensah");
     await page.getByLabel("Invite admin email").fill("lara.mensah@travelmate.test");
-    await page.getByLabel("Invite admin team").fill("Governance");
+    await page.getByLabel("Invite admin team").selectOption("Verification Review");
     await page.getByLabel("Invite admin note").fill(
       "Adding a new governance reviewer to support the compliance backlog.",
     );
@@ -31,12 +31,13 @@ test.describe("Flow 2.17 admin users", () => {
 
     await expect(page.getByText(/invited lara mensah into the admin dashboard/i).last()).toBeVisible();
 
+    await page.getByText("Maya Singh").click();
     await page.getByLabel("Admin governance note").fill(
-      "Invite was accepted, MFA was completed, and the account can now be activated.",
+      "MFA posture and workstation ownership were reviewed, so this admin can be reactivated.",
     );
     await page.getByRole("button", { name: "Activate admin" }).click();
 
-    await expect(page.getByText(/activated the admin account for lara mensah/i).last()).toBeVisible();
+    await expect(page.getByText(/activated the admin account for maya singh/i).last()).toBeVisible();
 
     await page.getByLabel("Target admin role").selectOption("finance");
     await page.getByLabel("Confirm finance or super admin grant").check();

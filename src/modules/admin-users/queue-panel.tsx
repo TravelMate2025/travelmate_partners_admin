@@ -6,6 +6,12 @@ import {
   formatSessionRiskLabel,
   sessionRiskTone,
 } from "@/modules/admin-users/rules";
+import type { AdminTeam } from "@/modules/admin-users/constants";
+import {
+  adminRoleOptions,
+  adminTeamOptions,
+  formatAdminRoleLabel,
+} from "@/modules/admin-users/constants";
 import type { AdminAccessFilterState, AdminAccessRecord, InviteAdminInput } from "@/modules/admin-users/types";
 
 export function AdminUsersQueuePanel({
@@ -42,7 +48,7 @@ export function AdminUsersQueuePanel({
   const adminDirectory = records.filter((record) => record.status !== "pending_invite");
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Admin Governance</p>
@@ -98,12 +104,18 @@ export function AdminUsersQueuePanel({
           </label>
           <label className="block">
             <span className="tm-label">Team</span>
-            <input
+            <select
               aria-label="Invite admin team"
               className="tm-input mt-3"
-              onChange={(event) => onInviteInputChange({ ...inviteInput, team: event.target.value })}
+              onChange={(event) => onInviteInputChange({ ...inviteInput, team: event.target.value as AdminTeam })}
               value={inviteInput.team}
-            />
+            >
+              {adminTeamOptions.map((team) => (
+                <option key={team} value={team}>
+                  {team}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block">
             <span className="tm-label">Initial role</span>
@@ -113,11 +125,11 @@ export function AdminUsersQueuePanel({
               onChange={(event) => onInviteInputChange({ ...inviteInput, role: event.target.value as InviteAdminInput["role"] })}
               value={inviteInput.role}
             >
-              <option value="operations">operations</option>
-              <option value="reviewer">reviewer</option>
-              <option value="support">support</option>
-              <option value="finance">finance</option>
-              <option value="super_admin">super admin</option>
+              {adminRoleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {formatAdminRoleLabel(role)}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block md:col-span-2">
@@ -132,14 +144,7 @@ export function AdminUsersQueuePanel({
           </label>
         </div>
         <div className="mt-4 flex flex-wrap gap-4">
-          <label className="tm-tag-pill inline-flex items-center gap-2">
-            <input
-              checked={inviteInput.requiresMfa}
-              onChange={(event) => onInviteInputChange({ ...inviteInput, requiresMfa: event.target.checked })}
-              type="checkbox"
-            />
-            Require MFA on activation
-          </label>
+          <span className="tm-tag-pill inline-flex items-center gap-2">MFA required for all invited admins</span>
           <label className="tm-tag-pill inline-flex items-center gap-2">
             <input
               checked={inviteInput.confirmSensitiveGrant}
@@ -189,11 +194,11 @@ export function AdminUsersQueuePanel({
             value={filters.role}
           >
             <option value="all">all</option>
-            <option value="super_admin">super admin</option>
-            <option value="operations">operations</option>
-            <option value="reviewer">reviewer</option>
-            <option value="support">support</option>
-            <option value="finance">finance</option>
+            {adminRoleOptions.map((role) => (
+              <option key={role} value={role}>
+                {formatAdminRoleLabel(role)}
+              </option>
+            ))}
           </select>
         </label>
         <label className="block">
@@ -233,7 +238,7 @@ export function AdminUsersQueuePanel({
                     </div>
                     <StatusBadge label={formatManagedAdminStatusLabel(record.status)} tone={adminStatusTone(record.status)} />
                   </div>
-                  <p className="tm-muted mt-3 text-sm">{record.team} · {record.role.replace("_", " ")}</p>
+                  <p className="tm-muted mt-3 text-sm">{record.team} · {formatAdminRoleLabel(record.role)}</p>
                 </button>
               ))
             ) : (
@@ -259,7 +264,7 @@ export function AdminUsersQueuePanel({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-950">{record.name}</p>
-                      <p className="tm-muted mt-2 text-sm">{record.team} · {record.role.replace("_", " ")}</p>
+                      <p className="tm-muted mt-2 text-sm">{record.team} · {formatAdminRoleLabel(record.role)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <StatusBadge label={formatManagedAdminStatusLabel(record.status)} tone={adminStatusTone(record.status)} />

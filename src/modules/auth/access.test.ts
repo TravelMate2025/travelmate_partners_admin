@@ -56,6 +56,10 @@ describe("resolveAdminAccess", () => {
     expect(resolveAdminAccess("/admin-users", session)).toEqual({ type: "allow" });
   });
 
+  it("allows invited admins onto the public accept-invite page without a session", () => {
+    expect(resolveAdminAccess("/auth/accept-invite", null)).toEqual({ type: "allow" });
+  });
+
   it("describes restricted routes from the shared route registry", () => {
     expect(getAdminRouteDefinition("/system-config")).toMatchObject({
       label: "System Config",

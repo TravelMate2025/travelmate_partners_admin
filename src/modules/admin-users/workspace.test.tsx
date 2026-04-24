@@ -17,12 +17,12 @@ describe("AdminUsersWorkspace", () => {
     expect(screen.getAllByText("Jordan Nwosu").length).toBeGreaterThan(0);
   });
 
-  it("handles invite, activation, and role change from the workspace", async () => {
+  it("handles invite, reactivation, and role change from the workspace", async () => {
     render(<AdminUsersWorkspace actor="Amina Bello" initialRecords={getAdminAccessRecords()} role="super_admin" />);
 
     fireEvent.change(screen.getByLabelText("Invite admin name"), { target: { value: "Lara Mensah" } });
     fireEvent.change(screen.getByLabelText("Invite admin email"), { target: { value: "lara.mensah@travelmate.test" } });
-    fireEvent.change(screen.getByLabelText("Invite admin team"), { target: { value: "Governance" } });
+    fireEvent.change(screen.getByLabelText("Invite admin team"), { target: { value: "Verification Review" } });
     fireEvent.change(screen.getByLabelText("Invite admin note"), {
       target: { value: "Adding a new governance reviewer to support the compliance backlog." },
     });
@@ -32,13 +32,14 @@ describe("AdminUsersWorkspace", () => {
       expect(screen.getByText(/invited lara mensah into the admin dashboard/i)).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByText("Maya Singh"));
     fireEvent.change(screen.getByLabelText("Admin governance note"), {
-      target: { value: "Invite was accepted, MFA was completed, and the account can now be activated." },
+      target: { value: "MFA posture and workstation ownership were reviewed, so this admin can be reactivated." },
     });
     fireEvent.click(screen.getByRole("button", { name: "Activate admin" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/activated the admin account for lara mensah/i)).toBeInTheDocument();
+      expect(screen.getByText(/activated the admin account for maya singh/i)).toBeInTheDocument();
     });
 
     fireEvent.change(screen.getByLabelText("Target admin role"), { target: { value: "finance" } });
@@ -49,7 +50,7 @@ describe("AdminUsersWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Apply role" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/changed lara mensah to role finance/i)).toBeInTheDocument();
+      expect(screen.getByText(/changed maya singh to role finance/i)).toBeInTheDocument();
     });
   });
 

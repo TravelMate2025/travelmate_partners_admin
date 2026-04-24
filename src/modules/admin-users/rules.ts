@@ -1,4 +1,5 @@
 import type { AdminRole } from "@/modules/auth/types";
+import { adminRoleOptions, adminTeamOptions } from "@/modules/admin-users/constants";
 import type {
   AdminAccessFilterState,
   AdminAccessPolicy,
@@ -39,7 +40,8 @@ export function validateInviteAdminInput(input: InviteAdminInput, role: AdminRol
   if (!policy.canInvite) return "This role cannot invite admin accounts.";
   if (input.name.trim().length < 3) return "Admin name must be at least 3 characters long.";
   if (!input.email.trim().includes("@")) return "A valid admin email is required.";
-  if (input.team.trim().length < 2) return "Team name is required before sending an invite.";
+  if (!adminTeamOptions.includes(input.team)) return "Choose a valid admin team before sending an invite.";
+  if (!adminRoleOptions.includes(input.role)) return "Choose a valid admin role before sending an invite.";
   if (input.note.trim().length < 12) return "Add an audit note of at least 12 characters before inviting an admin.";
   if (isSensitiveAdminRole(input.role) && !input.confirmSensitiveGrant) {
     return "Explicit confirmation is required before inviting an admin into a sensitive role.";
@@ -73,8 +75,8 @@ export function validateAdminGovernanceAction(
     return "Invite controls are only available while the admin invite is pending.";
   }
 
-  if (action === "activate_admin" && record.status !== "pending_invite" && record.status !== "inactive") {
-    return "Only pending or inactive admin accounts can be activated.";
+  if (action === "activate_admin" && record.status !== "inactive") {
+    return "Only inactive admin accounts can be activated.";
   }
 
   if (action === "deactivate_admin" && record.status !== "active") {
@@ -90,6 +92,7 @@ export function validateAdminGovernanceAction(
 
   if (action === "assign_role") {
     if (!targetRole) return "Select a target role before applying the role change.";
+    if (!adminRoleOptions.includes(targetRole)) return "Choose a valid admin role before applying the role change.";
     if (record.status === "pending_invite" || record.status === "revoked") {
       return "Only accepted admin accounts can receive role changes.";
     }
@@ -114,7 +117,7 @@ export function getAvailableAdminGovernanceActions(record: AdminAccessRecord, ro
   if (policy.canRevokeInvite && record.status === "pending_invite") {
     actions.push("revoke_invite");
   }
-  if (policy.canActivate && (record.status === "pending_invite" || record.status === "inactive")) {
+  if (policy.canActivate && record.status === "inactive") {
     actions.push("activate_admin");
   }
   if (policy.canDeactivate && record.status === "active") {

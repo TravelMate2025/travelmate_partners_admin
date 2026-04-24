@@ -2,6 +2,10 @@ import { ActivityTimeline } from "@/components/common/activity-timeline";
 import { StatusBadge } from "@/components/common/status-badge";
 import { SurfaceState } from "@/components/common/surface-state";
 import {
+  adminRoleOptions,
+  formatAdminRoleLabel,
+} from "@/modules/admin-users/constants";
+import {
   adminStatusTone,
   formatManagedAdminStatusLabel,
   formatManagedMfaStateLabel,
@@ -77,8 +81,16 @@ export function AdminUsersDetailPanel({
     );
   }
 
+  const isPendingInvite = selectedRecord.status === "pending_invite";
+  const isInviteLifecycleRecord = selectedRecord.status === "pending_invite" || selectedRecord.status === "revoked";
+  const canChangeRole = availableActions.includes("assign_role");
+  const roleTargets = adminRoleOptions.filter((role) => role !== selectedRecord.role);
+  const invitationTimestamp = selectedRecord.invitedAt ?? selectedRecord.lastAccessedAt;
+  const formattedInvitationTimestamp = invitationTimestamp ? invitationTimestamp.slice(0, 16).replace("T", " ") : "Not available";
+  const inviteExpiry = selectedRecord.inviteState === "pending" ? "Invitation is still awaiting acceptance." : "Invitation is no longer pending.";
+
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Admin Detail</p>
@@ -92,7 +104,7 @@ export function AdminUsersDetailPanel({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="tm-soft-band">
           <p className="tm-label">Role</p>
           <p className="mt-2 text-sm font-semibold text-slate-950">{selectedRecord.role.replace("_", " ")}</p>
@@ -113,66 +125,146 @@ export function AdminUsersDetailPanel({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="tm-soft-band">
-          <p className="tm-label">Permission policy summary</p>
-          <div className="mt-4 grid gap-3">
-            {selectedRecord.permissionPolicies.map((policy) => (
-              <div className="tm-document-card" key={policy.id}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">{policy.title}</p>
-                    <p className="tm-muted mt-2 text-sm">{policy.detail}</p>
-                  </div>
-                  <StatusBadge label={policy.tone} tone={policy.tone} />
-                </div>
+      <div className="mt-5 grid items-start gap-4 2xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="tm-soft-band h-full">
+          <p className="tm-label">{isInviteLifecycleRecord ? "Invitation details" : "Permission policy summary"}</p>
+          {isInviteLifecycleRecord ? (
+            <div className="mt-4 grid gap-3">
+              <div className="tm-document-card">
+                <p className="text-sm font-semibold text-slate-950">Invite created</p>
+                <p className="tm-muted mt-2 text-sm">{formattedInvitationTimestamp}</p>
               </div>
-            ))}
-          </div>
+              <div className="tm-document-card">
+                <p className="text-sm font-semibold text-slate-950">Invitation status</p>
+                <p className="tm-muted mt-2 text-sm">{inviteExpiry}</p>
+              </div>
+              <div className="tm-document-card">
+                <p className="text-sm font-semibold text-slate-950">Original invite rationale</p>
+                <p className="tm-muted mt-2 text-sm">
+                  {selectedRecord.operationalNote || "No invite rationale was recorded for this admin."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              {selectedRecord.permissionPolicies.map((policy) => (
+                <div className="tm-document-card" key={policy.id}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{policy.title}</p>
+                      <p className="tm-muted mt-2 text-sm">{policy.detail}</p>
+                    </div>
+                    <StatusBadge label={policy.tone} tone={policy.tone} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="tm-soft-band">
-          <p className="tm-label">Governance note and actions</p>
-          <textarea
-            aria-label="Admin governance note"
-            className="tm-textarea mt-3"
-            onChange={(event) => onNoteChange(event.target.value)}
-            placeholder="Capture invite rationale, role-change approval context, or account status review notes..."
-            value={note}
-          />
-          <p className="tm-muted mt-3 text-sm">{policySummary}</p>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <label className="block">
-              <span className="tm-label">Target role</span>
-              <select
-                aria-label="Target admin role"
-                className="tm-input mt-3"
-                onChange={(event) => onTargetRoleChange(event.target.value as AdminRole)}
-                value={targetRole}
-              >
-                <option value="super_admin">super admin</option>
-                <option value="operations">operations</option>
-                <option value="reviewer">reviewer</option>
-                <option value="support">support</option>
-                <option value="finance">finance</option>
-              </select>
-            </label>
-            <div className="tm-soft-band">
-              <p className="tm-label">Sensitive grant control</p>
-              <label className="tm-tag-pill mt-3 inline-flex items-center gap-2">
-                <input
-                  checked={confirmSensitiveGrant}
-                  onChange={(event) => onConfirmSensitiveGrantChange(event.target.checked)}
-                  type="checkbox"
+        <div className="tm-soft-band h-full">
+          <p className="tm-label">{isInviteLifecycleRecord ? "Invitation actions" : "Governance note and actions"}</p>
+          {isInviteLifecycleRecord ? (
+            <div className="mt-3 rounded-2xl border border-slate-200 bg-white/70 p-4">
+              <p className="text-sm font-semibold text-slate-950">Invitation governance is locked to the original request.</p>
+              <p className="tm-muted mt-2 text-sm">
+                You can resend, revoke, or activate this invite state, but role changes and invite-rationale edits stay locked to avoid overlapping controls.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3 grid gap-4">
+              <div className="tm-document-card">
+                <p className="text-sm font-semibold text-slate-950">Operational note</p>
+                <textarea
+                  aria-label="Admin governance note"
+                  className="tm-textarea mt-3"
+                  onChange={(event) => onNoteChange(event.target.value)}
+                  placeholder="Capture role-change approval context, account status review notes, or lifecycle rationale..."
+                  value={note}
                 />
-                Confirm finance or super admin grant
-              </label>
-              {selectedRecord.pendingApprovalReason ? (
-                <p className="tm-muted mt-3 text-sm">{selectedRecord.pendingApprovalReason}</p>
+              </div>
+
+              {canChangeRole ? (
+                <div className="tm-admin-governance-rail">
+                  <div className="tm-admin-governance-card">
+                    <div className="tm-admin-governance-header">
+                      <div className="min-w-0">
+                        <p className="tm-label">Challenge role</p>
+                        <p className="tm-muted mt-2 text-sm">
+                          Current role is <span className="font-semibold text-slate-950">{formatAdminRoleLabel(selectedRecord.role)}</span>.
+                          Select the next access posture directly from the controlled list below.
+                        </p>
+                      </div>
+                      <div className="tm-admin-role-chip">
+                        <span className="tm-label">Current</span>
+                        <strong className="block pt-1 text-sm font-semibold text-slate-950">
+                          {formatAdminRoleLabel(selectedRecord.role)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <label className="mt-5 block">
+                      <span className="tm-label">Target admin role</span>
+                      <select
+                        aria-label="Target admin role"
+                        className="tm-input mt-3"
+                        onChange={(event) => onTargetRoleChange(event.target.value as AdminRole)}
+                        value={roleTargets.includes(targetRole) ? targetRole : roleTargets[0] ?? targetRole}
+                      >
+                        {roleTargets.map((role) => (
+                          <option key={role} value={role}>
+                            {formatAdminRoleLabel(role)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="tm-admin-target-preview mt-5">
+                      <span className="tm-label">Selected transition</span>
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {formatAdminRoleLabel(selectedRecord.role)} to {formatAdminRoleLabel(targetRole)}
+                      </p>
+                      <p className="tm-muted mt-2 text-sm">
+                        This keeps the change explicit before you commit the governance action.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="tm-admin-governance-card tm-admin-governance-card-accent">
+                    <p className="tm-label">Sensitive grant control</p>
+                    <p className="tm-muted mt-2 text-sm">
+                      {targetRole === selectedRecord.role
+                        ? "Choose a different role first. Sensitive confirmation only applies when the target role becomes finance or super admin."
+                        : `Selected target role: ${formatAdminRoleLabel(targetRole)}.`}
+                    </p>
+
+                    <label className="tm-admin-sensitive-toggle mt-5">
+                      <input
+                        aria-label="Confirm finance or super admin grant"
+                        checked={confirmSensitiveGrant}
+                        onChange={(event) => onConfirmSensitiveGrantChange(event.target.checked)}
+                        type="checkbox"
+                      />
+                      <span>
+                        <strong className="block text-sm font-semibold text-slate-950">Confirm finance or super admin grant</strong>
+                        <span className="tm-muted mt-1 block text-sm">
+                          Use this only after the sensitive access review and approval note are complete.
+                        </span>
+                      </span>
+                    </label>
+
+                    {selectedRecord.pendingApprovalReason ? (
+                      <div className="tm-admin-governance-callout mt-4">
+                        <span className="tm-label">Policy note</span>
+                        <p className="tm-muted mt-2 text-sm">{selectedRecord.pendingApprovalReason}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
             </div>
-          </div>
+          )}
+          <p className="tm-muted mt-3 text-sm">{policySummary}</p>
 
           {feedback ? (
             <div className={`mt-4 tm-alert ${feedback.tone === "error" ? "tm-alert-danger" : "tm-alert-success"}`}>
@@ -207,8 +299,8 @@ export function AdminUsersDetailPanel({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="tm-soft-band">
+      <div className="mt-5 grid items-start gap-4 2xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="tm-soft-band h-full">
           <p className="tm-label">Recent access and session context</p>
           {selectedRecord.recentSessions.length > 0 ? (
             <div className="mt-4 grid gap-3">
@@ -230,7 +322,7 @@ export function AdminUsersDetailPanel({
           )}
         </div>
 
-        <div className="tm-soft-band">
+        <div className="tm-soft-band h-full">
           <p className="tm-label">Access governance history</p>
           <div className="mt-4">
             <ActivityTimeline items={selectedRecord.activity} />

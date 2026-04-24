@@ -40,7 +40,7 @@ export const mockAdminRecords: MockAdminRecord[] = [
     email: "support@travelmate.test",
     role: "support",
     team: "Partner Support",
-    requiresMfa: false,
+    requiresMfa: true,
     password: "TravelMate!2026",
     mfaCode: "444444",
     trustedDeviceLabel: "Support Laptop · Remote",

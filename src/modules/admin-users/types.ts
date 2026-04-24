@@ -1,5 +1,6 @@
 import type { ActivityItem } from "@/components/common/activity-timeline";
 import type { AdminRole } from "@/modules/auth/types";
+import type { AdminTeam } from "@/modules/admin-users/constants";
 
 export type ManagedAdminStatus = "pending_invite" | "active" | "inactive" | "revoked";
 export type ManagedInviteState = "pending" | "accepted" | "revoked" | "none";
@@ -33,7 +34,7 @@ export type AdminAccessRecord = {
   id: string;
   name: string;
   email: string;
-  team: string;
+  team: AdminTeam | string;
   role: AdminRole;
   status: ManagedAdminStatus;
   inviteState: ManagedInviteState;
@@ -75,9 +76,8 @@ export type AdminAccessPolicy = {
 export type InviteAdminInput = {
   name: string;
   email: string;
-  team: string;
+  team: AdminTeam;
   role: AdminRole;
-  requiresMfa: boolean;
   note: string;
   confirmSensitiveGrant: boolean;
 };

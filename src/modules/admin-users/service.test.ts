@@ -2,15 +2,14 @@ import { getAdminAccessRecords } from "@/modules/admin-users/data";
 import { mockAdminUsersRepository } from "@/modules/admin-users/service";
 
 describe("admin-users service", () => {
-  it("invites an admin, activates the invite, and updates the role policy", async () => {
+  it("invites an admin, reactivates an inactive admin, and updates the role policy", async () => {
     const invited = await mockAdminUsersRepository.inviteAdmin(
       getAdminAccessRecords(),
       {
         name: "Lara Mensah",
         email: "lara.mensah@travelmate.test",
-        team: "Governance",
+        team: "Verification Review",
         role: "reviewer",
-        requiresMfa: true,
         note: "Adding a new governance reviewer to support the compliance backlog.",
         confirmSensitiveGrant: false,
       },
@@ -23,10 +22,10 @@ describe("admin-users service", () => {
     const activated = await mockAdminUsersRepository.applyAction(
       invited.records,
       {
-        adminId: invited.createdRecord.id,
+        adminId: "adm-004",
         action: "activate_admin",
         actor: "Amina Bello",
-        note: "Invite was accepted, MFA was completed, and the account can now be activated.",
+        note: "MFA posture and workstation ownership were reviewed, so this admin can be reactivated.",
       },
       "super_admin",
     );
@@ -37,7 +36,7 @@ describe("admin-users service", () => {
     const roleChanged = await mockAdminUsersRepository.applyAction(
       activated.records,
       {
-        adminId: invited.createdRecord.id,
+        adminId: "adm-004",
         action: "assign_role",
         actor: "Amina Bello",
         note: "Reassigning this reviewer into finance after the governance approval review.",

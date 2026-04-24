@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { SurfaceState } from "@/components/common/surface-state";
 import type { AdminRole } from "@/modules/auth/types";
+import { adminRoleOptions, adminTeamOptions } from "@/modules/admin-users/constants";
 import { AdminUsersDetailPanel } from "@/modules/admin-users/detail-panel";
 import { AdminUsersQueuePanel } from "@/modules/admin-users/queue-panel";
 import {
@@ -12,7 +13,7 @@ import {
   getAvailableAdminGovernanceActions,
   matchesAdminAccessFilter,
 } from "@/modules/admin-users/rules";
-import { mockAdminUsersRepository } from "@/modules/admin-users/service";
+import { mockAdminUsersRepository, realAdminUsersRepository } from "@/modules/admin-users/service";
 import type {
   AdminAccessFilterState,
   AdminAccessRecord,
@@ -31,9 +32,8 @@ type AdminUsersSurfaceState =
 const defaultInviteInput: InviteAdminInput = {
   name: "",
   email: "",
-  team: "",
+  team: adminTeamOptions[0],
   role: "operations",
-  requiresMfa: true,
   note: "",
   confirmSensitiveGrant: false,
 };
@@ -42,11 +42,13 @@ export function AdminUsersWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: AdminAccessRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: AdminUsersSurfaceState;
 }) {
   const [records, setRecords] = useState(initialRecords);
@@ -72,6 +74,7 @@ export function AdminUsersWorkspace({
   const policy = getAdminAccessPolicy(role);
   const summary = useMemo(() => buildAdminAccessSummary(records), [records]);
   const availableActions = activeRecord ? getAvailableAdminGovernanceActions(activeRecord, role) : [];
+  const repository = mode === "real" ? realAdminUsersRepository : mockAdminUsersRepository;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -86,12 +89,8 @@ export function AdminUsersWorkspace({
       status:
         status === "pending_invite" || status === "active" || status === "inactive" || status === "revoked" ? status : "all",
       role:
-        adminRole === "super_admin" ||
-        adminRole === "operations" ||
-        adminRole === "reviewer" ||
-        adminRole === "support" ||
-        adminRole === "finance"
-          ? adminRole
+        adminRole && adminRoleOptions.includes(adminRole as AdminRole)
+          ? (adminRole as AdminRole)
           : "all",
       risk: risk === "normal" || risk === "elevated" ? risk : "all",
     });
@@ -141,7 +140,7 @@ export function AdminUsersWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockAdminUsersRepository.inviteAdmin(records, inviteInput, actor, role);
+      const result = await repository.inviteAdmin(records, inviteInput, actor, role);
       setRecords(result.records);
       syncSelection(result.createdRecord);
       setInviteInput(defaultInviteInput);
@@ -163,7 +162,7 @@ export function AdminUsersWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockAdminUsersRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           adminId: selectedRecord.id,
@@ -229,7 +228,7 @@ export function AdminUsersWorkspace({
   }
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[0.94fr_1.06fr]">
+    <section className="grid gap-5 xl:grid-cols-[minmax(0,0.84fr)_minmax(28rem,1.16fr)] xl:items-start">
       <AdminUsersQueuePanel
         filters={filters}
         inviteInput={inviteInput}

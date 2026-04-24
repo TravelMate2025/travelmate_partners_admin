@@ -14,7 +14,6 @@ describe("admin-users rules", () => {
           email: "jordan.nwosu@travelmate.test",
           team: "Finance Operations",
           role: "finance",
-          requiresMfa: true,
           note: "Finance capacity is expanding and this sensitive grant has governance approval.",
           confirmSensitiveGrant: false,
         },
@@ -55,9 +54,12 @@ describe("admin-users rules", () => {
   it("limits invite controls to pending invites and role assignment to accepted accounts", () => {
     const pendingRecord = getAdminAccessRecords().find((record) => record.id === "adm-007");
     const activeRecord = getAdminAccessRecords().find((record) => record.id === "adm-002");
+    const inactiveRecord = getAdminAccessRecords().find((record) => record.id === "adm-004");
 
     expect(getAvailableAdminGovernanceActions(pendingRecord!, "super_admin")).toContain("resend_invite");
+    expect(getAvailableAdminGovernanceActions(pendingRecord!, "super_admin")).not.toContain("activate_admin");
     expect(getAvailableAdminGovernanceActions(pendingRecord!, "super_admin")).not.toContain("assign_role");
     expect(getAvailableAdminGovernanceActions(activeRecord!, "super_admin")).toContain("assign_role");
+    expect(getAvailableAdminGovernanceActions(inactiveRecord!, "super_admin")).toContain("activate_admin");
   });
 });

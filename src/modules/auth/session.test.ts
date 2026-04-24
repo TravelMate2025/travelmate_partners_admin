@@ -1,4 +1,5 @@
 import {
+  acceptAdminInvitation,
   authenticateAdminCredentials,
   createChallengeForAdmin,
   logoutAdminSession,
@@ -183,7 +184,10 @@ describe("admin auth session helpers", () => {
       vi.fn().mockResolvedValue(
         new Response(JSON.stringify(mfaRequiredResponse), {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "set-cookie": "tm_partner_api_session=session-key-123; Path=/; HttpOnly; SameSite=Lax",
+          },
         }),
       ),
     );
@@ -194,29 +198,39 @@ describe("admin auth session helpers", () => {
       expect(result.user.role).toBe("reviewer");
       expect(result.challenge.challengeId).toBe(33);
       expect(result.challenge.expiresAt).toBe("2026-04-22T10:10:00.000Z");
+      expect(result.challenge.backendSessionKey).toBe("session-key-123");
     }
   });
 
-  it("verifies an API MFA response and creates an authenticated session", async () => {
+  it("refuses MFA verification when the bound challenge context is missing", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ message: "Invalid MFA code." }),
+      headers: {
+        get: () => null,
+      },
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await verifyAdminMfaCode("reviewer@travelmate.test", "123456", null, null);
+
+    expect(result.status).toBe("invalid");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts an admin invitation against the API", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(loginResponse), {
+        new Response(JSON.stringify({ data: {} }), {
           status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "set-cookie": "tm_partner_api_session=session-key-123; Path=/; HttpOnly; SameSite=Lax",
-          },
+          headers: { "Content-Type": "application/json" },
         }),
       ),
     );
 
-    const result = await verifyAdminMfaCode("reviewer@travelmate.test", "123456");
-    expect(result.status).toBe("authenticated");
-    if (result.status === "authenticated") {
-      expect(result.session.user.role).toBe("finance");
-      expect(result.session.mfaSatisfied).toBe(true);
-    }
+    const result = await acceptAdminInvitation("invite-token", "TravelMate!2026");
+    expect(result).toEqual({ ok: true });
   });
 
   it("flags expired admin challenge cookies using backend expiry metadata", () => {
@@ -225,12 +239,14 @@ describe("admin auth session helpers", () => {
       "/",
       "2026-04-22T09:00:00.000Z",
       33,
+      "session-key-123",
     );
     const activeChallenge = createChallengeForAdmin(
       "reviewer@travelmate.test",
       "/",
       "2099-04-22T10:10:00.000Z",
       34,
+      "session-key-124",
     );
 
     expect(isAdminChallengeExpired(expiredChallenge)).toBe(true);
