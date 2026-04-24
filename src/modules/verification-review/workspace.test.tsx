@@ -10,8 +10,8 @@ describe("VerificationReviewWorkspace", () => {
     expect(screen.getAllByText("amina-yusuf-passport.pdf").length).toBeGreaterThan(0);
     expect(screen.getByText(/Primary passport page and signature page/i)).toBeInTheDocument();
     expect(screen.getByText("/api/backend/verification-cases/verify-001/documents/doc-1/download")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Preview secure file" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Simulate signed download" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Preview secure file" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Download secure file" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Business registration/i }));
 

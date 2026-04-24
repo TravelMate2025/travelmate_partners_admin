@@ -30,8 +30,8 @@ describe("admin-users service", () => {
       "super_admin",
     );
 
-    expect(activated.updatedRecord.status).toBe("active");
-    expect(activated.updatedRecord.inviteState).toBe("accepted");
+    expect(activated.updatedRecord?.status).toBe("active");
+    expect(activated.updatedRecord?.inviteState).toBe("accepted");
 
     const roleChanged = await mockAdminUsersRepository.applyAction(
       activated.records,
@@ -46,8 +46,8 @@ describe("admin-users service", () => {
       "super_admin",
     );
 
-    expect(roleChanged.updatedRecord.role).toBe("finance");
-    expect(roleChanged.updatedRecord.permissionPolicies.some((policy) => policy.title.toLowerCase().includes("finance"))).toBe(true);
+    expect(roleChanged.updatedRecord?.role).toBe("finance");
+    expect(roleChanged.updatedRecord?.permissionPolicies.some((policy) => policy.title.toLowerCase().includes("finance"))).toBe(true);
   });
 
   it("revokes a pending invite and deactivates an active admin", async () => {
@@ -62,7 +62,7 @@ describe("admin-users service", () => {
       "super_admin",
     );
 
-    expect(revoked.updatedRecord.status).toBe("revoked");
+    expect(revoked.updatedRecord?.status).toBe("revoked");
 
     const deactivated = await mockAdminUsersRepository.applyAction(
       getAdminAccessRecords(),
@@ -75,7 +75,25 @@ describe("admin-users service", () => {
       "super_admin",
     );
 
-    expect(deactivated.updatedRecord.status).toBe("inactive");
+    expect(deactivated.updatedRecord?.status).toBe("inactive");
     expect(deactivated.auditRecord.summary).toContain("deactivated the admin account");
+  });
+
+  it("deletes an inactive admin from the workspace dataset", async () => {
+    const deleted = await mockAdminUsersRepository.applyAction(
+      getAdminAccessRecords(),
+      {
+        adminId: "adm-004",
+        action: "delete_admin",
+        actor: "Amina Bello",
+        note: "Removing this deactivated admin account after access cleanup is complete.",
+      },
+      "super_admin",
+    );
+
+    expect(deleted.updatedRecord).toBeNull();
+    expect(deleted.deletedRecordId).toBe("adm-004");
+    expect(deleted.records.some((record) => record.id === "adm-004")).toBe(false);
+    expect(deleted.auditRecord.summary).toContain("deleted the inactive admin account");
   });
 });

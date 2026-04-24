@@ -23,6 +23,18 @@ export const partnerRecordsSeed: PartnerRecord[] = [
       liveListings: 11,
       pendingListings: 2,
     },
+    operatingCoverage: {
+      countries: ["Nigeria"],
+      regions: ["Lagos State"],
+      cities: ["Lagos", "Lekki", "Ikeja"],
+      coverageNotes: "Airport meet-and-greet stays are only supported in Lagos with 24-hour notice for premium guests.",
+    },
+    payoutSetup: {
+      payoutMethod: "bank_transfer",
+      settlementCurrency: "NGN",
+      payoutSchedule: "weekly",
+      settlementTrigger: "service_completion",
+    },
     operationalNote: "Strategic Lagos stay partner with active expansion request for two additional properties.",
     history: [
       {
@@ -56,6 +68,18 @@ export const partnerRecordsSeed: PartnerRecord[] = [
       liveListings: 6,
       pendingListings: 3,
     },
+    operatingCoverage: {
+      countries: ["Ghana"],
+      regions: ["Greater Accra Region"],
+      cities: ["Accra", "Tema"],
+      coverageNotes: "Late-night transfer coverage is limited to prebooked airport and corporate routes.",
+    },
+    payoutSetup: {
+      payoutMethod: "mobile_money",
+      settlementCurrency: "GHS",
+      payoutSchedule: "daily",
+      settlementTrigger: "service_completion",
+    },
     operationalNote: "Temporary account lock was applied while verification requested another tax-certificate upload.",
     history: [
       {
@@ -88,6 +112,18 @@ export const partnerRecordsSeed: PartnerRecord[] = [
       transfers: 0,
       liveListings: 0,
       pendingListings: 0,
+    },
+    operatingCoverage: {
+      countries: ["Kenya"],
+      regions: ["Nairobi County", "Kajiado County"],
+      cities: ["Nairobi", "Karen"],
+      coverageNotes: "Seasonal inventory returns first in Nairobi before countryside retreat inventory is reactivated.",
+    },
+    payoutSetup: {
+      payoutMethod: "bank_transfer",
+      settlementCurrency: "KES",
+      payoutSchedule: "manual",
+      settlementTrigger: "service_completion",
     },
     operationalNote: "Account was archived after the partner requested a seasonal pause across all inventory.",
     history: [

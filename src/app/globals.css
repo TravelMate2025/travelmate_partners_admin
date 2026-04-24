@@ -295,6 +295,12 @@ input {
   color: var(--adm-deep);
 }
 
+.tm-btn-danger {
+  background: linear-gradient(145deg, #7b2618 0%, #a63a22 100%);
+  box-shadow: 0 18px 32px -28px rgba(122, 38, 24, 0.6);
+  color: #fff7f4;
+}
+
 .tm-input {
   width: 100%;
   border-radius: 0.95rem;
@@ -580,6 +586,44 @@ input {
   background: rgba(255, 247, 237, 0.72);
   padding: 0.85rem 0.95rem;
   overflow-wrap: anywhere;
+}
+
+.tm-admin-role-reference {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.tm-admin-role-reference-card {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(24, 42, 38, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 1rem;
+}
+
+.tm-admin-role-reference-card-active {
+  border-color: rgba(25, 70, 62, 0.22);
+  box-shadow: 0 18px 28px -30px rgba(16, 33, 29, 0.36);
+  background: linear-gradient(145deg, rgba(248, 252, 250, 0.95) 0%, rgba(239, 246, 243, 0.88) 100%);
+}
+
+.tm-admin-role-reference-block {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(25, 70, 62, 0.1);
+  background: rgba(248, 251, 249, 0.9);
+  padding: 0.9rem;
+}
+
+.tm-admin-role-reference-list {
+  display: grid;
+  gap: 0.65rem;
+  padding-left: 1rem;
+}
+
+.tm-admin-role-reference-list li {
+  color: var(--adm-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 @media (min-width: 640px) {

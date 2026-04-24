@@ -11,6 +11,7 @@ const actionEndpointMap = {
   revoke_invite: "revoke-invite",
   activate_admin: "activate",
   deactivate_admin: "deactivate",
+  delete_admin: "delete",
   assign_role: "assign-role",
 } as const;
 

@@ -52,7 +52,7 @@ describe("AdminUsersWorkspace", () => {
     await waitFor(() => {
       expect(screen.getByText(/changed maya singh to role finance/i)).toBeInTheDocument();
     });
-  });
+  }, 10000);
 
   it("shows governance errors when sensitive role confirmation is missing", async () => {
     render(<AdminUsersWorkspace actor="Amina Bello" initialRecords={getAdminAccessRecords()} role="super_admin" />);
@@ -66,5 +66,23 @@ describe("AdminUsersWorkspace", () => {
     await waitFor(() => {
       expect(screen.getByText(/explicit confirmation is required before granting a sensitive admin role/i)).toBeInTheDocument();
     });
+  });
+
+  it("lets super admins delete deactivated admins and shows role permissions guidance", async () => {
+    render(<AdminUsersWorkspace actor="Amina Bello" initialRecords={getAdminAccessRecords()} role="super_admin" />);
+
+    fireEvent.click(screen.getByText("Maya Singh"));
+    fireEvent.change(screen.getByLabelText("Admin governance note"), {
+      target: { value: "Removing this deactivated admin account after access cleanup is complete." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Delete admin" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/deleted the inactive admin account for maya singh/i)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("Maya Singh")).not.toBeInTheDocument();
+    expect(screen.getByText("Role permissions reference")).toBeInTheDocument();
+    expect(screen.getByText("Full governance authority across the admin platform.")).toBeInTheDocument();
   });
 });

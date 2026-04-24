@@ -11,7 +11,7 @@ export default async function PartnersPage() {
   return (
     <AdminShell
       title="Partner Accounts"
-      description="Search, inspect, lock, restore, and supervise partner records and portfolio state."
+      description="Search, inspect, lock, restore, and supervise partner records, structured operating coverage, and payout setup."
     >
       <PartnerOperationsWorkspace actor={session.user.name} initialRecords={getPartnerRecords()} role={session.user.role} />
     </AdminShell>

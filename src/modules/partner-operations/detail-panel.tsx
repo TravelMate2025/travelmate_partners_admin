@@ -38,6 +38,14 @@ function formatDate(value: string) {
   });
 }
 
+function formatPayoutMethod(value: PartnerRecord["payoutSetup"]["payoutMethod"]) {
+  return value === "mobile_money" ? "Mobile money" : "Bank transfer";
+}
+
+function formatPayoutSchedule(value: PartnerRecord["payoutSetup"]["payoutSchedule"]) {
+  return value === "manual" ? "Manual release" : value === "daily" ? "Daily" : "Weekly";
+}
+
 export function PartnerDetailPanel({
   selectedRecord,
   emptyState,
@@ -143,6 +151,85 @@ export function PartnerDetailPanel({
             Joined {formatDate(selectedRecord.joinedAt)} · last active {formatTimestamp(selectedRecord.lastActiveAt)}
           </p>
         </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="tm-soft-band">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="tm-label">Operating coverage</p>
+              <p className="tm-muted mt-2 text-sm">
+                Structured onboarding coverage from the partner setup flow. Use this to review where supply should actually be discoverable and supported.
+              </p>
+            </div>
+            <StatusBadge label={`${selectedRecord.operatingCoverage.cities.length} cities`} tone="info" />
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-3xl border border-slate-200 bg-white/85 p-4">
+              <p className="tm-label">Countries</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedRecord.operatingCoverage.countries.map((country) => (
+                  <StatusBadge key={country} label={country} tone="neutral" />
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white/85 p-4">
+              <p className="tm-label">Regions</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedRecord.operatingCoverage.regions.map((region) => (
+                  <StatusBadge key={region} label={region} tone="info" />
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white/85 p-4">
+              <p className="tm-label">Cities</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedRecord.operatingCoverage.cities.map((city) => (
+                  <StatusBadge key={city} label={city} tone="success" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[28px] border border-dashed border-slate-300 bg-slate-50/80 p-4">
+            <p className="tm-label">Coverage notes</p>
+            <p className="mt-3 text-sm leading-6 text-slate-900">{selectedRecord.operatingCoverage.coverageNotes}</p>
+          </div>
+        </section>
+
+        <section className="tm-soft-band">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="tm-label">Payout setup</p>
+              <p className="tm-muted mt-2 text-sm">
+                Payout schedule only controls when available balances are released. Earnings become eligible after the booked service is completed.
+              </p>
+            </div>
+            <StatusBadge label={selectedRecord.payoutSetup.settlementCurrency} tone="warning" />
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-[28px] border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-800">Settlement trigger</p>
+              <p className="mt-3 text-lg font-semibold text-slate-950">Eligible after service completion</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Stay earnings unlock after checkout. Transfer earnings unlock after trip completion.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-3xl border border-slate-200 bg-white/85 p-4">
+                <p className="tm-label">Payout method</p>
+                <p className="mt-3 text-base font-semibold text-slate-950">{formatPayoutMethod(selectedRecord.payoutSetup.payoutMethod)}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white/85 p-4">
+                <p className="tm-label">Payout schedule</p>
+                <p className="mt-3 text-base font-semibold text-slate-950">{formatPayoutSchedule(selectedRecord.payoutSetup.payoutSchedule)}</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-3">

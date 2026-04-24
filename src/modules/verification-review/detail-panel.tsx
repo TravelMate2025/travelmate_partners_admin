@@ -99,7 +99,7 @@ export function VerificationCaseDetail({
             <div>
               <p className="tm-label">Documents</p>
               <p className="tm-muted mt-3 text-sm">
-                Simulated backend packet with file metadata, preview context, and secure-download wiring.
+                Private reviewer packet with protected preview and download access.
               </p>
             </div>
             <StatusBadge label={`${selectedCase.documents.length} files`} tone="info" />
@@ -178,15 +178,24 @@ export function VerificationCaseDetail({
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button className="tm-btn tm-btn-primary" type="button">
+                  <a
+                    className="tm-btn tm-btn-primary"
+                    href={activeDocument.previewPath}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
                     Preview secure file
-                  </button>
-                  <button className="tm-btn tm-btn-outline" type="button">
-                    Simulate signed download
-                  </button>
+                  </a>
+                  <a
+                    className="tm-btn tm-btn-outline"
+                    download
+                    href={activeDocument.securePath}
+                  >
+                    Download secure file
+                  </a>
                 </div>
                 <p className="tm-muted mt-3 text-sm">
-                  Backend simulation: Django would issue a short-lived signed file URL for this packet after role and case access checks.
+                  Backend access is enforced through admin session checks and private document streaming.
                 </p>
               </div>
             </div>
@@ -198,6 +207,69 @@ export function VerificationCaseDetail({
                 tone="empty"
               />
             </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="tm-soft-band">
+          <p className="tm-label">Operating coverage</p>
+          {selectedCase.operatingCoverage.countries.length > 0 ? (
+            <div className="mt-3 grid gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Countries</p>
+                <p className="mt-1 text-sm text-slate-900">{selectedCase.operatingCoverage.countries.join(", ")}</p>
+              </div>
+              {selectedCase.operatingCoverage.regions.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Regions</p>
+                  <p className="mt-1 text-sm text-slate-900">{selectedCase.operatingCoverage.regions.join(", ")}</p>
+                </div>
+              )}
+              {selectedCase.operatingCoverage.cities.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cities</p>
+                  <p className="mt-1 text-sm text-slate-900">{selectedCase.operatingCoverage.cities.join(", ")}</p>
+                </div>
+              )}
+              {selectedCase.operatingCoverage.coverageNotes && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Coverage notes</p>
+                  <p className="mt-1 text-sm text-slate-900">{selectedCase.operatingCoverage.coverageNotes}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="tm-muted mt-3 text-sm">No operating coverage data submitted with this case.</p>
+          )}
+        </div>
+
+        <div className="tm-soft-band">
+          <p className="tm-label">Payout setup</p>
+          {selectedCase.payoutSetup.payoutMethod ? (
+            <div className="mt-3 grid gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Method</p>
+                <p className="mt-1 text-sm text-slate-900">{selectedCase.payoutSetup.payoutMethod.replace("_", " ")}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Currency</p>
+                <p className="mt-1 text-sm text-slate-900">{selectedCase.payoutSetup.settlementCurrency}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payout schedule</p>
+                <p className="mt-1 text-sm text-slate-900">{selectedCase.payoutSetup.payoutSchedule}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Settlement trigger</p>
+                <p className="mt-1 text-sm text-slate-900">
+                  Earnings are created after service completion — stays after checkout, transfers after trip end.
+                  Payout schedule controls when available balances are sent, not when earnings become available.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="tm-muted mt-3 text-sm">No payout setup data submitted with this case.</p>
           )}
         </div>
       </div>

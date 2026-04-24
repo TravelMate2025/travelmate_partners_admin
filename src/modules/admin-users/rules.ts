@@ -26,9 +26,10 @@ export function getAdminAccessPolicy(role: AdminRole): AdminAccessPolicy {
     canRevokeInvite: canGovern,
     canActivate: canGovern,
     canDeactivate: canGovern,
+    canDelete: canGovern,
     canAssignRole: canGovern,
     summary: canGovern
-      ? "Super admins can invite admins, activate or deactivate accounts, and assign roles. Grants into finance and super_admin require explicit confirmation."
+      ? "Super admins can invite admins, activate or deactivate accounts, delete inactive admins, and assign roles. Grants into finance and super_admin require explicit confirmation."
       : "This role can inspect admin account context but cannot change access governance.",
     allowedRoles: adminUsersAllowedRoles,
   };
@@ -69,6 +70,7 @@ export function validateAdminGovernanceAction(
   if (action === "revoke_invite" && !policy.canRevokeInvite) return "This role cannot revoke admin invites.";
   if (action === "activate_admin" && !policy.canActivate) return "This role cannot activate admin accounts.";
   if (action === "deactivate_admin" && !policy.canDeactivate) return "This role cannot deactivate admin accounts.";
+  if (action === "delete_admin" && !policy.canDelete) return "This role cannot delete admin accounts.";
   if (action === "assign_role" && !policy.canAssignRole) return "This role cannot assign admin roles.";
 
   if ((action === "resend_invite" || action === "revoke_invite") && record.status !== "pending_invite") {
@@ -83,11 +85,19 @@ export function validateAdminGovernanceAction(
     return "Only active admin accounts can be deactivated.";
   }
 
+  if (action === "delete_admin" && record.status !== "inactive") {
+    return "Only inactive admin accounts can be deleted.";
+  }
+
   if (action === "deactivate_admin" && record.role === "super_admin") {
     const activeSuperAdmins = records.filter((item) => item.status === "active" && item.role === "super_admin").length;
     if (activeSuperAdmins <= 1) {
       return "At least one active super admin must remain available.";
     }
+  }
+
+  if (action === "delete_admin" && record.role === "super_admin") {
+    return "Inactive super admin accounts cannot be deleted.";
   }
 
   if (action === "assign_role") {
@@ -122,6 +132,9 @@ export function getAvailableAdminGovernanceActions(record: AdminAccessRecord, ro
   }
   if (policy.canDeactivate && record.status === "active") {
     actions.push("deactivate_admin");
+  }
+  if (policy.canDelete && record.status === "inactive" && record.role !== "super_admin") {
+    actions.push("delete_admin");
   }
   if (policy.canAssignRole && record.status !== "pending_invite" && record.status !== "revoked") {
     actions.push("assign_role");

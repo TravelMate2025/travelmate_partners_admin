@@ -13,6 +13,20 @@ export type PartnerPortfolioSummary = {
   pendingListings: number;
 };
 
+export type PartnerOperatingCoverage = {
+  countries: string[];
+  regions: string[];
+  cities: string[];
+  coverageNotes: string;
+};
+
+export type PartnerPayoutSetup = {
+  payoutMethod: "bank_transfer" | "mobile_money";
+  settlementCurrency: string;
+  payoutSchedule: "manual" | "daily" | "weekly";
+  settlementTrigger: "service_completion";
+};
+
 export type PartnerMetadata = {
   marketOwner: string;
   supportTier: SupportTier;
@@ -40,6 +54,8 @@ export type PartnerRecord = {
   accountState: PartnerAccountState;
   metadata: PartnerMetadata;
   portfolio: PartnerPortfolioSummary;
+  operatingCoverage: PartnerOperatingCoverage;
+  payoutSetup: PartnerPayoutSetup;
   operationalNote: string;
   history: PartnerHistoryEntry[];
 };

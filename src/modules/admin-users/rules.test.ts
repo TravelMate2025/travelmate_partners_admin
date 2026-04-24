@@ -61,5 +61,44 @@ describe("admin-users rules", () => {
     expect(getAvailableAdminGovernanceActions(pendingRecord!, "super_admin")).not.toContain("assign_role");
     expect(getAvailableAdminGovernanceActions(activeRecord!, "super_admin")).toContain("assign_role");
     expect(getAvailableAdminGovernanceActions(inactiveRecord!, "super_admin")).toContain("activate_admin");
+    expect(getAvailableAdminGovernanceActions(inactiveRecord!, "super_admin")).toContain("delete_admin");
+  });
+
+  it("only allows deleting inactive non-super-admin accounts", () => {
+    const inactiveRecord = getAdminAccessRecords().find((record) => record.id === "adm-004");
+    const activeRecord = getAdminAccessRecords().find((record) => record.id === "adm-002");
+    const superAdminRecord = getAdminAccessRecords().find((record) => record.id === "adm-006");
+
+    expect(
+      validateAdminGovernanceAction(
+        getAdminAccessRecords(),
+        inactiveRecord!,
+        "delete_admin",
+        "super_admin",
+        "Removing this deactivated admin after access cleanup is complete.",
+      ),
+    ).toBeNull();
+
+    expect(
+      validateAdminGovernanceAction(
+        getAdminAccessRecords(),
+        activeRecord!,
+        "delete_admin",
+        "super_admin",
+        "Trying to delete an admin that is still active.",
+      ),
+    ).toBe("Only inactive admin accounts can be deleted.");
+
+    expect(
+      validateAdminGovernanceAction(
+        getAdminAccessRecords().map((record) =>
+          record.id === "adm-006" ? { ...record, status: "inactive" as const } : record,
+        ),
+        { ...superAdminRecord!, status: "inactive" as const },
+        "delete_admin",
+        "super_admin",
+        "Trying to delete an inactive super admin account.",
+      ),
+    ).toBe("Inactive super admin accounts cannot be deleted.");
   });
 });

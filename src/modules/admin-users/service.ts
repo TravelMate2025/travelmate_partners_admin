@@ -27,7 +27,9 @@ type AdminUsersApiRecord = Omit<AdminAccessRecord, "permissionPolicies"> & {
 };
 
 type AdminUsersApiInviteResponse = {
-  record: AdminUsersApiRecord;
+  record?: AdminUsersApiRecord;
+  deletedRecord?: AdminUsersApiRecord;
+  deletedRecordId?: string;
   auditRecord: AdminGovernanceAuditRecord;
 };
 
@@ -70,6 +72,8 @@ function buildAuditSummary(actor: string, action: AdminGovernanceAction, record:
       return `${actor} activated the admin account for ${record.name} and queued access governance follow-up.`;
     case "deactivate_admin":
       return `${actor} deactivated the admin account for ${record.name} and queued access governance follow-up.`;
+    case "delete_admin":
+      return `${actor} deleted the inactive admin account for ${record.name} and completed access governance cleanup.`;
     case "assign_role":
       return `${actor} changed ${record.name} to role ${targetRole?.replace("_", " ")} and queued access governance follow-up.`;
   }
@@ -82,6 +86,7 @@ function buildActivityTitle(action: AdminGovernanceAction) {
     revoke_invite: "Admin invite revoked",
     activate_admin: "Admin account activated",
     deactivate_admin: "Admin account deactivated",
+    delete_admin: "Admin account deleted",
     assign_role: "Admin role changed",
   };
   return labels[action];
@@ -255,6 +260,15 @@ export const mockAdminUsersRepository: AdminUsersRepository = {
 
     const auditRecord = createAuditRecord(record.id, payload.actor, payload.action, updatedRecord, payload.targetRole);
 
+    if (payload.action === "delete_admin") {
+      return {
+        records: records.filter((item) => item.id !== record.id),
+        updatedRecord: null,
+        deletedRecordId: record.id,
+        auditRecord,
+      };
+    }
+
     return {
       records: records.map((item) => (item.id === record.id ? updatedRecord : item)),
       updatedRecord,
@@ -284,6 +298,9 @@ export const realAdminUsersRepository: AdminUsersRepository = {
     const body = await readJson<AdminUsersApiInviteResponse>(response);
     if (!response.ok || !body?.data) {
       throw new Error(readMessage(body, "Unable to send the admin invite."));
+    }
+    if (!body.data.record) {
+      throw new Error("The admin invite response did not include a created record.");
     }
 
     const createdRecord = mapRecord(body.data.record);
@@ -332,6 +349,20 @@ export const realAdminUsersRepository: AdminUsersRepository = {
     const body = await readJson<AdminUsersApiInviteResponse>(response);
     if (!response.ok || !body?.data) {
       throw new Error(readMessage(body, "Unable to update the admin governance record."));
+    }
+
+    if (payload.action === "delete_admin") {
+      const deletedRecordId = body.data.deletedRecordId ?? payload.adminId;
+      return {
+        records: records.filter((item) => item.id !== deletedRecordId),
+        updatedRecord: null,
+        deletedRecordId,
+        auditRecord: body.data.auditRecord,
+      };
+    }
+
+    if (!body.data.record) {
+      throw new Error("The admin governance response did not include an updated record.");
     }
 
     const updatedRecord = mapRecord(body.data.record);

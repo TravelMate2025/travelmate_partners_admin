@@ -206,7 +206,7 @@ export function VerificationReviewWorkspace({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="tm-label">Documents</p>
-                <p className="tm-muted mt-3 text-sm">Simulated backend packet with file metadata, preview context, and secure-download wiring.</p>
+                <p className="tm-muted mt-3 text-sm">Private reviewer packet with protected preview and download access.</p>
               </div>
               <StatusBadge label={`${selectedCase.documents.length} files`} tone="info" />
             </div>
@@ -274,17 +274,26 @@ export function VerificationReviewWorkspace({
                       <p className="mt-2 text-sm text-slate-900">{activeDocument.reviewerHint}</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button className="tm-btn tm-btn-primary" type="button">
-                      Preview secure file
-                    </button>
-                    <button className="tm-btn tm-btn-outline" type="button">
-                      Simulate signed download
-                    </button>
-                  </div>
-                  <p className="tm-muted mt-3 text-sm">
-                    Backend simulation: Django would issue a short-lived signed file URL for this packet after role and case access checks.
-                  </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <a
+                    className="tm-btn tm-btn-primary"
+                    href={activeDocument.previewPath}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Preview secure file
+                  </a>
+                  <a
+                    className="tm-btn tm-btn-outline"
+                    download
+                    href={activeDocument.securePath}
+                  >
+                    Download secure file
+                  </a>
+                </div>
+                <p className="tm-muted mt-3 text-sm">
+                  Backend access is enforced through admin session checks and private document streaming.
+                </p>
                 </div>
               </div>
             ) : null}

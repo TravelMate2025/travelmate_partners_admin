@@ -13,6 +13,7 @@ export type VerificationDocument = {
   pageCount: number;
   uploadedAt: string;
   source: "partner_portal" | "resubmission";
+  previewPath: string;
   securePath: string;
   previewSummary: string;
   reviewerHint: string;
@@ -64,6 +65,20 @@ export type VerificationCaseReviewSignals = {
   latestActionLabel: string;
 };
 
+export type VerificationPartnerCoverage = {
+  countries: string[];
+  regions: string[];
+  cities: string[];
+  coverageNotes: string;
+};
+
+export type VerificationPartnerPayoutSetup = {
+  payoutMethod: string;
+  settlementCurrency: string;
+  payoutSchedule: string;
+  settlementTrigger: "service_completion";
+};
+
 export type VerificationCase = {
   id: string;
   partnerName: string;
@@ -78,6 +93,8 @@ export type VerificationCase = {
   documents: VerificationDocument[];
   history: VerificationHistoryEntry[];
   reviewSignals: VerificationCaseReviewSignals;
+  operatingCoverage: VerificationPartnerCoverage;
+  payoutSetup: VerificationPartnerPayoutSetup;
   latestAuditRecord?: VerificationAuditRecord;
   latestPartnerNotification?: VerificationPartnerNotification;
 };

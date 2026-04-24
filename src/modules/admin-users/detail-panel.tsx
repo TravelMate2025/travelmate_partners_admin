@@ -2,6 +2,7 @@ import { ActivityTimeline } from "@/components/common/activity-timeline";
 import { StatusBadge } from "@/components/common/status-badge";
 import { SurfaceState } from "@/components/common/surface-state";
 import {
+  adminRolePermissionProfiles,
   adminRoleOptions,
   formatAdminRoleLabel,
 } from "@/modules/admin-users/constants";
@@ -22,6 +23,7 @@ function getActionLabel(action: AdminGovernanceAction) {
     revoke_invite: { idle: "Revoke invite", pending: "Revoking..." },
     activate_admin: { idle: "Activate admin", pending: "Activating..." },
     deactivate_admin: { idle: "Deactivate admin", pending: "Deactivating..." },
+    delete_admin: { idle: "Delete admin", pending: "Deleting..." },
     assign_role: { idle: "Apply role", pending: "Applying role..." },
   };
 
@@ -85,6 +87,7 @@ export function AdminUsersDetailPanel({
   const isInviteLifecycleRecord = selectedRecord.status === "pending_invite" || selectedRecord.status === "revoked";
   const canChangeRole = availableActions.includes("assign_role");
   const roleTargets = adminRoleOptions.filter((role) => role !== selectedRecord.role);
+  const roleReferenceOrder = [selectedRecord.role, ...adminRoleOptions.filter((role) => role !== selectedRecord.role)];
   const invitationTimestamp = selectedRecord.invitedAt ?? selectedRecord.lastAccessedAt;
   const formattedInvitationTimestamp = invitationTimestamp ? invitationTimestamp.slice(0, 16).replace("T", " ") : "Not available";
   const inviteExpiry = selectedRecord.inviteState === "pending" ? "Invitation is still awaiting acceptance." : "Invitation is no longer pending.";
@@ -262,6 +265,67 @@ export function AdminUsersDetailPanel({
                   </div>
                 </div>
               ) : null}
+
+              <div className="tm-admin-governance-card">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="tm-label">Role permissions reference</p>
+                    <p className="tm-muted mt-2 text-sm">
+                      Compare what each admin role can do before you invite, reactivate, or reassign access.
+                    </p>
+                  </div>
+                  <div className="tm-admin-role-chip">
+                    <span className="tm-label">Selected target</span>
+                    <strong className="block pt-1 text-sm font-semibold text-slate-950">
+                      {formatAdminRoleLabel(targetRole)}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="tm-admin-role-reference mt-5">
+                  {roleReferenceOrder.map((role) => {
+                    const profile = adminRolePermissionProfiles[role];
+                    const isSelectedRole = role === targetRole;
+                    const isCurrentRole = role === selectedRecord.role;
+                    return (
+                      <article
+                        className={`tm-admin-role-reference-card ${isSelectedRole ? "tm-admin-role-reference-card-active" : ""}`}
+                        key={role}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-slate-950">{formatAdminRoleLabel(role)}</p>
+                            <p className="tm-muted mt-2 text-sm">{profile.headline}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {isCurrentRole ? <StatusBadge label="Current role" tone="info" /> : null}
+                            {isSelectedRole ? <StatusBadge label="Selected target" tone="success" /> : null}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                          <div className="tm-admin-role-reference-block">
+                            <p className="tm-label">Allowed</p>
+                            <ul className="tm-admin-role-reference-list mt-3">
+                              {profile.grants.map((grant) => (
+                                <li key={grant}>{grant}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="tm-admin-role-reference-block">
+                            <p className="tm-label">Restricted</p>
+                            <ul className="tm-admin-role-reference-list mt-3">
+                              {profile.limits.map((limit) => (
+                                <li key={limit}>{limit}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           )}
           <p className="tm-muted mt-3 text-sm">{policySummary}</p>
@@ -279,10 +343,11 @@ export function AdminUsersDetailPanel({
                 const isPending = pendingAction === action;
                 const isBlocked = pendingAction !== null && !isPending;
                 const isNeutral = action === "resend_invite" || action === "assign_role";
+                const isDanger = action === "delete_admin";
                 return (
                   <button
                     aria-label={idle}
-                    className={`tm-btn ${isNeutral ? "tm-btn-outline" : "tm-btn-primary"}`}
+                    className={`tm-btn ${isDanger ? "tm-btn-danger" : isNeutral ? "tm-btn-outline" : "tm-btn-primary"}`}
                     disabled={isPending || isBlocked}
                     key={action}
                     onClick={() => onAction(action)}

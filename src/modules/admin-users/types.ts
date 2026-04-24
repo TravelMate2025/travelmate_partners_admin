@@ -13,6 +13,7 @@ export type AdminGovernanceAction =
   | "revoke_invite"
   | "activate_admin"
   | "deactivate_admin"
+  | "delete_admin"
   | "assign_role";
 
 export type PermissionPolicySummary = {
@@ -68,6 +69,7 @@ export type AdminAccessPolicy = {
   canRevokeInvite: boolean;
   canActivate: boolean;
   canDeactivate: boolean;
+  canDelete: boolean;
   canAssignRole: boolean;
   summary: string;
   allowedRoles: AdminRole[];
@@ -102,7 +104,8 @@ export type AdminGovernanceAuditRecord = {
 
 export type AdminGovernanceActionResult = {
   records: AdminAccessRecord[];
-  updatedRecord: AdminAccessRecord;
+  updatedRecord: AdminAccessRecord | null;
+  deletedRecordId?: string;
   auditRecord: AdminGovernanceAuditRecord;
 };
 

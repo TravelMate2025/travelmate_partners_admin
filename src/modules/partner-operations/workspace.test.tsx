@@ -72,4 +72,14 @@ describe("PartnerOperationsWorkspace", () => {
     expect(screen.getByText("No partners match this view")).toBeInTheDocument();
     expect(screen.getByText("No partner selected from this filter set")).toBeInTheDocument();
   });
+
+  it("shows structured operating coverage and payout setup in the detail panel", () => {
+    render(<PartnerOperationsWorkspace actor="Operations Admin" initialRecords={getPartnerRecords()} role="operations" />);
+
+    expect(screen.getByText("Operating coverage")).toBeInTheDocument();
+    expect(screen.getByText("Payout setup")).toBeInTheDocument();
+    expect(screen.getByText("Lagos State")).toBeInTheDocument();
+    expect(screen.getByText("Bank transfer")).toBeInTheDocument();
+    expect(screen.getByText("Eligible after service completion")).toBeInTheDocument();
+  });
 });

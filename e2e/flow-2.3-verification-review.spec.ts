@@ -65,8 +65,12 @@ async function createSubmittedVerificationCase(request: APIRequestContext) {
     [
       "operations",
       {
-        serviceRegions: ["Lagos"],
+        operatingCountries: ["Nigeria"],
+        operatingRegions: ["Lagos"],
         operatingCities: ["Lekki"],
+        coverageNotes: "",
+        payoutMethod: "bank_transfer",
+        settlementCurrency: "NGN",
         payoutSchedule: "weekly",
       },
     ],
@@ -81,19 +85,26 @@ async function createSubmittedVerificationCase(request: APIRequestContext) {
   for (const document of [
     {
       category: "identity",
-      fileName: "identity-proof.pdf",
-      fileType: "application/pdf",
-      fileSize: 2048,
+      name: "identity-proof.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4 identity proof"),
     },
     {
       category: "business",
-      fileName: "business-registration.pdf",
-      fileType: "application/pdf",
-      fileSize: 3072,
+      name: "business-registration.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4 business registration"),
     },
   ]) {
     await request.post(`http://127.0.0.1:8000/api/v1/partners/${userId}/verification/documents`, {
-      data: document,
+      multipart: {
+        category: document.category,
+        file: {
+          name: document.name,
+          mimeType: document.mimeType,
+          buffer: document.buffer,
+        },
+      },
     });
   }
 

@@ -176,7 +176,11 @@ export function AdminUsersWorkspace({
       );
 
       setRecords(result.records);
-      syncSelection(result.updatedRecord);
+      if (result.updatedRecord) {
+        syncSelection(result.updatedRecord);
+      } else {
+        syncSelection(result.records[0]);
+      }
       setFeedback({ tone: "success", message: result.auditRecord.summary });
     } catch (error) {
       setFeedback({

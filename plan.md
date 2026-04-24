@@ -166,7 +166,8 @@
 ### 2.3 Partner Verification and Lifecycle Management Flow
 - Admin opens partner verification queue.
 - System shows submitted partner applications and supporting KYC/KYB documents.
-- Admin reviews documents, adds internal notes, and approves/rejects/suspends partners.
+- Admin previews/downloads private supporting documents, adds internal notes, and approves/rejects/suspends partners.
+- Verification evidence is expected to come from private S3-compatible storage in production, mediated through protected admin endpoints.
 - System records verification history and notifies the partner of the decision or document request.
 
 ### 2.4 Partner Account Management Flow
@@ -177,6 +178,7 @@
 ### 2.5 Listing Moderation (Stays and Transfers) Flow
 - Admin opens the moderation queue for submitted stays/transfers.
 - System loads listing details, media, compliance context, and moderation history.
+- Listing media is expected to be served from Cloudinary-backed public/media delivery workflows in production.
 - Admin approves, rejects, sends back for edits, flags, bulk-updates, or emergency-unpublishes listings.
 - System stores moderation reasons and notifies the partner.
 
@@ -252,6 +254,25 @@
   - pricing/availability data quality signals
   - partner notifications and reporting surfaces
   - booking-completion settlements, refund tracking, and payout-method submission
+- Planned partner-onboarding redesign should stay visible in admin workflows:
+  - partner operating coverage is now implemented in `api` and `partner_app` as structured country/region/city selections with optional coverage notes
+  - payout setup is now implemented in `api` and `partner_app` as payout method, settlement currency, and disbursement cadence
+  - the remaining admin-dashboard work is to expose that structured coverage and payout setup clearly in partner review/detail surfaces
+  - admin copy should state that service completion creates settlement eligibility, while cadence only controls when available balances are disbursed
+
+## 4. Current Implementation Alignment
+
+- `api` and `partner_app` are now aligned for the Phase 2 partner-onboarding operations redesign.
+- `admin_dashboard` must now mirror the same contract in partner supervision surfaces:
+  - operating countries
+  - operating regions
+  - operating cities
+  - optional coverage notes
+  - payout method
+  - settlement currency
+  - disbursement cadence
+  - explicit settlement trigger messaging tied to service completion
+- Until this admin visibility lands, the slice is only partially aligned across the three product surfaces.
 - Admin workflow status models must align with partner-facing models already established in `partner_app/AGENTS.md` and `partner_app/plan.md`, especially:
   - Verification: `pending`, `in_review`, `approved`, `rejected`
   - Verification-to-lifecycle mapping: verification `approved` promotes partner lifecycle to `verified`; verification `rejected` promotes partner lifecycle to `rejected`; `suspended` is an admin lifecycle control, not a verification outcome
@@ -260,6 +281,10 @@
   - Admin settlement run status: `queued`, `processing`, `completed`, `partial`, `failed`
   - Refund: `requested`, `partner_notified`, `refunded`, `disputed`, `recovered`
 - Admin settlement account review in Flow 2.16 is the back-office counterpart to partner payout-method submission and verification in partner Flow 2.15.
+- Admin partner-review and finance surfaces should reflect the same settlement semantics:
+  - stays become settlement-eligible after checkout
+  - transfers become settlement-eligible after trip completion
+  - daily/weekly/manual cadence affects disbursement timing only, not earning creation
 - Admin listing moderation in Flow 2.5 is the back-office counterpart to partner listing submission and correction workflows in partner Flows 2.5, 2.7, 2.9, and 2.10.
 - Admin financial operations in Flow 2.15 is the back-office counterpart to partner wallet and settlement visibility in partner Flows 2.14 and 2.15.
 - Admin route and module naming should follow the current admin scaffold where applicable:
