@@ -163,7 +163,7 @@ export const verificationCasesSeed: VerificationCase[] = [
     },
     payoutSetup: {
       payoutMethod: "mobile_money",
-      settlementCurrency: "GHS",
+      settlementCurrency: "USD",
       payoutSchedule: "daily",
       settlementTrigger: "service_completion",
     },
@@ -251,7 +251,7 @@ export const verificationCasesSeed: VerificationCase[] = [
     },
     payoutSetup: {
       payoutMethod: "bank_transfer",
-      settlementCurrency: "KES",
+      settlementCurrency: "GBP",
       payoutSchedule: "manual",
       settlementTrigger: "service_completion",
     },

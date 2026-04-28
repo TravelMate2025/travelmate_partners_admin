@@ -8,11 +8,14 @@ import { getListingModerationRecords } from "@/modules/listing-moderation/data";
 describe("listing moderation policy", () => {
   it("grants emergency takedowns to operations but not reviewers", () => {
     const liveStay = getListingModerationRecords().find((record) => record.id === "listing-stay-002");
+    const approvedStay = liveStay ? { ...liveStay, status: "approved" as const } : null;
 
     expect(liveStay).toBeDefined();
+    expect(approvedStay).toBeDefined();
     expect(getListingModerationPolicy("operations").canEmergencyUnpublish).toBe(true);
     expect(getListingModerationPolicy("reviewer").canEmergencyUnpublish).toBe(false);
     expect(canApplyModerationAction("operations", liveStay!, "emergency_unpublish")).toBe(true);
+    expect(canApplyModerationAction("operations", approvedStay!, "emergency_unpublish")).toBe(true);
     expect(canApplyModerationAction("reviewer", liveStay!, "emergency_unpublish")).toBe(false);
   });
 

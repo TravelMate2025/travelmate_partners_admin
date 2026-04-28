@@ -54,6 +54,7 @@ export async function POST(
         })
       : JSON.stringify({
           note: parsed?.note ?? "",
+          dashboardBaseUrl: request.nextUrl.origin,
         });
 
   const response = await fetch(`${getAdminApiBaseUrl()}/admin/admin-users/${userId}/${actionEndpointMap[action]}`, {

@@ -83,7 +83,7 @@ export function PartnerDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -91,7 +91,7 @@ export function PartnerDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState
           actionLabel="Reset to first partner"
           description="The selected partner is no longer available in this directory snapshot."
@@ -106,7 +106,7 @@ export function PartnerDetailPanel({
   const policy = getPartnerPolicy(role);
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Partner Detail</p>

@@ -2,6 +2,7 @@ import { AdminShell } from "@/components/common/admin-shell";
 import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getSystemConfigRecords } from "@/modules/system-config/data";
+import { TaxonomyControlPanel } from "@/modules/system-config/taxonomy-control-panel";
 import { SystemConfigWorkspace } from "@/modules/system-config/workspace";
 
 export default async function SystemConfigPage() {
@@ -18,6 +19,7 @@ export default async function SystemConfigPage() {
         initialRecords={getSystemConfigRecords()}
         role={session.user.role}
       />
+      <TaxonomyControlPanel role={session.user.role} />
     </AdminShell>
   );
 }

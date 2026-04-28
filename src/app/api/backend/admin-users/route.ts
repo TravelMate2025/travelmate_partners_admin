@@ -40,7 +40,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.text();
+  const parsedBody = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!parsedBody) {
+    return NextResponse.json(
+      { message: "Request body must be valid JSON.", error: { message: "Request body must be valid JSON." } },
+      { status: 400 },
+    );
+  }
+  const body = JSON.stringify({
+    ...parsedBody,
+    dashboardBaseUrl: request.nextUrl.origin,
+  });
   const response = await fetch(`${getAdminApiBaseUrl()}/admin/admin-users/invite`, {
     method: "POST",
     headers: {

@@ -31,6 +31,8 @@ export type ModerationMediaAsset = {
   uploadedAt: string;
   previewSummary: string;
   securePath: string;
+  roomId?: string | null;
+  spaceType?: string | null;
 };
 
 export type ModerationHistoryEntry = {

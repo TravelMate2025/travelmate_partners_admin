@@ -10,7 +10,10 @@ import {
   getAllowedBulkModerationActions,
   getListingModerationPolicy,
 } from "@/modules/listing-moderation/policy";
-import { mockListingModerationRepository } from "@/modules/listing-moderation/service";
+import {
+  mockListingModerationRepository,
+  realListingModerationRepository,
+} from "@/modules/listing-moderation/service";
 import type {
   ModerationAction,
   ModerationFilterState,
@@ -37,11 +40,14 @@ export function ListingModerationWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
 }: {
   initialRecords: ModerationListingRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
 }) {
+  const repository = mode === "real" ? realListingModerationRepository : mockListingModerationRepository;
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<ModerationFilterState>({
     query: "",
@@ -155,7 +161,7 @@ export function ListingModerationWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockListingModerationRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           actor,

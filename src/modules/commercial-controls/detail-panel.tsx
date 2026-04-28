@@ -61,7 +61,7 @@ export function CommercialControlsDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -69,7 +69,7 @@ export function CommercialControlsDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState
           actionLabel="Reset commercial selection"
           description="The selected commercial rule is no longer available in the current data snapshot."
@@ -82,7 +82,7 @@ export function CommercialControlsDetailPanel({
   }
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Rule Detail</p>

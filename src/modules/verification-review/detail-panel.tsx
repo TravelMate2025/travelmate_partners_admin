@@ -63,7 +63,7 @@ export function VerificationCaseDetail({
 }) {
   if (!selectedCase) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState
           actionLabel="Reset to first case"
           description="The selected case is no longer available in this queue snapshot."
@@ -76,9 +76,10 @@ export function VerificationCaseDetail({
   }
 
   const flaggedDocuments = selectedCase.documents.filter((document) => document.status === "flagged");
+  const latestDecision = selectedCase.history[0];
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Case Detail</p>
@@ -93,8 +94,31 @@ export function VerificationCaseDetail({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="tm-soft-band">
+          <p className="tm-label">Case market</p>
+          <p className="mt-2 text-sm text-slate-900">{selectedCase.country}</p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Submitted packet</p>
+          <p className="mt-2 text-sm text-slate-900">
+            {selectedCase.documents.length} file{selectedCase.documents.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Flagged documents</p>
+          <p className="mt-2 text-sm text-slate-900">
+            {flaggedDocuments.length > 0 ? `${flaggedDocuments.length} needs review` : "All clear"}
+          </p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Latest reviewer action</p>
+          <p className="mt-2 text-sm text-slate-900">{latestDecision ? latestDecision.action : "No decision history yet"}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid items-start gap-4 2xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="tm-soft-band h-full">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="tm-label">Documents</p>
@@ -136,7 +160,7 @@ export function VerificationCaseDetail({
           </p>
         </div>
 
-        <div className="tm-soft-band">
+        <div className="tm-soft-band h-full">
           <p className="tm-label">Document packet preview</p>
           {documentException ? (
             <div className="mt-4">
@@ -211,8 +235,8 @@ export function VerificationCaseDetail({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <div className="tm-soft-band">
+      <div className="mt-5 grid items-start gap-4 2xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="tm-soft-band h-full">
           <p className="tm-label">Operating coverage</p>
           {selectedCase.operatingCoverage.countries.length > 0 ? (
             <div className="mt-3 grid gap-2">
@@ -244,7 +268,7 @@ export function VerificationCaseDetail({
           )}
         </div>
 
-        <div className="tm-soft-band">
+        <div className="tm-soft-band h-full">
           <p className="tm-label">Payout setup</p>
           {selectedCase.payoutSetup.payoutMethod ? (
             <div className="mt-3 grid gap-2">
@@ -286,59 +310,73 @@ export function VerificationCaseDetail({
         ) : null}
       </div>
 
-      <div className="tm-soft-band mt-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="tm-label">Internal review note</p>
-            <p className="tm-muted mt-2 text-sm">
-              Use notes to capture rationale that should be preserved in the verification history and reviewer audit trail.
-            </p>
+      <div className="mt-5 grid items-start gap-4 2xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="tm-soft-band h-full">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="tm-label">Internal review note</p>
+              <p className="tm-muted mt-2 text-sm">
+                Use notes to capture rationale that should be preserved in the verification history and reviewer audit trail.
+              </p>
+            </div>
+            {activeDocument && !documentException ? <StatusBadge label={`reviewing ${activeDocument.label.toLowerCase()}`} tone="info" /> : null}
           </div>
-          {activeDocument && !documentException ? <StatusBadge label={`reviewing ${activeDocument.label.toLowerCase()}`} tone="info" /> : null}
-        </div>
-      </div>
+          <div className="tm-document-card mt-4">
+            <label className="block">
+              <textarea
+                className="tm-textarea mt-3"
+                onChange={(event) => onNoteChange(event.target.value)}
+                placeholder="Add approval rationale, rejection reason, or resubmission guidance..."
+                value={note}
+              />
+            </label>
+          </div>
 
-      <div className="tm-soft-band mt-3">
-        <label className="block">
-          <textarea
-            className="tm-textarea mt-3"
-            onChange={(event) => onNoteChange(event.target.value)}
-            placeholder="Add approval rationale, rejection reason, or resubmission guidance..."
-            value={note}
-          />
-        </label>
-        {selectedCase.latestAuditRecord ? (
-          <div className="tm-alert tm-alert-success mt-4">
-            Audit prep: {selectedCase.latestAuditRecord.summary} Audit event is{" "}
-            {selectedCase.latestAuditRecord.status.replaceAll("_", " ")}.
+          {selectedCase.latestAuditRecord ? (
+            <div className="tm-alert tm-alert-success mt-4">
+              Audit prep: {selectedCase.latestAuditRecord.summary} Audit event is{" "}
+              {selectedCase.latestAuditRecord.status.replaceAll("_", " ")}.
+            </div>
+          ) : null}
+          {feedback ? <div className={`mt-4 tm-alert ${feedback.tone === "error" ? "tm-alert-danger" : "tm-alert-success"}`}>{feedback.message}</div> : null}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <StatusBadge label={selectedCase.reviewSignals.latestActionLabel} tone="info" />
+            <StatusBadge
+              label={selectedCase.reviewSignals.needsMoreInfo ? "follow-up open" : "no open follow-up"}
+              tone={selectedCase.reviewSignals.needsMoreInfo ? "warning" : "success"}
+            />
           </div>
-        ) : null}
-        {feedback ? <div className={`mt-4 tm-alert ${feedback.tone === "error" ? "tm-alert-danger" : "tm-alert-success"}`}>{feedback.message}</div> : null}
-        <div className="mt-5 flex flex-wrap gap-2">
-          <StatusBadge label={selectedCase.reviewSignals.latestActionLabel} tone="info" />
-          <StatusBadge
-            label={selectedCase.reviewSignals.needsMoreInfo ? "follow-up open" : "no open follow-up"}
-            tone={selectedCase.reviewSignals.needsMoreInfo ? "warning" : "success"}
-          />
         </div>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button className="tm-btn tm-btn-primary" disabled={pendingAction !== null || !allowedActions?.approve} onClick={() => onDecision("approve")} type="button">
-            {pendingAction === "approve" ? "Approving..." : "Approve verification"}
-          </button>
-          <button
-            className="tm-btn tm-btn-outline"
-            disabled={pendingAction !== null || !allowedActions?.request_more_info}
-            onClick={() => onDecision("request_more_info")}
-            type="button"
-          >
-            {pendingAction === "request_more_info" ? "Requesting..." : "Request more info"}
-          </button>
-          <button className="tm-btn tm-btn-outline" disabled={pendingAction !== null || !allowedActions?.reject} onClick={() => onDecision("reject")} type="button">
-            {pendingAction === "reject" ? "Rejecting..." : "Reject verification"}
-          </button>
-          <button className="tm-btn tm-btn-outline" disabled={pendingAction !== null || !allowedActions?.suspend} onClick={() => onDecision("suspend")} type="button">
-            {pendingAction === "suspend" ? "Suspending..." : "Suspend lifecycle"}
-          </button>
+
+        <div className="tm-soft-band h-full">
+          <p className="tm-label">Decision controls</p>
+          <div className="mt-4 grid gap-3">
+            <div className="tm-document-card">
+              <p className="text-sm font-semibold text-slate-950">Reviewer actions</p>
+              <p className="tm-muted mt-2 text-sm">
+                Apply the final verification outcome once the packet, market coverage, and payout setup all line up with policy.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button className="tm-btn tm-btn-primary" disabled={pendingAction !== null || !allowedActions?.approve} onClick={() => onDecision("approve")} type="button">
+                  {pendingAction === "approve" ? "Approving..." : "Approve verification"}
+                </button>
+                <button
+                  className="tm-btn tm-btn-outline"
+                  disabled={pendingAction !== null || !allowedActions?.request_more_info}
+                  onClick={() => onDecision("request_more_info")}
+                  type="button"
+                >
+                  {pendingAction === "request_more_info" ? "Requesting..." : "Request more info"}
+                </button>
+                <button className="tm-btn tm-btn-outline" disabled={pendingAction !== null || !allowedActions?.reject} onClick={() => onDecision("reject")} type="button">
+                  {pendingAction === "reject" ? "Rejecting..." : "Reject verification"}
+                </button>
+                <button className="tm-btn tm-btn-outline" disabled={pendingAction !== null || !allowedActions?.suspend} onClick={() => onDecision("suspend")} type="button">
+                  {pendingAction === "suspend" ? "Suspending..." : "Suspend lifecycle"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -157,7 +157,7 @@ export function SystemConfigDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -165,7 +165,7 @@ export function SystemConfigDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState
           actionLabel="Reset selection"
           description="The selected configuration item is no longer available in the current snapshot."
@@ -180,7 +180,7 @@ export function SystemConfigDetailPanel({
   const availableActions = getAvailableActions(selectedRecord, role);
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Configuration Detail</p>

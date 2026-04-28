@@ -3,7 +3,9 @@ import type {
   ModerationAction,
   ModerationActionPayload,
   ModerationActionResult,
+  ModerationAuditRecord,
   ModerationListingRecord,
+  ModerationPartnerNotification,
 } from "@/modules/listing-moderation/types";
 import type { AdminRole } from "@/modules/auth/types";
 
@@ -139,6 +141,74 @@ export type ListingModerationRepository = {
     payload: ModerationActionPayload,
     role: AdminRole,
   ): Promise<ModerationActionResult>;
+};
+
+export const realListingModerationRepository: ListingModerationRepository = {
+  async applyAction(records, payload, role) {
+    if (payload.listingIds.length === 0) {
+      throw new Error("Select at least one listing before applying a moderation action.");
+    }
+
+    const targets = records.filter((record) => payload.listingIds.includes(record.id));
+    if (targets.length !== payload.listingIds.length) {
+      throw new Error("One or more selected listings were not found.");
+    }
+
+    for (const record of targets) {
+      if (!canApplyModerationAction(role, record, payload.action)) {
+        throw new Error(`Action ${payload.action} is not allowed for listing ${record.id}.`);
+      }
+    }
+
+    const updatedRecords: ModerationListingRecord[] = [];
+    let lastAuditRecord: ModerationAuditRecord | null = null;
+    const partnerNotifications: ModerationPartnerNotification[] = [];
+
+    for (const target of targets) {
+      const response = await fetch(`/api/backend/moderation/listings/${target.id}/decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: payload.action,
+          listingKind: target.kind,
+          reasonCode: payload.reasonCode,
+          note: payload.note,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({})) as Record<string, unknown>;
+        const message =
+          (errorBody?.message as string) ??
+          (errorBody?.error as { message?: string })?.message ??
+          `Failed to apply ${payload.action} to listing ${target.id}.`;
+        throw new Error(message);
+      }
+
+      const body = await response.json() as {
+        data: {
+          record: ModerationListingRecord;
+          auditRecord: ModerationAuditRecord;
+          partnerNotification: ModerationPartnerNotification;
+        };
+      };
+      updatedRecords.push(body.data.record);
+      lastAuditRecord = body.data.auditRecord;
+      partnerNotifications.push(body.data.partnerNotification);
+    }
+
+    const nextRecords = records.map((record) => {
+      const updated = updatedRecords.find((r) => r.id === record.id);
+      return updated ?? record;
+    });
+
+    return {
+      records: nextRecords,
+      updatedIds: payload.listingIds,
+      auditRecord: lastAuditRecord!,
+      partnerNotifications,
+    };
+  },
 };
 
 export const mockListingModerationRepository: ListingModerationRepository = {

@@ -35,7 +35,7 @@ export function ApiClientsDetailPanel({
 }) {
   if (!selectedRecord) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState
           actionLabel="Reset API client selection"
           description="The selected API client is no longer available in the current queue snapshot."
@@ -48,7 +48,7 @@ export function ApiClientsDetailPanel({
   }
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Client Detail</p>

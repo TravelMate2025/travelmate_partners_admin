@@ -93,7 +93,7 @@ export function NotificationsDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -101,7 +101,7 @@ export function NotificationsDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel">
+      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
         <SurfaceState
           actionLabel="Reset message selection"
           description="The selected partner message is no longer available in the current communication snapshot."
@@ -114,7 +114,7 @@ export function NotificationsDetailPanel({
   }
 
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Message Detail</p>

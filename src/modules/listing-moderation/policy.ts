@@ -9,7 +9,7 @@ import type {
 const actionByStatus: Record<ListingLifecycleStatus, ModerationAction[]> = {
   draft: ["flag"],
   pending: ["approve", "reject", "send_back", "flag"],
-  approved: ["flag"],
+  approved: ["flag", "emergency_unpublish"],
   live: ["flag", "emergency_unpublish"],
   paused: ["flag"],
   rejected: ["flag"],
