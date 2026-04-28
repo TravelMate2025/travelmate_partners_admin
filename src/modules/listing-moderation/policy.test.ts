@@ -19,6 +19,17 @@ describe("listing moderation policy", () => {
     expect(canApplyModerationAction("reviewer", liveStay!, "emergency_unpublish")).toBe(false);
   });
 
+  it("does not crash and allows approve+flag for paused_by_admin listings", () => {
+    const anyRecord = getListingModerationRecords()[0];
+    const pausedByAdmin = { ...anyRecord, status: "paused_by_admin" as const };
+
+    expect(() => canApplyModerationAction("operations", pausedByAdmin, "emergency_unpublish")).not.toThrow();
+    expect(canApplyModerationAction("operations", pausedByAdmin, "emergency_unpublish")).toBe(false);
+    expect(canApplyModerationAction("operations", pausedByAdmin, "approve")).toBe(true);
+    expect(canApplyModerationAction("operations", pausedByAdmin, "flag")).toBe(true);
+    expect(canApplyModerationAction("operations", pausedByAdmin, "reject")).toBe(false);
+  });
+
   it("derives bulk actions from the full selected record set", () => {
     const records = getListingModerationRecords();
     const pendingSelections = records.filter((record) => record.status === "pending");

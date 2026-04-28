@@ -63,6 +63,15 @@ export type NotificationsRepository = {
   ): Promise<NotificationActionResult>;
 };
 
+type NotificationsSendEnvelope = {
+  data?: {
+    record?: NotificationRecord;
+    auditRecord?: NotificationActionResult["auditRecord"];
+  };
+  message?: string;
+  error?: { message?: string };
+};
+
 export const mockNotificationsRepository: NotificationsRepository = {
   async applyAction(records, payload, role) {
     const record = records.find((item) => item.id === payload.notificationId);
@@ -140,6 +149,65 @@ export const mockNotificationsRepository: NotificationsRepository = {
       records: records.map((item) => (item.id === record.id ? updatedRecord : item)),
       updatedRecord,
       auditRecord: updatedRecord.latestAuditRecord,
+    };
+  },
+};
+
+export const realNotificationsRepository: NotificationsRepository = {
+  async applyAction(records, payload, role) {
+    const selected = records.find((item) => item.id === payload.notificationId) ?? records[0];
+    if (!selected) {
+      throw new Error("No notification draft is available to send.");
+    }
+    if (!canSendNotification(role, { ...selected, kind: payload.kind })) {
+      throw new Error("This notification cannot be sent with the current role and message type.");
+    }
+
+    const validationError = validateNotificationPayload(payload, role);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const response = await fetch("/api/backend/notifications/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        kind: payload.kind,
+        audienceSegment: payload.audienceSegment,
+        region: payload.region,
+        channels: payload.channels,
+        note: payload.note,
+      }),
+    });
+
+    const body = (await response.json().catch(() => null)) as NotificationsSendEnvelope | null;
+    if (!response.ok || !body?.data?.record || !body.data.auditRecord) {
+      throw new Error(
+        body?.message ??
+          body?.error?.message ??
+          "Unable to send partner message.",
+      );
+    }
+
+    const updatedRecord = body.data.record;
+    const auditRecord = body.data.auditRecord;
+
+    const existingIndex = records.findIndex((item) => item.id === updatedRecord.id);
+    const nextRecords = [...records];
+    if (existingIndex >= 0) {
+      nextRecords[existingIndex] = updatedRecord;
+    } else {
+      nextRecords.unshift(updatedRecord);
+    }
+
+    return {
+      records: nextRecords,
+      updatedRecord,
+      auditRecord,
     };
   },
 };

@@ -20,6 +20,8 @@ function getActionLabel(action: SupportAction) {
     escalate: { idle: "Escalate case", pending: "Escalating..." },
     resolve: { idle: "Resolve case", pending: "Resolving..." },
     run_diagnostics: { idle: "Run safe diagnostics", pending: "Running diagnostics..." },
+    reinstate_listing: { idle: "Reinstate listing", pending: "Reinstating..." },
+    dismiss_appeal: { idle: "Dismiss appeal", pending: "Dismissing..." },
   };
   return labels[action];
 }
@@ -49,7 +51,7 @@ export function SupportIncidentsDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -57,7 +59,7 @@ export function SupportIncidentsDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset selection"
           description="The selected support case is no longer available in this snapshot."
@@ -70,7 +72,7 @@ export function SupportIncidentsDetailPanel({
   }
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Support Case Detail</p>
@@ -145,7 +147,7 @@ export function SupportIncidentsDetailPanel({
                 const isPending = pendingAction === action;
                 const isBlocked = pendingAction !== null && !isPending;
                 const isNeutral = action === "log_note" || action === "run_diagnostics";
-                const isDanger = action === "escalate";
+                const isDanger = action === "escalate" || action === "dismiss_appeal";
                 return (
                   <button
                     aria-label={idle}

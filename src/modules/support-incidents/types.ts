@@ -7,7 +7,14 @@ export type SupportIncidentQueue = "partner_support" | "trust_ops" | "financial_
 export type SupportIncidentType = "partner_access" | "listing_sync" | "refund_followup" | "verification_handoff" | "policy_concern";
 export type SupportIncidentState = "none" | "active" | "mitigated";
 export type SupportDiagnosticStatus = "pass" | "warn" | "blocked";
-export type SupportAction = "log_note" | "flag_incident" | "escalate" | "resolve" | "run_diagnostics";
+export type SupportAction =
+  | "log_note"
+  | "flag_incident"
+  | "escalate"
+  | "resolve"
+  | "run_diagnostics"
+  | "reinstate_listing"
+  | "dismiss_appeal";
 
 export type SupportLinkedContext = {
   id: string;
@@ -53,6 +60,9 @@ export type SupportIncidentRecord = {
   linkedContext: SupportLinkedContext[];
   diagnostics: SupportDiagnosticSnapshot[];
   activity: ActivityItem[];
+  appealId?: string;
+  appealListingKind?: "stay" | "transfer";
+  appealListingId?: string;
 };
 
 export type SupportIncidentFilterState = {

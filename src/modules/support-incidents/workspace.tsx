@@ -12,7 +12,7 @@ import {
   getSupportIncidentPolicy,
   matchesSupportIncidentFilter,
 } from "@/modules/support-incidents/rules";
-import { mockSupportIncidentRepository } from "@/modules/support-incidents/service";
+import { applyListingAppealAction, mockSupportIncidentRepository } from "@/modules/support-incidents/service";
 import type { SupportAction, SupportIncidentFilterState, SupportIncidentRecord } from "@/modules/support-incidents/types";
 
 type SupportIncidentsSurfaceState =
@@ -54,6 +54,12 @@ export function SupportIncidentsWorkspace({
   const summary = useMemo(() => buildSupportIncidentSummary(records), [records]);
   const policy = getSupportIncidentPolicy(role);
   const availableActions = activeRecord ? getAvailableSupportActions(activeRecord, role) : [];
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = window.setTimeout(() => setFeedback(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -121,16 +127,15 @@ export function SupportIncidentsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockSupportIncidentRepository.applyAction(
-        records,
-        {
-          caseId: selectedRecord.id,
-          action,
-          actor,
-          note,
-        },
-        role,
-      );
+      const payload = {
+        caseId: selectedRecord.id,
+        action,
+        actor,
+        note,
+      };
+      const result = selectedRecord.appealId
+        ? await applyListingAppealAction(records, payload)
+        : await mockSupportIncidentRepository.applyAction(records, payload, role);
 
       setRecords(result.records);
       syncSelection(result.updatedRecord);
@@ -180,7 +185,15 @@ export function SupportIncidentsWorkspace({
   }
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[0.94fr_1.06fr]">
+    <>
+      {feedback && selectedRecord?.appealId ? (
+        <div className="fixed bottom-5 right-5 z-50 max-w-md">
+          <div className={`tm-alert shadow-lg ${feedback.tone === "error" ? "tm-alert-danger" : "tm-alert-success"}`}>
+            {feedback.tone === "error" ? `Action failed: ${feedback.message}` : `Action completed: ${feedback.message}`}
+          </div>
+        </div>
+      ) : null}
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,0.94fr)_minmax(28rem,1.06fr)] xl:items-start">
       <SupportIncidentsQueuePanel
         filters={filters}
         onFilterChange={setFilters}
@@ -214,6 +227,7 @@ export function SupportIncidentsWorkspace({
         policySummary={policy.summary}
         selectedRecord={activeRecord}
       />
-    </section>
+      </section>
+    </>
   );
 }

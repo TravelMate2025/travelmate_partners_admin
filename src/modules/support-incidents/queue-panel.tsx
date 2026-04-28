@@ -33,7 +33,7 @@ export function SupportIncidentsQueuePanel({
   };
 }) {
   return (
-    <article className="tm-panel">
+    <article className="tm-panel min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Support Operations</p>

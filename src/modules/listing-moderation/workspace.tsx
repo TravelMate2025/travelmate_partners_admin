@@ -99,6 +99,7 @@ export function ListingModerationWorkspace({
         status === "approved" ||
         status === "live" ||
         status === "paused" ||
+        status === "paused_by_admin" ||
         status === "rejected" ||
         status === "archived"
           ? status
@@ -157,6 +158,14 @@ export function ListingModerationWorkspace({
   }
 
   async function applyAction(action: ModerationAction, listingIds: string[]) {
+    if ((action === "flag" || action === "emergency_unpublish") && note.trim().length === 0) {
+      setFeedback({
+        tone: "error",
+        message: "Provide a moderation note when flagging or emergency-unpublishing a listing.",
+      });
+      return;
+    }
+
     setPendingAction(action);
     setFeedback(null);
 

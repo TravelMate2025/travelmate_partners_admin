@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { SurfaceState } from "@/components/common/surface-state";
-import { ReportsDashboardPanel } from "@/modules/reports/dashboard-panel";
 import { getReportSnapshot } from "@/modules/reports/data";
+import { ReportsDashboardPanel } from "@/modules/reports/dashboard-panel";
 import { ReportsDetailPanel } from "@/modules/reports/detail-panel";
-import { mockReportsRepository } from "@/modules/reports/service";
+import { fetchReportsSnapshot, mockReportsRepository, realReportsRepository } from "@/modules/reports/service";
 import type {
   ReportExportRecord,
   ReportMetricKey,
+  ReportSnapshot,
   ReportsRegion,
   ReportsSurfaceState,
   ReportsTimeframe,
@@ -17,11 +18,15 @@ import type {
 
 export function ReportsWorkspace({
   actor,
+  initialSnapshot,
   initialExports,
+  mode = "mock",
   surfaceState,
 }: {
   actor: string;
+  initialSnapshot?: ReportSnapshot;
   initialExports: ReportExportRecord[];
+  mode?: "mock" | "real";
   surfaceState?: ReportsSurfaceState;
 }) {
   const [region, setRegion] = useState<ReportsRegion>("all");
@@ -34,10 +39,42 @@ export function ReportsWorkspace({
     "api_adoption",
   ]);
   const [exports, setExports] = useState(initialExports);
+  const [snapshot, setSnapshot] = useState<ReportSnapshot>(initialSnapshot ?? getReportSnapshot("all", "30d"));
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [pendingExport, setPendingExport] = useState(false);
+  const [loadingSnapshot, setLoadingSnapshot] = useState(false);
 
-  const snapshot = useMemo(() => getReportSnapshot(region, timeframe), [region, timeframe]);
+  const repository = mode === "real" ? realReportsRepository : mockReportsRepository;
+
+  useEffect(() => {
+    if (mode !== "real") {
+      setSnapshot(getReportSnapshot(region, timeframe));
+      return;
+    }
+    let active = true;
+    setLoadingSnapshot(true);
+    fetchReportsSnapshot(region, timeframe)
+      .then((result) => {
+        if (!active) return;
+        setSnapshot(result.snapshot);
+        setExports(result.exports);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setFeedback({
+          tone: "error",
+          message: error instanceof Error ? error.message : "Unable to load report snapshot.",
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoadingSnapshot(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [mode, region, timeframe]);
 
   function toggleSection(section: ReportMetricKey) {
     setSelectedSections((current) =>
@@ -50,7 +87,7 @@ export function ReportsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockReportsRepository.exportReport(exports, {
+      const result = await repository.exportReport(exports, {
         actor,
         action: "export_report",
         region,
@@ -104,6 +141,7 @@ export function ReportsWorkspace({
         snapshot={snapshot}
         timeframe={timeframe}
       />
+      {loadingSnapshot ? <p className="tm-muted text-sm">Loading report snapshot...</p> : null}
     </section>
   );
 }

@@ -7,7 +7,7 @@ import type { AdminRole } from "@/modules/auth/types";
 import { NotificationsDetailPanel } from "@/modules/notifications/detail-panel";
 import { NotificationsQueuePanel } from "@/modules/notifications/queue-panel";
 import { buildNotificationsSummary, canSendNotification, getNotificationsPolicy, matchesNotificationFilter } from "@/modules/notifications/rules";
-import { mockNotificationsRepository } from "@/modules/notifications/service";
+import { mockNotificationsRepository, realNotificationsRepository } from "@/modules/notifications/service";
 import type {
   NotificationAction,
   NotificationAudienceSegment,
@@ -18,32 +18,57 @@ import type {
   NotificationsSurfaceState,
 } from "@/modules/notifications/types";
 
+function buildDraftRecord(actor: string): NotificationRecord {
+  const now = new Date().toISOString();
+  return {
+    id: "notification-draft-local",
+    title: "Partner message draft",
+    body: "Write a clear partner-facing update before sending.",
+    kind: "direct",
+    status: "draft",
+    audienceSegment: "verified_partners",
+    region: null,
+    channels: ["email"],
+    targetPartnerCount: 0,
+    createdAt: now,
+    createdBy: actor,
+    summary: "Draft message prepared for partner communication.",
+    deliveryMetadata: null,
+    operationalNote: "",
+    history: [],
+    latestAuditRecord: null,
+  };
+}
+
 export function NotificationsWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: NotificationRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: NotificationsSurfaceState;
 }) {
-  const [records, setRecords] = useState(initialRecords);
+  const seededRecords = initialRecords.length > 0 ? initialRecords : [buildDraftRecord(actor)];
+  const [records, setRecords] = useState(seededRecords);
   const [filters, setFilters] = useState<NotificationFilterState>({
     query: "",
     kind: "all",
     status: "all",
     channel: "all",
   });
-  const [selectedId, setSelectedId] = useState(initialRecords[0]?.id ?? "");
-  const [title, setTitle] = useState(initialRecords[0]?.title ?? "");
-  const [body, setBody] = useState(initialRecords[0]?.body ?? "");
-  const [kind, setKind] = useState<NotificationKind>(initialRecords[0]?.kind ?? "direct");
-  const [audienceSegment, setAudienceSegment] = useState<NotificationAudienceSegment>(initialRecords[0]?.audienceSegment ?? "verified_partners");
-  const [region, setRegion] = useState(initialRecords[0]?.region ?? "");
-  const [channels, setChannels] = useState<NotificationChannel[]>(initialRecords[0]?.channels ?? ["email"]);
-  const [note, setNote] = useState(initialRecords[0]?.operationalNote ?? "");
+  const [selectedId, setSelectedId] = useState(seededRecords[0]?.id ?? "");
+  const [title, setTitle] = useState(seededRecords[0]?.title ?? "");
+  const [body, setBody] = useState(seededRecords[0]?.body ?? "");
+  const [kind, setKind] = useState<NotificationKind>(seededRecords[0]?.kind ?? "direct");
+  const [audienceSegment, setAudienceSegment] = useState<NotificationAudienceSegment>(seededRecords[0]?.audienceSegment ?? "verified_partners");
+  const [region, setRegion] = useState(seededRecords[0]?.region ?? "");
+  const [channels, setChannels] = useState<NotificationChannel[]>(seededRecords[0]?.channels ?? ["email"]);
+  const [note, setNote] = useState(seededRecords[0]?.operationalNote ?? "");
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<NotificationAction | null>(null);
   const [hasLoadedUrlState, setHasLoadedUrlState] = useState(false);
@@ -52,6 +77,7 @@ export function NotificationsWorkspace({
   const selectedRecord = useMemo(() => records.find((record) => record.id === selectedId) ?? null, [records, selectedId]);
   const policy = getNotificationsPolicy(role);
   const summary = useMemo(() => buildNotificationsSummary(records), [records]);
+  const repository = mode === "real" ? realNotificationsRepository : mockNotificationsRepository;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -121,7 +147,7 @@ export function NotificationsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockNotificationsRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           actor,
@@ -166,20 +192,6 @@ export function NotificationsWorkspace({
       <section className="grid gap-5">
         <article className="tm-panel">
           <SurfaceState description={surfaceState.description} title={surfaceState.title} tone={surfaceState.status} />
-        </article>
-      </section>
-    );
-  }
-
-  if (records.length === 0) {
-    return (
-      <section className="grid gap-5">
-        <article className="tm-panel">
-          <SurfaceState
-            description="Partner communication drafts and delivery logs will appear here once messaging data is available."
-            title="Messaging workspace is empty"
-            tone="empty"
-          />
         </article>
       </section>
     );

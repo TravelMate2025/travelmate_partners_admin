@@ -6,6 +6,7 @@ export type ListingLifecycleStatus =
   | "approved"
   | "live"
   | "paused"
+  | "paused_by_admin"
   | "rejected"
   | "archived";
 

@@ -45,9 +45,9 @@ describe("NotificationsWorkspace", () => {
     expect(screen.getAllByRole("option", { name: "broadcast" })[1]).toBeDisabled();
   });
 
-  it("renders explicit empty states", () => {
+  it("shows a local draft when no records are returned and keeps filter empty state", () => {
     const { unmount } = render(<NotificationsWorkspace actor="Maya Singh" initialRecords={[]} role="support" />);
-    expect(screen.getByText("Messaging workspace is empty")).toBeInTheDocument();
+    expect(screen.getAllByText("Partner message draft").length).toBeGreaterThan(0);
 
     unmount();
     render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);

@@ -48,6 +48,27 @@ describe("ListingModerationWorkspace", () => {
     expect(screen.getAllByText(/Please clarify amenities and route coverage/i).length).toBeGreaterThan(0);
   });
 
+  it("requires a moderation note for flag actions", async () => {
+    render(
+      <ListingModerationWorkspace
+        actor="Operations Admin"
+        initialRecords={getListingModerationRecords()}
+        role="operations"
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/Capture moderation reason/i), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Flag" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Provide a moderation note when flagging or emergency-unpublishing a listing."),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("supports bulk flag actions for selected listings", async () => {
     render(
       <ListingModerationWorkspace

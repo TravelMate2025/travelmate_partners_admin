@@ -14,7 +14,7 @@ import {
   getVisiblePayoutFields,
   matchesPayoutReviewFilter,
 } from "@/modules/payout-review/rules";
-import { mockPayoutReviewRepository } from "@/modules/payout-review/service";
+import { mockPayoutReviewRepository, realPayoutReviewRepository } from "@/modules/payout-review/service";
 import type {
   PayoutReviewAction,
   PayoutReviewFilterState,
@@ -42,13 +42,16 @@ export function PayoutReviewWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: PayoutReviewRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: PayoutReviewSurfaceState;
 }) {
+  const repository = mode === "real" ? realPayoutReviewRepository : mockPayoutReviewRepository;
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<PayoutReviewFilterState>({
     query: "",
@@ -149,7 +152,7 @@ export function PayoutReviewWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockPayoutReviewRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           caseId: selectedRecord.id,

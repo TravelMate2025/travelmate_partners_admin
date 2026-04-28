@@ -39,6 +39,18 @@ export type FinancialOpsRepository = {
   ): Promise<FinancialOpsActionResult>;
 };
 
+type FinancialOpsListEnvelope = {
+  data?: { records?: FinancialOpsRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+type FinancialOpsDecisionEnvelope = {
+  data?: FinancialOpsActionResult;
+  message?: string;
+  error?: { message?: string };
+};
+
 export const mockFinancialOpsRepository: FinancialOpsRepository = {
   async applyAction(records, payload, role) {
     const record = records.find((item) => item.id === payload.caseId);
@@ -153,5 +165,32 @@ export const mockFinancialOpsRepository: FinancialOpsRepository = {
       updatedRecord,
       auditRecord,
     };
+  },
+};
+
+export async function fetchFinancialOpsRecords(): Promise<FinancialOpsRecord[]> {
+  const response = await fetch("/api/backend/financial-ops/cases", {
+    method: "GET",
+    cache: "no-store",
+  });
+  const body = (await response.json().catch(() => null)) as FinancialOpsListEnvelope | null;
+  if (!response.ok || !body?.data?.records) {
+    throw new Error(body?.message ?? body?.error?.message ?? "Unable to load financial operations queue.");
+  }
+  return body.data.records;
+}
+
+export const realFinancialOpsRepository: FinancialOpsRepository = {
+  async applyAction(_records, payload, _role) {
+    const response = await fetch(`/api/backend/financial-ops/cases/${encodeURIComponent(payload.caseId)}/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as FinancialOpsDecisionEnvelope | null;
+    if (!response.ok || !body?.data?.records || !body.data.updatedRecord || !body.data.auditRecord) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to apply financial operations action.");
+    }
+    return body.data;
   },
 };

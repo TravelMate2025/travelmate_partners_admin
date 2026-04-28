@@ -78,9 +78,10 @@ export function TaxonomyControlPanel({ role }: { role: AdminRole }) {
     if (!canEdit) {
       return;
     }
+    const formElement = event.currentTarget;
     setSaving(true);
     setMessage("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const payload = {
       category: newCategory,
       code: String(form.get("code") ?? ""),
@@ -101,7 +102,7 @@ export function TaxonomyControlPanel({ role }: { role: AdminRole }) {
     await loadItems();
     setSaving(false);
     setMessage("Taxonomy option created as draft.");
-    event.currentTarget.reset();
+    formElement.reset();
   }
 
   async function updateStatus(itemId: string, status: TaxonomyStatus) {
@@ -172,6 +173,16 @@ export function TaxonomyControlPanel({ role }: { role: AdminRole }) {
       <p className="tm-muted mt-1 text-sm">
         Manage amenities, property types, and vehicle classes used by partner listing forms.
       </p>
+      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+        <p className="font-semibold text-slate-900">Before you add a taxonomy option</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li><strong>Category:</strong> choose where this appears (Amenities, Property Types, Vehicle Classes).</li>
+          <li><strong>Code:</strong> stable internal key (lowercase letters, numbers, underscores only). Example: <code>boutique_hotel</code>.</li>
+          <li><strong>Label:</strong> admin/partner-facing display name. Example: <code>Boutique Hotel</code>.</li>
+          <li><strong>Status:</strong> new options are created as <strong>Draft</strong>. Use <strong>Publish</strong> to make them selectable by partners.</li>
+          <li><strong>Deprecate:</strong> removes an option from new selections but does not delete existing listing records.</li>
+        </ul>
+      </div>
 
       {loading ? (
         <p className="mt-3 text-sm text-slate-600">Loading taxonomy options...</p>
@@ -200,14 +211,23 @@ export function TaxonomyControlPanel({ role }: { role: AdminRole }) {
           <label className="tm-field">
             <span className="tm-field-label">Code</span>
             <input className="tm-input" name="code" placeholder="e.g. boutique_hotel" required />
+            <span className="tm-muted mt-1 text-xs">
+              Use a permanent machine key. Avoid renaming after go-live.
+            </span>
           </label>
           <label className="tm-field">
             <span className="tm-field-label">Label</span>
             <input className="tm-input" name="label" placeholder="e.g. Boutique Hotel" required />
+            <span className="tm-muted mt-1 text-xs">
+              This is what partners see in dropdowns.
+            </span>
           </label>
           <label className="tm-field">
             <span className="tm-field-label">Sort Order</span>
             <input className="tm-input" defaultValue={100} min={0} name="sortOrder" type="number" />
+            <span className="tm-muted mt-1 text-xs">
+              Lower numbers appear first in partner forms.
+            </span>
           </label>
           <div className="md:col-span-4">
             <button className="tm-btn tm-btn-primary" disabled={saving} type="submit">

@@ -2,11 +2,22 @@ import { AdminShell } from "@/components/common/admin-shell";
 import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getFinancialOpsRecords } from "@/modules/financial-ops/data";
+import { getFinancialOpsFromApi } from "@/modules/financial-ops/server";
 import { FinancialOpsWorkspace } from "@/modules/financial-ops/workspace";
 
 export default async function FinancialOpsPage() {
   const session = await getAdminSession();
   requireAdminRouteAccess("/financial-ops", session);
+  const { records, error } = await getFinancialOpsFromApi();
+  const initialRecords = records.length > 0 ? records : getFinancialOpsRecords();
+  const surfaceState =
+    error && records.length === 0
+      ? {
+          status: "error" as const,
+          title: "Financial operations queue is unavailable",
+          description: error,
+        }
+      : undefined;
 
   return (
     <AdminShell
@@ -15,8 +26,10 @@ export default async function FinancialOpsPage() {
     >
       <FinancialOpsWorkspace
         actor={session.user.name}
-        initialRecords={getFinancialOpsRecords()}
+        initialRecords={initialRecords}
         role={session.user.role}
+        mode="real"
+        surfaceState={surfaceState}
       />
     </AdminShell>
   );

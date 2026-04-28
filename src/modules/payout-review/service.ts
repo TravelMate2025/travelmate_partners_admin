@@ -60,6 +60,18 @@ export type PayoutReviewRepository = {
   ): Promise<PayoutReviewActionResult>;
 };
 
+type PayoutReviewListEnvelope = {
+  data?: { records?: PayoutReviewRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+type PayoutReviewDecisionEnvelope = {
+  data?: PayoutReviewActionResult;
+  message?: string;
+  error?: { message?: string };
+};
+
 export const mockPayoutReviewRepository: PayoutReviewRepository = {
   async applyAction(records, payload, role) {
     const record = records.find((item) => item.id === payload.caseId);
@@ -156,5 +168,34 @@ export const mockPayoutReviewRepository: PayoutReviewRepository = {
       updatedRecord,
       auditRecord,
     };
+  },
+};
+
+export async function fetchPayoutReviewRecords(): Promise<PayoutReviewRecord[]> {
+  const response = await fetch("/api/backend/payout-review/cases", {
+    method: "GET",
+    cache: "no-store",
+  });
+  const body = (await response.json().catch(() => null)) as PayoutReviewListEnvelope | null;
+  if (!response.ok || !body?.data?.records) {
+    throw new Error(body?.message ?? body?.error?.message ?? "Unable to load payout review queue.");
+  }
+  return body.data.records;
+}
+
+export const realPayoutReviewRepository: PayoutReviewRepository = {
+  async applyAction(_records, payload, _role) {
+    const response = await fetch(`/api/backend/payout-review/cases/${encodeURIComponent(payload.caseId)}/decision`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as PayoutReviewDecisionEnvelope | null;
+    if (!response.ok || !body?.data?.records || !body.data.updatedRecord || !body.data.auditRecord) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to apply payout review action.");
+    }
+    return body.data;
   },
 };

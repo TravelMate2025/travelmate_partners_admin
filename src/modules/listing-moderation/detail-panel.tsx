@@ -234,6 +234,9 @@ export function ListingModerationDetailPanel({
                   placeholder="Capture moderation reason, correction guidance, or emergency context..."
                   value={note}
                 />
+                <p className="tm-muted mt-2 text-xs">
+                  Required for Flag and Emergency unpublish actions.
+                </p>
               </label>
             </div>
           </div>

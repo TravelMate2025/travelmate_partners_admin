@@ -29,6 +29,14 @@ export function getSupportIncidentPolicy(role: AdminRole): SupportIncidentPolicy
 }
 
 export function getAvailableSupportActions(record: SupportIncidentRecord, role: AdminRole): SupportAction[] {
+  if (record.appealId) {
+    const isOperationsRole = role === "operations" || role === "super_admin";
+    if (!isOperationsRole || record.status === "resolved") {
+      return [];
+    }
+    return ["reinstate_listing", "dismiss_appeal"];
+  }
+
   const policy = getSupportIncidentPolicy(role);
   const actions: SupportAction[] = [];
 
@@ -51,6 +59,22 @@ export function validateSupportAction(
 ) {
   const policy = getSupportIncidentPolicy(role);
   const trimmedNote = note.trim();
+  const isAppeal = Boolean(record.appealId);
+
+  if (isAppeal) {
+    const isOperationsRole = role === "operations" || role === "super_admin";
+    if (!isOperationsRole) return "Only operations and super admin roles can resolve listing appeals.";
+    if (action !== "reinstate_listing" && action !== "dismiss_appeal") {
+      return "Only appeal resolution actions are available for this case.";
+    }
+    if (record.status === "resolved") {
+      return "This appeal is already resolved.";
+    }
+    if (trimmedNote.length < 12) {
+      return "Add a resolution note of at least 12 characters before resolving this appeal.";
+    }
+    return null;
+  }
 
   if (action === "log_note" && !policy.canLogNote) return "This role cannot add internal support notes.";
   if (action === "flag_incident" && !policy.canFlagIncident) return "This role cannot flag incidents.";

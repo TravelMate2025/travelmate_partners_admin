@@ -12,7 +12,7 @@ import {
   getFinancialOpsPolicy,
   matchesFinancialOpsFilter,
 } from "@/modules/financial-ops/rules";
-import { mockFinancialOpsRepository } from "@/modules/financial-ops/service";
+import { mockFinancialOpsRepository, realFinancialOpsRepository } from "@/modules/financial-ops/service";
 import type { FinancialOpsAction, FinancialOpsFilterState, FinancialOpsRecord } from "@/modules/financial-ops/types";
 
 type FinancialOpsSurfaceState =
@@ -27,13 +27,16 @@ export function FinancialOpsWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: FinancialOpsRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: FinancialOpsSurfaceState;
 }) {
+  const repository = mode === "real" ? realFinancialOpsRepository : mockFinancialOpsRepository;
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<FinancialOpsFilterState>({
     query: "",
@@ -135,7 +138,7 @@ export function FinancialOpsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockFinancialOpsRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           caseId: selectedRecord.id,

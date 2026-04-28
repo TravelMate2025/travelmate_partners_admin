@@ -20,6 +20,8 @@ function nextStatus(record: SupportIncidentRecord, action: SupportIncidentAction
       return "resolved";
     case "run_diagnostics":
     case "log_note":
+    case "reinstate_listing":
+    case "dismiss_appeal":
       return record.status;
   }
 }
@@ -33,6 +35,8 @@ function nextIncidentState(record: SupportIncidentRecord, action: SupportInciden
       return "mitigated";
     case "run_diagnostics":
     case "log_note":
+    case "reinstate_listing":
+    case "dismiss_appeal":
       return record.incidentState;
   }
 }
@@ -44,6 +48,8 @@ function buildActionLabel(action: SupportIncidentActionPayload["action"]) {
     escalate: "escalated",
     resolve: "resolved",
     run_diagnostics: "ran safe diagnostics for",
+    reinstate_listing: "reinstated listing from appeal for",
+    dismiss_appeal: "dismissed listing appeal for",
   };
   return labels[action];
 }
@@ -59,6 +65,8 @@ function buildActivityTitle(action: SupportIncidentActionPayload["action"]) {
     escalate: "Case escalated",
     resolve: "Case resolved",
     run_diagnostics: "Safe diagnostics completed",
+    reinstate_listing: "Listing reinstated from appeal",
+    dismiss_appeal: "Listing appeal dismissed",
   };
   return labels[action];
 }
@@ -99,6 +107,95 @@ export type SupportIncidentRepository = {
     role: AdminRole,
   ): Promise<SupportIncidentActionResult>;
 };
+
+type ResolveAppealEnvelope = {
+  data?: {
+    id: string;
+    status: string;
+    resolution?: string | null;
+    resolutionNote?: string | null;
+    resolvedAt?: string | null;
+    updatedAt?: string;
+  };
+  message?: string;
+  error?: { message?: string };
+};
+
+function getResolveAppealErrorMessage(body: ResolveAppealEnvelope | null, status: number): string {
+  return (
+    body?.message ??
+    body?.error?.message ??
+    `Unable to resolve listing appeal (HTTP ${status}).`
+  );
+}
+
+export async function applyListingAppealAction(
+  records: SupportIncidentRecord[],
+  payload: SupportIncidentActionPayload,
+): Promise<SupportIncidentActionResult> {
+  const record = records.find((item) => item.id === payload.caseId);
+  if (!record || !record.appealId) {
+    throw new Error("Selected listing appeal case was not found.");
+  }
+  if (payload.action !== "reinstate_listing" && payload.action !== "dismiss_appeal") {
+    throw new Error("Unsupported listing appeal action.");
+  }
+
+  const resolution = payload.action === "reinstate_listing" ? "reinstated" : "dismissed";
+  const response = await fetch(`/api/backend/support-incidents/listing-appeals/${encodeURIComponent(record.appealId)}/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      resolution,
+      resolutionNote: payload.note,
+      resolution_note: payload.note,
+    }),
+  });
+  const body = (await response.json().catch(() => null)) as ResolveAppealEnvelope | null;
+  if (!response.ok || !body?.data) {
+    throw new Error(getResolveAppealErrorMessage(body, response.status));
+  }
+
+  const timestamp = body.data.resolvedAt ?? body.data.updatedAt ?? new Date().toISOString();
+  const updatedRecord: SupportIncidentRecord = {
+    ...record,
+    status: "resolved",
+    incidentState: "mitigated",
+    operationalNote: body.data.resolutionNote ?? payload.note.trim(),
+    lastUpdatedAt: timestamp,
+    activity: [
+      {
+        id: `support-activity-${record.id}-${Date.now()}`,
+        title: payload.action === "reinstate_listing" ? "Listing reinstated from appeal" : "Listing appeal dismissed",
+        detail:
+          payload.action === "reinstate_listing"
+            ? `${payload.actor} reinstated this listing after reviewing the partner appeal.`
+            : `${payload.actor} dismissed this listing appeal and retained the suspension.`,
+        time: timestamp.slice(11, 16) + " UTC",
+        tone: payload.action === "reinstate_listing" ? "success" : "danger",
+      },
+      ...record.activity,
+    ],
+  };
+
+  const auditRecord: SupportIncidentAuditRecord = {
+    eventId: `support-appeal-audit-${record.id}-${Date.now()}`,
+    caseId: record.id,
+    actor: payload.actor,
+    action: payload.action,
+    summary:
+      payload.action === "reinstate_listing"
+        ? `${payload.actor} reinstated listing ${record.title} after appeal review.`
+        : `${payload.actor} dismissed listing appeal for ${record.title}.`,
+    status: "queued_for_followup",
+  };
+
+  return {
+    records: records.map((item) => (item.id === record.id ? updatedRecord : item)),
+    updatedRecord,
+    auditRecord,
+  };
+}
 
 export const mockSupportIncidentRepository: SupportIncidentRepository = {
   async applyAction(records, payload, role) {

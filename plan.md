@@ -226,6 +226,12 @@
 - Admin reviews incoming partner issues and flagged incidents.
 - System shows issue history, internal notes, escalation state, and diagnostics.
 - Admin records actions, escalates when needed, and resolves issues with traceability.
+- Listing suspension appeals (`paused_by_admin` listings where the partner has submitted an appeal) appear in the support/incident queue as a distinct appeal case type.
+- Admin opens an appeal case to see: listing name and kind, partner name, suspension moderation feedback reason, appeal message, and date submitted.
+- Admin resolves the appeal with a reinstate or dismiss decision and an optional resolution note.
+- Reinstate: triggers listing `approve` transition; listing becomes `approved` and partner is notified.
+- Dismiss: listing remains `paused_by_admin`; partner receives a dismissal notification with the resolution note.
+- Appeal queue requires `operations` role minimum for resolve actions; `viewer` role may read the queue.
 
 ### 2.15 Financial Operations and Settlement Management Flow
 - Admin opens financial operations for partner settlements.
@@ -276,7 +282,8 @@
 - Admin workflow status models must align with partner-facing models already established in `partner_app/AGENTS.md` and `partner_app/plan.md`, especially:
   - Verification: `pending`, `in_review`, `approved`, `rejected`
   - Verification-to-lifecycle mapping: verification `approved` promotes partner lifecycle to `verified`; verification `rejected` promotes partner lifecycle to `rejected`; `suspended` is an admin lifecycle control, not a verification outcome
-  - Listing: `draft`, `pending`, `approved`, `live`, `paused`, `rejected`, `archived`
+  - Listing: `draft`, `pending`, `approved`, `live`, `paused`, `paused_by_admin`, `rejected`, `archived`
+    - `paused_by_admin` is set by admin emergency unpublish; the partner has no self-service actions on this state; admin can reinstate (`approve`) or archive; partner UI shows "Suspended by platform" with moderation reason
   - Partner-facing settlement status: `pending_completion`, `processing`, `paid`, `failed`, `reversed`
   - Admin settlement run status: `queued`, `processing`, `completed`, `partial`, `failed`
   - Refund: `requested`, `partner_notified`, `refunded`, `disputed`, `recovered`
@@ -286,6 +293,7 @@
   - transfers become settlement-eligible after trip completion
   - daily/weekly/manual cadence affects disbursement timing only, not earning creation
 - Admin listing moderation in Flow 2.5 is the back-office counterpart to partner listing submission and correction workflows in partner Flows 2.5, 2.7, 2.9, and 2.10.
+- Admin listing suspension appeal resolution in Flow 2.14 is the back-office counterpart to partner listing suspension appeal submission in partner Flow 2.16.
 - Admin financial operations in Flow 2.15 is the back-office counterpart to partner wallet and settlement visibility in partner Flows 2.14 and 2.15.
 - Admin route and module naming should follow the current admin scaffold where applicable:
   - route slugs currently use `/partners` for partner operations and `/moderation` for listing moderation

@@ -12,6 +12,7 @@ const actionByStatus: Record<ListingLifecycleStatus, ModerationAction[]> = {
   approved: ["flag", "emergency_unpublish"],
   live: ["flag", "emergency_unpublish"],
   paused: ["flag"],
+  paused_by_admin: ["approve", "flag"],
   rejected: ["flag"],
   archived: [],
 };
