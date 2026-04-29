@@ -35,6 +35,8 @@ function buildDraftRecord(actor: string): NotificationRecord {
     summary: "Draft message prepared for partner communication.",
     deliveryMetadata: null,
     operationalNote: "",
+    source: "admin_outbound",
+    routing: {},
     history: [],
     latestAuditRecord: null,
   };
@@ -53,7 +55,11 @@ export function NotificationsWorkspace({
   mode?: "mock" | "real";
   surfaceState?: NotificationsSurfaceState;
 }) {
-  const seededRecords = initialRecords.length > 0 ? initialRecords : [buildDraftRecord(actor)];
+  const outboundRecords = useMemo(
+    () => initialRecords.filter((record) => (record.source ?? "admin_outbound") === "admin_outbound"),
+    [initialRecords],
+  );
+  const seededRecords = outboundRecords.length > 0 ? outboundRecords : [buildDraftRecord(actor)];
   const [records, setRecords] = useState(seededRecords);
   const [filters, setFilters] = useState<NotificationFilterState>({
     query: "",
@@ -69,6 +75,8 @@ export function NotificationsWorkspace({
   const [region, setRegion] = useState(seededRecords[0]?.region ?? "");
   const [channels, setChannels] = useState<NotificationChannel[]>(seededRecords[0]?.channels ?? ["email"]);
   const [note, setNote] = useState(seededRecords[0]?.operationalNote ?? "");
+  const [partnerIdsInput, setPartnerIdsInput] = useState("");
+  const [isAppealCompose, setIsAppealCompose] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<NotificationAction | null>(null);
   const [hasLoadedUrlState, setHasLoadedUrlState] = useState(false);
@@ -86,6 +94,13 @@ export function NotificationsWorkspace({
     const status = params.get("status");
     const channel = params.get("channel");
     const message = params.get("message");
+    const compose = params.get("compose");
+    const composeAudience = params.get("audience");
+    const composePartnerId = params.get("partnerId");
+    const composeSource = params.get("composeSource");
+    const composeTitle = params.get("title");
+    const composeBody = params.get("body");
+    const composeNote = params.get("note");
 
     setFilters({
       query: query ?? "",
@@ -95,11 +110,23 @@ export function NotificationsWorkspace({
     });
 
     if (message) {
-      syncSelection(initialRecords.find((record) => record.id === message));
+      syncSelection(outboundRecords.find((record) => record.id === message));
+    }
+    if (compose === "1") {
+      setIsAppealCompose(composeSource === "appeal");
+      if (composeTitle) setTitle(composeTitle);
+      if (composeBody) setBody(composeBody);
+      if (composeNote) setNote(composeNote);
+      if (composeAudience === "partner") {
+        setAudienceSegment("partner");
+      }
+      if (composePartnerId) {
+        setPartnerIdsInput(composePartnerId);
+      }
     }
 
     setHasLoadedUrlState(true);
-  }, [initialRecords]);
+  }, [outboundRecords]);
 
   useEffect(() => {
     if (!hasLoadedUrlState) return;
@@ -146,6 +173,23 @@ export function NotificationsWorkspace({
     setPendingAction(action);
     setFeedback(null);
 
+    if (isAppealCompose && audienceSegment !== "partner") {
+      setFeedback({
+        tone: "error",
+        message: "Appeal responses must target the specific partner. Set audience segment to 'partner'.",
+      });
+      setPendingAction(null);
+      return;
+    }
+    if (isAppealCompose && kind !== "direct") {
+      setFeedback({
+        tone: "error",
+        message: "Appeal responses must be sent as direct messages.",
+      });
+      setPendingAction(null);
+      return;
+    }
+
     try {
       const result = await repository.applyAction(
         records,
@@ -158,6 +202,13 @@ export function NotificationsWorkspace({
           kind,
           audienceSegment,
           region: audienceSegment === "region" ? region : null,
+          partnerIds:
+            audienceSegment === "partner"
+              ? partnerIdsInput
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter((item) => item.length > 0)
+              : [],
           channels,
           note,
         },
@@ -226,15 +277,25 @@ export function NotificationsWorkspace({
         kind={kind}
         note={note}
         onAction={(action) => void handleAction(action)}
-        onAudienceSegmentChange={setAudienceSegment}
+        onAudienceSegmentChange={(value) => {
+          setAudienceSegment(value);
+          if (isAppealCompose && value !== "partner") {
+            setFeedback({
+              tone: "error",
+              message: "This compose flow is for an appeal response. Keep audience segment as 'partner'.",
+            });
+          }
+        }}
         onBodyChange={setBody}
         onChannelToggle={toggleChannel}
         onKindChange={setKind}
         onNoteChange={setNote}
         onRegionChange={setRegion}
+        onPartnerIdsInputChange={setPartnerIdsInput}
         onResetSelection={resetSelection}
         onTitleChange={setTitle}
         pendingAction={pendingAction}
+        partnerIdsInput={partnerIdsInput}
         policySummary={policy.summary}
         region={region}
         selectedRecord={selectedRecord}

@@ -466,6 +466,40 @@ input {
   color: #8d3f30;
 }
 
+.tm-admin-toast-stack {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 70;
+  display: grid;
+  gap: 0.6rem;
+  width: min(26rem, calc(100vw - 2rem));
+}
+
+.tm-admin-toast {
+  border-radius: 0.85rem;
+  border: 1px solid rgba(24, 42, 38, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.8rem 0.95rem;
+  box-shadow: 0 12px 26px -16px rgba(16, 33, 29, 0.35);
+  color: #132925;
+}
+
+.tm-admin-toast-info {
+  border-color: rgba(14, 165, 233, 0.28);
+  background: rgba(14, 165, 233, 0.09);
+}
+
+.tm-admin-toast-success {
+  border-color: rgba(43, 122, 87, 0.24);
+  background: rgba(43, 122, 87, 0.1);
+}
+
+.tm-admin-toast-error {
+  border-color: rgba(200, 91, 67, 0.25);
+  background: rgba(200, 91, 67, 0.1);
+}
+
 .tm-review-listing {
   width: 100%;
   border-radius: 1rem;

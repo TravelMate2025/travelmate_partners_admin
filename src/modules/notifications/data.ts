@@ -17,6 +17,8 @@ export function getNotificationRecords(): NotificationRecord[] {
       summary: "Prepared broadcast for verified partners about revised payout-statement timing.",
       deliveryMetadata: null,
       operationalNote: "Coordinate with finance before sending broad payout communications.",
+      source: "admin_outbound",
+      routing: {},
       history: [
         {
           id: "notification-history-001",
@@ -52,6 +54,8 @@ export function getNotificationRecords(): NotificationRecord[] {
         isEstimated: false,
       },
       operationalNote: "One email bounce remains open with support for Safari Ride Network.",
+      source: "admin_outbound",
+      routing: {},
       history: [
         {
           id: "notification-history-002",
@@ -87,6 +91,8 @@ export function getNotificationRecords(): NotificationRecord[] {
         isEstimated: false,
       },
       operationalNote: "Keep support looped in if the client reports integration blockers.",
+      source: "admin_outbound",
+      routing: {},
       history: [
         {
           id: "notification-history-003",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import "@/app/globals.css";
+import { AdminToastCenter } from "@/components/common/admin-toast-center";
 import { AdminSessionProvider } from "@/modules/auth/admin-session-context";
 import { getAdminSession } from "@/modules/auth/session";
 
@@ -15,7 +16,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        <AdminSessionProvider session={session}>{children}</AdminSessionProvider>
+        <AdminSessionProvider session={session}>
+          {children}
+          <AdminToastCenter />
+        </AdminSessionProvider>
       </body>
     </html>
   );

@@ -7,7 +7,7 @@ import type { AdminRole } from "@/modules/auth/types";
 import { ApiClientsDetailPanel } from "@/modules/api-clients/detail-panel";
 import { ApiClientsQueuePanel } from "@/modules/api-clients/queue-panel";
 import { canApplyApiClientAction, getApiClientsPolicy } from "@/modules/api-clients/rules";
-import { mockApiClientsRepository } from "@/modules/api-clients/service";
+import { mockApiClientsRepository, realApiClientsRepository } from "@/modules/api-clients/service";
 import type {
   ApiClientAction,
   ApiClientFilterState,
@@ -35,13 +35,16 @@ export function ApiClientsWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: ApiClientRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: ApiClientsSurfaceState;
 }) {
+  const repository = mode === "real" ? realApiClientsRepository : mockApiClientsRepository;
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<ApiClientFilterState>({
     query: "",
@@ -144,7 +147,7 @@ export function ApiClientsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockApiClientsRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           actor,

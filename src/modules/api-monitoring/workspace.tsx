@@ -11,7 +11,7 @@ import {
   canApplyApiGovernanceAction,
   getApiMonitoringPolicy,
 } from "@/modules/api-monitoring/rules";
-import { mockApiMonitoringRepository } from "@/modules/api-monitoring/service";
+import { mockApiMonitoringRepository, realApiMonitoringRepository } from "@/modules/api-monitoring/service";
 import type {
   ApiGovernanceAction,
   ApiMonitoringFilterState,
@@ -40,13 +40,16 @@ export function ApiMonitoringWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: ApiMonitoringRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: ApiMonitoringSurfaceState;
 }) {
+  const repository = mode === "real" ? realApiMonitoringRepository : mockApiMonitoringRepository;
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<ApiMonitoringFilterState>({
     query: "",
@@ -151,7 +154,7 @@ export function ApiMonitoringWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockApiMonitoringRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           actor,

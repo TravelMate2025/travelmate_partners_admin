@@ -33,10 +33,12 @@ function targetSummary(segment: NotificationAudienceSegment, region: string | nu
       return "API client partners";
     case "region":
       return region ? `${region} partners` : "regional partners";
+    case "partner":
+      return "selected partner(s)";
   }
 }
 
-function estimatedTargetCount(segment: NotificationAudienceSegment, region: string | null) {
+function estimatedTargetCount(segment: NotificationAudienceSegment, region: string | null, partnerIds?: string[]) {
   switch (segment) {
     case "all_partners":
       return 240;
@@ -48,6 +50,8 @@ function estimatedTargetCount(segment: NotificationAudienceSegment, region: stri
       return 12;
     case "region":
       return region === "East Africa" ? 42 : 27;
+    case "partner":
+      return Math.max(1, partnerIds?.length ?? 1);
   }
 }
 
@@ -91,7 +95,7 @@ export const mockNotificationsRepository: NotificationsRepository = {
 
     const timestamp = new Date().toISOString();
     const target = targetSummary(payload.audienceSegment, payload.region);
-    const targetCount = estimatedTargetCount(payload.audienceSegment, payload.region);
+    const targetCount = estimatedTargetCount(payload.audienceSegment, payload.region, payload.partnerIds);
     const formattedTimestamp = formatTimestamp(timestamp);
 
     const updatedRecord = {
@@ -105,6 +109,8 @@ export const mockNotificationsRepository: NotificationsRepository = {
       channels: payload.channels,
       targetPartnerCount: targetCount,
       operationalNote: payload.note.trim(),
+      source: "admin_outbound" as const,
+      routing: {},
       summary: `Queued ${payload.kind} message for ${target} across ${payload.channels.join(", ")} pending backend dispatch.`,
       deliveryMetadata: {
         deliveredCount: null,
@@ -179,6 +185,7 @@ export const realNotificationsRepository: NotificationsRepository = {
         kind: payload.kind,
         audienceSegment: payload.audienceSegment,
         region: payload.region,
+        partnerIds: payload.partnerIds,
         channels: payload.channels,
         note: payload.note,
       }),

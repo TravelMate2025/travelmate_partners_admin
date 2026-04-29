@@ -40,6 +40,8 @@ function mapAppealToSupportRecord(appeal: AppealRecord, detail?: AppealDetail): 
     title: `${appeal.listingKind === "stay" ? "Stay" : "Transfer"} appeal · ${listingName}`,
     summary: appeal.message,
     partnerName,
+    partnerId: appeal.partnerId,
+    partnerEmail: detail?.partnerEmail ?? undefined,
     owner: "Operations",
     queue: "trust_ops",
     severity: "high",
@@ -109,5 +111,37 @@ export async function getListingAppealSupportCasesFromApi(): Promise<{ records: 
     return { records, error: null };
   } catch {
     return { records: [], error: "Unable to load listing appeals." };
+  }
+}
+
+type SupportEnvelope = {
+  data?: { records?: SupportIncidentRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+export async function getSupportIncidentsFromApi(): Promise<{ records: SupportIncidentRecord[]; error: string | null }> {
+  const session = await getStoredAdminSession();
+  if (!session) {
+    return { records: [], error: "Admin session is not available for support incidents." };
+  }
+  try {
+    const response = await fetch(`${getAdminApiBaseUrl()}/admin/support-incidents`, {
+      method: "GET",
+      headers: {
+        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+      },
+      cache: "no-store",
+    });
+    const body = (await response.json().catch(() => null)) as SupportEnvelope | null;
+    if (!response.ok || !body?.data?.records) {
+      return {
+        records: [],
+        error: body?.message ?? body?.error?.message ?? "Unable to load support incidents.",
+      };
+    }
+    return { records: body.data.records, error: null };
+  } catch {
+    return { records: [], error: "Unable to load support incidents." };
   }
 }

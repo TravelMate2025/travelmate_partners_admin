@@ -58,4 +58,22 @@ describe("NotificationsWorkspace", () => {
     expect(screen.getAllByText("No messages match this view").length).toBeGreaterThan(0);
     expect(screen.getByText("Clear or relax the current filters to continue reviewing partner communications.")).toBeInTheDocument();
   });
+
+  it("blocks appeal response send when audience changes away from partner", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/notifications?compose=1&composeSource=appeal&audience=partner&partnerId=partner-1&title=Appeal+Response&body=This+is+a+sufficiently+long+appeal+response+message.&note=Documented+appeal+response+context+for+audit.",
+    );
+    render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);
+
+    fireEvent.change(screen.getByLabelText("Audience segment"), {
+      target: { value: "watchlist" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Appeal responses must target the specific partner/i)).toBeInTheDocument();
+    });
+  });
 });

@@ -12,7 +12,7 @@ import {
   getSupportIncidentPolicy,
   matchesSupportIncidentFilter,
 } from "@/modules/support-incidents/rules";
-import { applyListingAppealAction, mockSupportIncidentRepository } from "@/modules/support-incidents/service";
+import { applyListingAppealAction, mockSupportIncidentRepository, realSupportIncidentRepository } from "@/modules/support-incidents/service";
 import type { SupportAction, SupportIncidentFilterState, SupportIncidentRecord } from "@/modules/support-incidents/types";
 
 type SupportIncidentsSurfaceState =
@@ -27,14 +27,28 @@ export function SupportIncidentsWorkspace({
   initialRecords,
   actor,
   role,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: SupportIncidentRecord[];
   actor: string;
   role: AdminRole;
+  mode?: "mock" | "real";
   surfaceState?: SupportIncidentsSurfaceState;
 }) {
-  const [records, setRecords] = useState(initialRecords);
+  const repository = mode === "real" ? realSupportIncidentRepository : mockSupportIncidentRepository;
+  function sortByMostRecentOpened(items: SupportIncidentRecord[]) {
+    return [...items].sort((a, b) => {
+      const aTime = Date.parse(a.openedAt);
+      const bTime = Date.parse(b.openedAt);
+      if (Number.isNaN(aTime) || Number.isNaN(bTime)) {
+        return b.id.localeCompare(a.id);
+      }
+      return bTime - aTime;
+    });
+  }
+
+  const [records, setRecords] = useState(() => sortByMostRecentOpened(initialRecords));
   const [filters, setFilters] = useState<SupportIncidentFilterState>({
     query: "",
     status: "all",
@@ -48,7 +62,10 @@ export function SupportIncidentsWorkspace({
   const [pendingAction, setPendingAction] = useState<SupportAction | null>(null);
   const [hasLoadedUrlState, setHasLoadedUrlState] = useState(false);
 
-  const filteredRecords = useMemo(() => records.filter((record) => matchesSupportIncidentFilter(record, filters)), [records, filters]);
+  const filteredRecords = useMemo(
+    () => sortByMostRecentOpened(records.filter((record) => matchesSupportIncidentFilter(record, filters))),
+    [records, filters],
+  );
   const selectedRecord = useMemo(() => records.find((record) => record.id === selectedId) ?? null, [records, selectedId]);
   const activeRecord = useMemo(() => filteredRecords.find((record) => record.id === selectedId) ?? null, [filteredRecords, selectedId]);
   const summary = useMemo(() => buildSupportIncidentSummary(records), [records]);
@@ -135,7 +152,7 @@ export function SupportIncidentsWorkspace({
       };
       const result = selectedRecord.appealId
         ? await applyListingAppealAction(records, payload)
-        : await mockSupportIncidentRepository.applyAction(records, payload, role);
+        : await repository.applyAction(records, payload, role);
 
       setRecords(result.records);
       syncSelection(result.updatedRecord);

@@ -44,6 +44,8 @@ export type SupportIncidentRecord = {
   title: string;
   summary: string;
   partnerName: string;
+  partnerId?: string;
+  partnerEmail?: string;
   owner: string;
   queue: SupportIncidentQueue;
   severity: SupportIncidentSeverity;

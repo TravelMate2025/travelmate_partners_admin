@@ -64,6 +64,9 @@ export function validateNotificationPayload(payload: NotificationActionPayload, 
   if (payload.audienceSegment === "region" && (!payload.region || payload.region.trim().length === 0)) {
     return "Choose a region when sending a region-targeted message.";
   }
+  if (payload.audienceSegment === "partner" && (!payload.partnerIds || payload.partnerIds.length === 0)) {
+    return "Select at least one partner ID when sending a partner-targeted message.";
+  }
 
   if (payload.note.trim().length < 12) {
     return "Add an internal audit note before sending a message.";

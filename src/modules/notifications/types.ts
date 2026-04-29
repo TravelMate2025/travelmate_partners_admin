@@ -3,7 +3,7 @@ import type { AdminRole } from "@/modules/auth/types";
 export type NotificationKind = "direct" | "broadcast" | "transactional";
 export type NotificationStatus = "draft" | "sent" | "failed";
 export type NotificationChannel = "email" | "in_app" | "sms";
-export type NotificationAudienceSegment = "all_partners" | "verified_partners" | "watchlist" | "api_clients" | "region";
+export type NotificationAudienceSegment = "all_partners" | "verified_partners" | "watchlist" | "api_clients" | "region" | "partner";
 export type NotificationAction = "send_message";
 
 export type NotificationDeliveryMetadata = {
@@ -58,6 +58,12 @@ export type NotificationRecord = {
   summary: string;
   deliveryMetadata: NotificationDeliveryMetadata | null;
   operationalNote: string;
+  source?: "admin_outbound" | "workflow_alert";
+  routing?: {
+    module?: string;
+    href?: string;
+    [key: string]: unknown;
+  };
   history: NotificationHistoryEntry[];
   latestAuditRecord: NotificationAuditRecord | null;
 };
@@ -86,6 +92,7 @@ export type NotificationActionPayload = {
   kind: NotificationKind;
   audienceSegment: NotificationAudienceSegment;
   region: string | null;
+  partnerIds?: string[];
   channels: NotificationChannel[];
   note: string;
 };

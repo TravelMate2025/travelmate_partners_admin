@@ -161,6 +161,15 @@ export function SupportIncidentsDetailPanel({
                   </button>
                 );
               })}
+              {selectedRecord.partnerId ? (
+                <Link
+                  aria-label="Respond in Partner Messaging"
+                  className="tm-btn tm-btn-outline"
+                  href={`/notifications?compose=1&composeSource=appeal&audience=partner&partnerId=${encodeURIComponent(selectedRecord.partnerId)}&title=${encodeURIComponent(`Response: ${selectedRecord.title}`)}&body=${encodeURIComponent("Thank you for your appeal. We have reviewed your case and are sharing an update.")}&note=${encodeURIComponent("Responding to support/appeal case from Support and Incidents.")}`}
+                >
+                  Respond in Partner Messaging
+                </Link>
+              ) : null}
             </div>
           ) : (
             <p className="tm-muted mt-5 text-sm">No case actions are available for this role.</p>

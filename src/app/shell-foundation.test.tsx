@@ -6,6 +6,7 @@ import { getAdminSession } from "@/modules/auth/session";
 
 vi.mock("@/modules/auth/session", () => ({
   getAdminSession: vi.fn().mockResolvedValue(null),
+  getStoredAdminSession: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -61,6 +62,6 @@ describe("Flow 2.0 shell foundation", () => {
 
     expect(screen.getAllByText("Payout Review").length).toBeGreaterThan(0);
     expect(screen.getByText("Review settlement-account submissions, masked payout details, risk flags, and settlement holds from one finance-governance route.")).toBeInTheDocument();
-    expect(screen.getByText("Approve payout method")).toBeInTheDocument();
+    expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
   });
 });

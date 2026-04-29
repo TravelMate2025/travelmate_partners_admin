@@ -210,6 +210,18 @@ export type ApiClientsRepository = {
   ): Promise<ApiClientActionResult>;
 };
 
+type ApiClientsListEnvelope = {
+  data?: { records?: ApiClientRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+type ApiClientsActionEnvelope = {
+  data?: ApiClientActionResult;
+  message?: string;
+  error?: { message?: string };
+};
+
 export const mockApiClientsRepository: ApiClientsRepository = {
   async applyAction(records, payload, role) {
     const record = records.find((item) => item.id === payload.clientId);
@@ -248,5 +260,32 @@ export const mockApiClientsRepository: ApiClientsRepository = {
       updatedRecord,
       auditRecord: updatedRecord.latestAuditRecord,
     };
+  },
+};
+
+export async function fetchApiClientRecords(): Promise<ApiClientRecord[]> {
+  const response = await fetch("/api/backend/api-clients", {
+    method: "GET",
+    cache: "no-store",
+  });
+  const body = (await response.json().catch(() => null)) as ApiClientsListEnvelope | null;
+  if (!response.ok || !body?.data?.records) {
+    throw new Error(body?.message ?? body?.error?.message ?? "Unable to load API clients.");
+  }
+  return body.data.records;
+}
+
+export const realApiClientsRepository: ApiClientsRepository = {
+  async applyAction(_records, payload, _role) {
+    const response = await fetch(`/api/backend/api-clients/${encodeURIComponent(payload.clientId)}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as ApiClientsActionEnvelope | null;
+    if (!response.ok || !body?.data?.records || !body.data.updatedRecord || !body.data.auditRecord) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to manage API client.");
+    }
+    return body.data;
   },
 };

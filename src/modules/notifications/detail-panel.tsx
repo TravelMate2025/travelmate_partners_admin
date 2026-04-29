@@ -50,6 +50,7 @@ export function NotificationsDetailPanel({
   kind,
   audienceSegment,
   region,
+  partnerIdsInput,
   channels,
   note,
   pendingAction,
@@ -62,6 +63,7 @@ export function NotificationsDetailPanel({
   onKindChange,
   onAudienceSegmentChange,
   onRegionChange,
+  onPartnerIdsInputChange,
   onChannelToggle,
   onNoteChange,
   onAction,
@@ -74,6 +76,7 @@ export function NotificationsDetailPanel({
   kind: NotificationKind;
   audienceSegment: NotificationAudienceSegment;
   region: string;
+  partnerIdsInput: string;
   channels: NotificationChannel[];
   note: string;
   pendingAction: NotificationAction | null;
@@ -86,6 +89,7 @@ export function NotificationsDetailPanel({
   onKindChange: (value: NotificationKind) => void;
   onAudienceSegmentChange: (value: NotificationAudienceSegment) => void;
   onRegionChange: (value: string) => void;
+  onPartnerIdsInputChange: (value: string) => void;
   onChannelToggle: (channel: NotificationChannel) => void;
   onNoteChange: (value: string) => void;
   onAction: (action: NotificationAction) => void;
@@ -169,6 +173,7 @@ export function NotificationsDetailPanel({
                 <option value="watchlist">watchlist</option>
                 <option value="api_clients">api clients</option>
                 <option value="region">region</option>
+                <option value="partner">partner</option>
               </select>
             </label>
             <label className="block md:col-span-2">
@@ -180,6 +185,17 @@ export function NotificationsDetailPanel({
                 onChange={(event) => onRegionChange(event.target.value)}
                 placeholder="East Africa"
                 value={region}
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="tm-label">Partner IDs</span>
+              <input
+                aria-label="Target partner IDs"
+                className="tm-input mt-3"
+                disabled={audienceSegment !== "partner"}
+                onChange={(event) => onPartnerIdsInputChange(event.target.value)}
+                placeholder="partner-id-1, partner-id-2"
+                value={partnerIdsInput}
               />
             </label>
           </div>

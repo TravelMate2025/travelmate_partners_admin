@@ -108,6 +108,18 @@ export type SupportIncidentRepository = {
   ): Promise<SupportIncidentActionResult>;
 };
 
+type SupportListEnvelope = {
+  data?: { records?: SupportIncidentRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+type SupportActionEnvelope = {
+  data?: SupportIncidentActionResult;
+  message?: string;
+  error?: { message?: string };
+};
+
 type ResolveAppealEnvelope = {
   data?: {
     id: string;
@@ -280,5 +292,29 @@ export const mockSupportIncidentRepository: SupportIncidentRepository = {
       updatedRecord,
       auditRecord,
     };
+  },
+};
+
+export async function fetchSupportIncidentRecords(): Promise<SupportIncidentRecord[]> {
+  const response = await fetch("/api/backend/support-incidents", { method: "GET", cache: "no-store" });
+  const body = (await response.json().catch(() => null)) as SupportListEnvelope | null;
+  if (!response.ok || !body?.data?.records) {
+    throw new Error(body?.message ?? body?.error?.message ?? "Unable to load support incidents.");
+  }
+  return body.data.records;
+}
+
+export const realSupportIncidentRepository: SupportIncidentRepository = {
+  async applyAction(_records, payload, _role) {
+    const response = await fetch(`/api/backend/support-incidents/${encodeURIComponent(payload.caseId)}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as SupportActionEnvelope | null;
+    if (!response.ok || !body?.data?.records || !body.data.updatedRecord || !body.data.auditRecord) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to update support case.");
+    }
+    return body.data;
   },
 };

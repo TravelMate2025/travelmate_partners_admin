@@ -71,6 +71,18 @@ export type PartnerOperationsRepository = {
   applyAction(records: PartnerRecord[], payload: PartnerActionPayload, role: Parameters<typeof getPartnerPolicy>[0]): Promise<PartnerActionResult>;
 };
 
+type PartnerOpsListEnvelope = {
+  data?: { records?: PartnerRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+type PartnerOpsActionEnvelope = {
+  data?: PartnerActionResult;
+  message?: string;
+  error?: { message?: string };
+};
+
 export const mockPartnerOperationsRepository: PartnerOperationsRepository = {
   async applyAction(records, payload, role) {
     const nextRecords = applyPartnerAction(records, payload, role);
@@ -85,5 +97,29 @@ export const mockPartnerOperationsRepository: PartnerOperationsRepository = {
       updatedRecord,
       auditMessage: `${payload.actor} executed ${payload.type} for ${updatedRecord.businessName}.`,
     };
+  },
+};
+
+export async function fetchPartnerOperationRecords(): Promise<PartnerRecord[]> {
+  const response = await fetch("/api/backend/partner-operations", { method: "GET", cache: "no-store" });
+  const body = (await response.json().catch(() => null)) as PartnerOpsListEnvelope | null;
+  if (!response.ok || !body?.data?.records) {
+    throw new Error(body?.message ?? body?.error?.message ?? "Unable to load partner operations.");
+  }
+  return body.data.records;
+}
+
+export const realPartnerOperationsRepository: PartnerOperationsRepository = {
+  async applyAction(_records, payload, _role) {
+    const response = await fetch(`/api/backend/partner-operations/${encodeURIComponent(payload.partnerId)}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as PartnerOpsActionEnvelope | null;
+    if (!response.ok || !body?.data?.records || !body.data.updatedRecord) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to apply account action.");
+    }
+    return body.data;
   },
 };

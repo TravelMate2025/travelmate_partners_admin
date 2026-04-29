@@ -7,7 +7,7 @@ import type { AdminRole } from "@/modules/auth/types";
 import { PartnerDetailPanel } from "@/modules/partner-operations/detail-panel";
 import { PartnerDirectoryPanel } from "@/modules/partner-operations/directory-panel";
 import { getPartnerPolicy, getPartnerRoutePolicySummary } from "@/modules/partner-operations/policy";
-import { mockPartnerOperationsRepository } from "@/modules/partner-operations/service";
+import { mockPartnerOperationsRepository, realPartnerOperationsRepository } from "@/modules/partner-operations/service";
 import type {
   PartnerFilterState,
   PartnerPriority,
@@ -42,13 +42,16 @@ export function PartnerOperationsWorkspace({
   initialRecords,
   role,
   actor,
+  mode = "mock",
   surfaceState,
 }: {
   initialRecords: PartnerRecord[];
   role: AdminRole;
   actor: string;
+  mode?: "mock" | "real";
   surfaceState?: PartnerWorkspaceSurfaceState;
 }) {
+  const repository = mode === "real" ? realPartnerOperationsRepository : mockPartnerOperationsRepository;
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<PartnerFilterState>({
     query: "",
@@ -149,7 +152,7 @@ export function PartnerOperationsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockPartnerOperationsRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           type: "update_metadata",
@@ -188,7 +191,7 @@ export function PartnerOperationsWorkspace({
     setFeedback(null);
 
     try {
-      const result = await mockPartnerOperationsRepository.applyAction(
+      const result = await repository.applyAction(
         records,
         {
           type: action,

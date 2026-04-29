@@ -126,6 +126,18 @@ export type ApiMonitoringRepository = {
   ): Promise<ApiGovernanceActionResult>;
 };
 
+type ApiMonitoringListEnvelope = {
+  data?: { records?: ApiMonitoringRecord[] };
+  message?: string;
+  error?: { message?: string };
+};
+
+type ApiMonitoringActionEnvelope = {
+  data?: ApiGovernanceActionResult;
+  message?: string;
+  error?: { message?: string };
+};
+
 export const mockApiMonitoringRepository: ApiMonitoringRepository = {
   async applyAction(records, payload, role) {
     const record = records.find((item) => item.id === payload.anomalyId);
@@ -155,5 +167,29 @@ export const mockApiMonitoringRepository: ApiMonitoringRepository = {
       updatedRecord,
       auditRecord: updatedRecord.latestAuditRecord,
     };
+  },
+};
+
+export async function fetchApiMonitoringRecords(): Promise<ApiMonitoringRecord[]> {
+  const response = await fetch("/api/backend/api-monitoring", { method: "GET", cache: "no-store" });
+  const body = (await response.json().catch(() => null)) as ApiMonitoringListEnvelope | null;
+  if (!response.ok || !body?.data?.records) {
+    throw new Error(body?.message ?? body?.error?.message ?? "Unable to load API monitoring queue.");
+  }
+  return body.data.records;
+}
+
+export const realApiMonitoringRepository: ApiMonitoringRepository = {
+  async applyAction(_records, payload, _role) {
+    const response = await fetch(`/api/backend/api-monitoring/${encodeURIComponent(payload.anomalyId)}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as ApiMonitoringActionEnvelope | null;
+    if (!response.ok || !body?.data?.records || !body.data.updatedRecord || !body.data.auditRecord) {
+      throw new Error(body?.message ?? body?.error?.message ?? "Unable to manage API monitoring alert.");
+    }
+    return body.data;
   },
 };
