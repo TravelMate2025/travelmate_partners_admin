@@ -94,7 +94,7 @@ export function PayoutReviewDetailPanel({
   }
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit overflow-x-hidden xl:sticky xl:top-24">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Payout Detail</p>

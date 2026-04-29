@@ -3,9 +3,10 @@ import { adminNavItems, adminShellHighlights, getRoleAwareAdminNavItems } from "
 describe("admin shell navigation", () => {
   it("covers the shell root and all major admin sections", () => {
     expect(adminNavItems[0].href).toBe("/");
-    expect(adminNavItems).toHaveLength(16);
+    expect(adminNavItems).toHaveLength(17);
     expect(adminNavItems.some((item) => item.href === "/verification-review")).toBe(true);
     expect(adminNavItems.some((item) => item.href === "/financial-ops")).toBe(true);
+    expect(adminNavItems.some((item) => item.href === "/fx-rates")).toBe(true);
     expect(adminNavItems.some((item) => item.href === "/payout-review")).toBe(true);
   });
 

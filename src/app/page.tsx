@@ -8,14 +8,15 @@ import { StatCard } from "@/components/common/stat-card";
 import { StatusBadge } from "@/components/common/status-badge";
 import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
-import { formatDashboardMetric, getDashboardModel } from "@/modules/dashboard/data";
+import { formatDashboardMetric } from "@/modules/dashboard/data";
+import { getDashboardModelFromApi } from "@/modules/dashboard/server";
 import { adminShellHighlights } from "@/modules/shell/navigation";
 
 export default async function DashboardPage() {
   const session = await getAdminSession();
   requireAdminRouteAccess("/", session);
   const role = session?.user.role ?? "super_admin";
-  const dashboard = getDashboardModel(role);
+  const { model: dashboard, error: dashboardError } = await getDashboardModelFromApi(role);
 
   return (
     <AdminShell
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
             <p className="tm-label">Current focus</p>
             <p className="mt-2 text-lg font-semibold text-slate-950">{dashboard.focusLabel}</p>
             <p className="tm-muted mt-1 text-sm">{dashboard.overviewNote}</p>
+            {dashboardError ? <p className="mt-2 text-xs text-amber-700">{dashboardError}</p> : null}
           </div>
         </div>
       }

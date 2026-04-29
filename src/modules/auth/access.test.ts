@@ -35,6 +35,11 @@ describe("resolveAdminAccess", () => {
       nextPath: "/payout-review",
       requiredRoles: ["finance", "super_admin"],
     });
+    expect(resolveAdminAccess("/fx-rates", session)).toEqual({
+      type: "redirect_forbidden",
+      nextPath: "/fx-rates",
+      requiredRoles: ["finance", "super_admin"],
+    });
   });
 
   it("blocks non-super-admin roles from admin governance routes", () => {

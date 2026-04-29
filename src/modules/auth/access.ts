@@ -143,6 +143,15 @@ export const adminRouteDefinitions: AdminRouteDefinition[] = [
     showInNav: true,
   },
   {
+    prefix: "/fx-rates",
+    label: "FX Rates",
+    shortLabel: "FX",
+    section: "finance",
+    description: "Manage admin-owned currency conversion rates used in settlement calculations.",
+    roles: ["finance", "super_admin"],
+    showInNav: true,
+  },
+  {
     prefix: "/payout-review",
     label: "Payout Review",
     shortLabel: "Payouts",

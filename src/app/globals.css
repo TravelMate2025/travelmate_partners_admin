@@ -424,10 +424,12 @@ input {
 }
 
 .tm-soft-band {
+  min-width: 0;
   border-radius: 1rem;
   border: 1px solid rgba(24, 42, 38, 0.08);
   background: rgba(255, 255, 255, 0.58);
   padding: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .tm-queue-card,
@@ -525,12 +527,14 @@ input {
 }
 
 .tm-document-card {
+  min-width: 0;
   width: 100%;
   border-radius: 1rem;
   border: 1px solid rgba(24, 42, 38, 0.08);
   background: rgba(255, 255, 255, 0.66);
   padding: 1rem;
   text-align: left;
+  overflow-wrap: anywhere;
   transition:
     border-color 160ms ease,
     transform 160ms ease,
