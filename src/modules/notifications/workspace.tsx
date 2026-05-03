@@ -42,6 +42,30 @@ function buildDraftRecord(actor: string): NotificationRecord {
   };
 }
 
+function buildAppealComposeDraft(actor: string): NotificationRecord {
+  const now = new Date().toISOString();
+  return {
+    id: "notification-draft-appeal",
+    title: "Appeal response draft",
+    body: "Write a clear, partner-specific appeal response before sending.",
+    kind: "direct",
+    status: "draft",
+    audienceSegment: "partner",
+    region: null,
+    channels: ["in_app", "email"],
+    targetPartnerCount: 1,
+    createdAt: now,
+    createdBy: actor,
+    summary: "Appeal response draft prepared for a specific partner.",
+    deliveryMetadata: null,
+    operationalNote: "",
+    source: "admin_outbound",
+    routing: {},
+    history: [],
+    latestAuditRecord: null,
+  };
+}
+
 export function NotificationsWorkspace({
   initialRecords,
   actor,
@@ -112,8 +136,9 @@ export function NotificationsWorkspace({
     if (message) {
       syncSelection(outboundRecords.find((record) => record.id === message));
     }
+    const appealCompose = compose === "1" && composeSource === "appeal";
     if (compose === "1") {
-      setIsAppealCompose(composeSource === "appeal");
+      setIsAppealCompose(appealCompose);
       if (composeTitle) setTitle(composeTitle);
       if (composeBody) setBody(composeBody);
       if (composeNote) setNote(composeNote);
@@ -123,10 +148,21 @@ export function NotificationsWorkspace({
       if (composePartnerId) {
         setPartnerIdsInput(composePartnerId);
       }
+      if (appealCompose) {
+        setKind("direct");
+        setAudienceSegment("partner");
+        setSelectedId("notification-draft-appeal");
+        setRecords((current) => {
+          if (current.some((record) => record.id === "notification-draft-appeal")) {
+            return current;
+          }
+          return [buildAppealComposeDraft(actor), ...current];
+        });
+      }
     }
 
     setHasLoadedUrlState(true);
-  }, [outboundRecords]);
+  }, [actor, outboundRecords]);
 
   useEffect(() => {
     if (!hasLoadedUrlState) return;
@@ -264,6 +300,7 @@ export function NotificationsWorkspace({
         canBroadcast={policy.canBroadcast}
         body={body}
         canSend={selectedRecord ? canSendNotification(role, { ...selectedRecord, kind }) : false}
+        isAppealCompose={isAppealCompose}
         channels={channels}
         emptyState={
           filteredRecords.length === 0

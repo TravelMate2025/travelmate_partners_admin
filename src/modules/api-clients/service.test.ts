@@ -2,9 +2,28 @@ import { getApiClientRecords } from "@/modules/api-clients/data";
 import { mockApiClientsRepository } from "@/modules/api-clients/service";
 
 describe("mockApiClientsRepository", () => {
-  it("approves pending API clients with the selected plan and quota", async () => {
-    const result = await mockApiClientsRepository.applyAction(
+  it("starts review then approves pending API clients with the selected plan and quota", async () => {
+    const reviewResult = await mockApiClientsRepository.applyAction(
       getApiClientRecords(),
+      {
+        actor: "Operations Admin",
+        clientId: "api-client-001",
+        action: "start_review",
+        note: "Initial intake review started after basic compliance checks.",
+        plan: "starter",
+        rateLimitPerMinute: 120,
+        policyEnvironment: "sandbox",
+        policyTier: "standard",
+        policyScopes: ["inventory.read"],
+        policyProducts: ["stays"],
+        policyAlertProfile: "balanced",
+        reasonCode: "",
+      },
+      "operations",
+    );
+
+    const result = await mockApiClientsRepository.applyAction(
+      reviewResult.records,
       {
         actor: "Operations Admin",
         clientId: "api-client-001",
@@ -12,6 +31,12 @@ describe("mockApiClientsRepository", () => {
         note: "Approved after use-case verification and plan fit review.",
         plan: "starter",
         rateLimitPerMinute: 120,
+        policyEnvironment: "production",
+        policyTier: "elevated",
+        policyScopes: ["inventory.read", "pricing.read", "bookings.read"],
+        policyProducts: ["stays", "transfers"],
+        policyAlertProfile: "balanced",
+        reasonCode: "",
       },
       "operations",
     );
@@ -32,6 +57,12 @@ describe("mockApiClientsRepository", () => {
         note: "Issued first production key after approval.",
         plan: "starter",
         rateLimitPerMinute: 80,
+        policyEnvironment: "production",
+        policyTier: "elevated",
+        policyScopes: ["inventory.read", "pricing.read", "bookings.read"],
+        policyProducts: ["stays", "transfers"],
+        policyAlertProfile: "balanced",
+        reasonCode: "",
       },
       "operations",
     );
@@ -50,6 +81,12 @@ describe("mockApiClientsRepository", () => {
         note: "Rotated the key after elevated error-rate investigation.",
         plan: "enterprise",
         rateLimitPerMinute: 900,
+        policyEnvironment: "production",
+        policyTier: "strategic",
+        policyScopes: ["inventory.read", "pricing.read", "bookings.read"],
+        policyProducts: ["stays", "transfers"],
+        policyAlertProfile: "strict",
+        reasonCode: "credential_rotation",
       },
       "operations",
     );
@@ -69,6 +106,12 @@ describe("mockApiClientsRepository", () => {
           note: "Attempted enterprise approval without eligibility.",
           plan: "enterprise",
           rateLimitPerMinute: 300,
+          policyEnvironment: "production",
+          policyTier: "elevated",
+          policyScopes: ["inventory.read", "pricing.read", "bookings.read"],
+          policyProducts: ["stays", "transfers"],
+          policyAlertProfile: "balanced",
+          reasonCode: "",
         },
         "operations",
       ),
@@ -86,6 +129,12 @@ describe("mockApiClientsRepository", () => {
           note: "Attempted invalid quota override.",
           plan: "starter",
           rateLimitPerMinute: 999,
+          policyEnvironment: "production",
+          policyTier: "elevated",
+          policyScopes: ["inventory.read", "pricing.read", "bookings.read"],
+          policyProducts: ["stays", "transfers"],
+          policyAlertProfile: "balanced",
+          reasonCode: "",
         },
         "operations",
       ),

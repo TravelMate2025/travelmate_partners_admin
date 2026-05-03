@@ -59,7 +59,7 @@ describe("NotificationsWorkspace", () => {
     expect(screen.getByText("Clear or relax the current filters to continue reviewing partner communications.")).toBeInTheDocument();
   });
 
-  it("blocks appeal response send when audience changes away from partner", async () => {
+  it("locks targeting controls in appeal response compose flow", async () => {
     window.history.replaceState(
       null,
       "",
@@ -67,13 +67,24 @@ describe("NotificationsWorkspace", () => {
     );
     render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);
 
-    fireEvent.change(screen.getByLabelText("Audience segment"), {
-      target: { value: "watchlist" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    expect(screen.getAllByLabelText("Message type")[1]).toBeDisabled();
+    expect(screen.getAllByLabelText("Message type")[1]).toHaveValue("direct");
+    expect(screen.getByLabelText("Audience segment")).toBeDisabled();
+    expect(screen.getByLabelText("Audience segment")).toHaveValue("partner");
+    expect(screen.getByLabelText("Target partner IDs")).toBeDisabled();
+    expect(screen.getByText(/Appeal response mode locks message targeting to the selected partner./i)).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByText(/Appeal responses must target the specific partner/i)).toBeInTheDocument();
-    });
+  it("does not inherit selected broadcast when entering appeal compose flow", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/notifications?kind=broadcast&message=notification-001&compose=1&composeSource=appeal&audience=partner&partnerId=partner-1&title=Appeal+Response&body=This+is+a+sufficiently+long+appeal+response+message.&note=Documented+appeal+response+context+for+audit.",
+    );
+    render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);
+
+    expect(screen.getAllByLabelText("Message type")[1]).toHaveValue("direct");
+    expect(screen.getByLabelText("Audience segment")).toHaveValue("partner");
+    expect(screen.getByLabelText("Target partner IDs")).toHaveValue("partner-1");
   });
 });

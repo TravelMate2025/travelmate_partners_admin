@@ -20,6 +20,13 @@ export const apiClientSeed: ApiClientRecord[] = [
       lastActiveAt: "Not active yet",
     },
     requestedRateLimitPerMinute: 180,
+    policy: {
+      environment: "sandbox",
+      tier: "standard",
+      scopes: ["inventory.read"],
+      products: ["stays"],
+      alertProfile: "balanced",
+    },
     planEligibility: {
       recommendedPlan: "growth",
       eligiblePlans: ["starter", "growth"],
@@ -56,6 +63,13 @@ export const apiClientSeed: ApiClientRecord[] = [
       lastActiveAt: "Not active yet",
     },
     requestedRateLimitPerMinute: 60,
+    policy: {
+      environment: "production",
+      tier: "elevated",
+      scopes: ["inventory.read", "pricing.read", "bookings.read"],
+      products: ["stays", "transfers"],
+      alertProfile: "balanced",
+    },
     planEligibility: {
       recommendedPlan: "starter",
       eligiblePlans: ["starter", "growth"],
@@ -92,6 +106,13 @@ export const apiClientSeed: ApiClientRecord[] = [
       lastActiveAt: "2026-04-18T08:05:00.000Z",
     },
     requestedRateLimitPerMinute: 900,
+    policy: {
+      environment: "production",
+      tier: "strategic",
+      scopes: ["inventory.read", "pricing.read", "bookings.read"],
+      products: ["stays", "transfers"],
+      alertProfile: "strict",
+    },
     planEligibility: {
       recommendedPlan: "enterprise",
       eligiblePlans: ["enterprise"],
@@ -118,5 +139,19 @@ export const apiClientSeed: ApiClientRecord[] = [
 ];
 
 export function getApiClientRecords() {
-  return apiClientSeed;
+  return apiClientSeed.map((record) => ({
+    ...record,
+    usage: { ...record.usage },
+    policy: {
+      ...record.policy,
+      scopes: [...record.policy.scopes],
+      products: [...record.policy.products],
+    },
+    planEligibility: {
+      ...record.planEligibility,
+      eligiblePlans: [...record.planEligibility.eligiblePlans],
+    },
+    history: record.history.map((entry) => ({ ...entry })),
+    latestAuditRecord: record.latestAuditRecord ? { ...record.latestAuditRecord } : undefined,
+  }));
 }

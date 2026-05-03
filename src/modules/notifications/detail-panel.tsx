@@ -58,6 +58,7 @@ export function NotificationsDetailPanel({
   policySummary,
   canSend,
   canBroadcast,
+  isAppealCompose,
   onTitleChange,
   onBodyChange,
   onKindChange,
@@ -84,6 +85,7 @@ export function NotificationsDetailPanel({
   policySummary: string;
   canSend: boolean;
   canBroadcast: boolean;
+  isAppealCompose: boolean;
   onTitleChange: (value: string) => void;
   onBodyChange: (value: string) => void;
   onKindChange: (value: NotificationKind) => void;
@@ -157,7 +159,13 @@ export function NotificationsDetailPanel({
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label className="block">
               <span className="tm-label">Message type</span>
-              <select aria-label="Message type" className="tm-input mt-3" onChange={(event) => onKindChange(event.target.value as NotificationKind)} value={kind}>
+              <select
+                aria-label="Message type"
+                className="tm-input mt-3"
+                disabled={isAppealCompose}
+                onChange={(event) => onKindChange(event.target.value as NotificationKind)}
+                value={kind}
+              >
                 <option value="direct">direct</option>
                 <option disabled={!canBroadcast} value="broadcast">
                   broadcast
@@ -167,7 +175,13 @@ export function NotificationsDetailPanel({
             </label>
             <label className="block">
               <span className="tm-label">Audience segment</span>
-              <select aria-label="Audience segment" className="tm-input mt-3" onChange={(event) => onAudienceSegmentChange(event.target.value as NotificationAudienceSegment)} value={audienceSegment}>
+              <select
+                aria-label="Audience segment"
+                className="tm-input mt-3"
+                disabled={isAppealCompose}
+                onChange={(event) => onAudienceSegmentChange(event.target.value as NotificationAudienceSegment)}
+                value={audienceSegment}
+              >
                 <option value="all_partners">all partners</option>
                 <option value="verified_partners">verified partners</option>
                 <option value="watchlist">watchlist</option>
@@ -192,13 +206,16 @@ export function NotificationsDetailPanel({
               <input
                 aria-label="Target partner IDs"
                 className="tm-input mt-3"
-                disabled={audienceSegment !== "partner"}
+                disabled={audienceSegment !== "partner" || isAppealCompose}
                 onChange={(event) => onPartnerIdsInputChange(event.target.value)}
                 placeholder="partner-id-1, partner-id-2"
                 value={partnerIdsInput}
               />
             </label>
           </div>
+          {isAppealCompose ? (
+            <p className="tm-muted mt-3 text-sm">Appeal response mode locks message targeting to the selected partner.</p>
+          ) : null}
           <div className="mt-4">
             <p className="tm-label">Channels</p>
             <div className="mt-3 flex flex-wrap gap-3">

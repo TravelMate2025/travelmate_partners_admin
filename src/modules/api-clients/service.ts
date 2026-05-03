@@ -26,6 +26,8 @@ function formatTimestamp(date: string) {
 
 function buildHistoryAction(action: ApiClientAction) {
   switch (action) {
+    case "start_review":
+      return "Review started";
     case "approve_client":
       return "Client approved";
     case "reject_client":
@@ -37,7 +39,9 @@ function buildHistoryAction(action: ApiClientAction) {
     case "revoke_key":
       return "Key revoked";
     case "block_client":
-      return "Client blocked";
+      return "Client suspended";
+    case "restore_client":
+      return "Client restored";
     case "update_plan":
       return "Plan updated";
   }
@@ -45,6 +49,8 @@ function buildHistoryAction(action: ApiClientAction) {
 
 function buildAuditSummary(actor: string, action: ApiClientAction, companyName: string) {
   switch (action) {
+    case "start_review":
+      return `${actor} started API client review for ${companyName}.`;
     case "approve_client":
       return `${actor} approved API client ${companyName}.`;
     case "reject_client":
@@ -56,7 +62,9 @@ function buildAuditSummary(actor: string, action: ApiClientAction, companyName: 
     case "revoke_key":
       return `${actor} revoked the API key for ${companyName}.`;
     case "block_client":
-      return `${actor} blocked API client ${companyName}.`;
+      return `${actor} suspended API client ${companyName}.`;
+    case "restore_client":
+      return `${actor} restored API client ${companyName}.`;
     case "update_plan":
       return `${actor} updated the API plan for ${companyName}.`;
   }
@@ -67,12 +75,35 @@ function applyActionToRecord(record: ApiClientRecord, payload: ApiClientActionPa
   const note = payload.note.trim().length > 0 ? payload.note.trim() : record.note;
 
   switch (payload.action) {
+    case "start_review":
+      return {
+        ...record,
+        status: "under_review" as const,
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-start-review-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
     case "approve_client":
       return {
         ...record,
         status: "approved" as const,
         approvedAt: timestamp,
         plan: payload.plan,
+        policy: {
+          environment: payload.policyEnvironment,
+          tier: payload.policyTier,
+          scopes: payload.policyScopes,
+          products: payload.policyProducts,
+          alertProfile: payload.policyAlertProfile,
+        },
         usage: {
           ...record.usage,
           rateLimitPerMinute: payload.rateLimitPerMinute,
@@ -179,10 +210,34 @@ function applyActionToRecord(record: ApiClientRecord, payload: ApiClientActionPa
           ...record.history,
         ],
       };
+    case "restore_client":
+      return {
+        ...record,
+        status: "approved" as const,
+        keyStatus: "revoked" as const,
+        note,
+        history: [
+          {
+            id: `api-history-${record.id}-restore-${Date.now()}`,
+            actor: payload.actor,
+            action: buildHistoryAction(payload.action),
+            timestamp: formatTimestamp(timestamp),
+            note,
+          },
+          ...record.history,
+        ],
+      };
     case "update_plan":
       return {
         ...record,
         plan: payload.plan,
+        policy: {
+          environment: payload.policyEnvironment,
+          tier: payload.policyTier,
+          scopes: payload.policyScopes,
+          products: payload.policyProducts,
+          alertProfile: payload.policyAlertProfile,
+        },
         usage: {
           ...record.usage,
           rateLimitPerMinute: payload.rateLimitPerMinute,

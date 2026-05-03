@@ -1,4 +1,22 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+
+const apiDir = path.resolve(__dirname, "../../api");
+const apiPython = path.resolve(apiDir, "venv/bin/python");
+
+function readUserIdByEmail(email: string) {
+  return execFileSync(
+    apiPython,
+    [
+      "manage.py",
+      "shell",
+      "-c",
+      ["from apps.users.models import User", `user = User.objects.filter(email='${email}').first()`, "print(user.id if user else '')"].join("; "),
+    ],
+    { cwd: apiDir, encoding: "utf-8" },
+  ).trim();
+}
 
 async function signInAsReviewer(page: Parameters<typeof test>[0]["page"]) {
   await page.goto("/auth/login");
@@ -26,23 +44,10 @@ async function createSubmittedVerificationCase(request: APIRequestContext) {
       otpCode: otpPayload.data.otp_code_hint,
     },
   });
-  const signupPayload = (await signupResponse.json()) as {
-    data: { verification_code_hint?: string };
-  };
-
-  await request.post("http://127.0.0.1:8000/api/v1/auth/verify-email", {
-    data: {
-      email,
-      code: signupPayload.data.verification_code_hint,
-    },
-  });
   await request.post("http://127.0.0.1:8000/api/v1/auth/login", {
     data: { email, password: "Password123!" },
   });
-
-  const meResponse = await request.get("http://127.0.0.1:8000/api/v1/auth/me");
-  const mePayload = (await meResponse.json()) as { data: { id: string } };
-  const userId = mePayload.data.id;
+  const userId = readUserIdByEmail(email);
 
   for (const [step, data] of [
     [

@@ -14,7 +14,8 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm run build && npm run start -- --port 3200",
+    command:
+      "/bin/zsh -lc '../api/venv/bin/python ../api/manage.py seed_admin_users && npm run build && npm run start -- --port 3200'",
     url: "http://127.0.0.1:3200",
     reuseExistingServer: true,
     timeout: 240_000,

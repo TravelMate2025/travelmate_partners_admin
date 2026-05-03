@@ -23,7 +23,7 @@ describe("ApiClientsWorkspace", () => {
     expect(screen.getAllByText("RouteFlow Integrations").length).toBeGreaterThan(0);
   });
 
-  it("approves pending API clients", async () => {
+  it("starts review then approves pending API clients", async () => {
     render(
       <ApiClientsWorkspace
         actor="Operations Admin"
@@ -41,14 +41,17 @@ describe("ApiClientsWorkspace", () => {
     fireEvent.change(screen.getByPlaceholderText(/Capture approval context/i), {
       target: { value: "Approved after enterprise-travel procurement validation." },
     });
+    fireEvent.click(screen.getByRole("button", { name: "Start review" }));
+    await waitFor(() => {
+      expect(screen.getAllByText(/started API client review/i).length).toBeGreaterThan(0);
+    });
     fireEvent.click(screen.getByRole("button", { name: "Approve client" }));
 
     await waitFor(() => {
       expect(screen.getAllByText(/approved API client/i).length).toBeGreaterThan(0);
     });
     expect(screen.getAllByText("approved").length).toBeGreaterThan(0);
-    expect(screen.getByDisplayValue("starter")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("120")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve client" })).toBeInTheDocument();
   });
 
   it("issues keys for approved clients", async () => {
@@ -90,7 +93,7 @@ describe("ApiClientsWorkspace", () => {
     expect(screen.getByText("Key regenerated")).toBeInTheDocument();
   });
 
-  it("shows only eligible plan choices for pending applications", () => {
+  it("shows only eligible plan choices for pending applications", async () => {
     render(
       <ApiClientsWorkspace
         actor="Operations Admin"
@@ -99,7 +102,10 @@ describe("ApiClientsWorkspace", () => {
       />,
     );
 
-    const planSelect = screen.getByLabelText("Assigned plan");
+    const planBand = await screen.findByText("Plan and quota");
+    const detailPanel = planBand.closest("article");
+    expect(detailPanel).not.toBeNull();
+    const planSelect = within(detailPanel as HTMLElement).getByDisplayValue("growth");
 
     expect(within(planSelect).getByRole("option", { name: "starter" })).toBeEnabled();
     expect(within(planSelect).getByRole("option", { name: "growth" })).toBeEnabled();

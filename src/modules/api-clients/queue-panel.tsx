@@ -56,6 +56,7 @@ export function ApiClientsQueuePanel({
           >
             <option value="all">all</option>
             <option value="pending_review">pending review</option>
+            <option value="under_review">under review</option>
             <option value="approved">approved</option>
             <option value="rejected">rejected</option>
             <option value="blocked">blocked</option>
@@ -106,6 +107,7 @@ export function ApiClientsQueuePanel({
               </div>
               <div className="flex flex-wrap gap-2">
                 <StatusBadge label={record.status} tone="info" />
+                {record.isResubmissionPending ? <StatusBadge label="Re-submission pending" tone="warning" /> : null}
                 <StatusBadge label={record.riskLevel} tone={toneForRisk(record.riskLevel)} />
               </div>
             </div>

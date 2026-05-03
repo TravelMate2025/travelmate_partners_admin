@@ -6,15 +6,31 @@ import { SurfaceState } from "@/components/common/surface-state";
 import type { AdminRole } from "@/modules/auth/types";
 import { ApiClientsDetailPanel } from "@/modules/api-clients/detail-panel";
 import { ApiClientsQueuePanel } from "@/modules/api-clients/queue-panel";
-import { canApplyApiClientAction, getApiClientsPolicy } from "@/modules/api-clients/rules";
+import { canApplyApiClientAction, getApiClientsPolicy, validateApiClientActionPayload } from "@/modules/api-clients/rules";
 import { mockApiClientsRepository, realApiClientsRepository } from "@/modules/api-clients/service";
 import type {
   ApiClientAction,
   ApiClientFilterState,
+  ApiPolicyAlertProfile,
+  ApiPolicyEnvironment,
+  ApiPolicyScope,
+  ApiPolicyProduct,
+  ApiPolicyTier,
   ApiClientRecord,
   ApiClientsSurfaceState,
   ApiPlan,
 } from "@/modules/api-clients/types";
+
+const DEFAULT_POLICY_SCOPES: ApiPolicyScope[] = ["inventory.read", "pricing.read", "bookings.read"];
+const DEFAULT_POLICY_PRODUCTS: ApiPolicyProduct[] = ["stays", "transfers"];
+
+function withDefaultPolicyScopes(scopes: ApiPolicyScope[] | undefined) {
+  return scopes && scopes.length > 0 ? scopes : DEFAULT_POLICY_SCOPES;
+}
+
+function withDefaultPolicyProducts(products: ApiPolicyProduct[] | undefined) {
+  return products && products.length > 0 ? products : DEFAULT_POLICY_PRODUCTS;
+}
 
 function matchesFilter(record: ApiClientRecord, filters: ApiClientFilterState) {
   const query = filters.query.trim().toLowerCase();
@@ -56,6 +72,13 @@ export function ApiClientsWorkspace({
   const [note, setNote] = useState(initialRecords[0]?.note ?? "");
   const [plan, setPlan] = useState<ApiPlan>(initialRecords[0]?.plan ?? "starter");
   const [rateLimitPerMinute, setRateLimitPerMinute] = useState(initialRecords[0]?.usage.rateLimitPerMinute ?? 60);
+  const [policyEnvironment, setPolicyEnvironment] = useState<ApiPolicyEnvironment>(initialRecords[0]?.policy.environment ?? "sandbox");
+  const [policyTier, setPolicyTier] = useState<ApiPolicyTier>(initialRecords[0]?.policy.tier ?? "standard");
+  const [policyScopes, setPolicyScopes] = useState<ApiPolicyScope[]>(withDefaultPolicyScopes(initialRecords[0]?.policy.scopes));
+  const [policyProducts, setPolicyProducts] = useState<ApiPolicyProduct[]>(withDefaultPolicyProducts(initialRecords[0]?.policy.products));
+  const [policyAlertProfile, setPolicyAlertProfile] = useState<ApiPolicyAlertProfile>(initialRecords[0]?.policy.alertProfile ?? "balanced");
+  const [reasonCode, setReasonCode] = useState("credential_rotation");
+  const [effectiveAt, setEffectiveAt] = useState("");
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<ApiClientAction | null>(null);
   const [hasLoadedUrlState, setHasLoadedUrlState] = useState(false);
@@ -66,12 +89,14 @@ export function ApiClientsWorkspace({
 
   const allowedActions = selectedRecord
       ? {
+        start_review: canApplyApiClientAction(role, selectedRecord, "start_review") ?? false,
         approve_client: canApplyApiClientAction(role, selectedRecord, "approve_client") ?? false,
         reject_client: canApplyApiClientAction(role, selectedRecord, "reject_client") ?? false,
         issue_key: canApplyApiClientAction(role, selectedRecord, "issue_key") ?? false,
         regenerate_key: canApplyApiClientAction(role, selectedRecord, "regenerate_key") ?? false,
         revoke_key: canApplyApiClientAction(role, selectedRecord, "revoke_key") ?? false,
         block_client: canApplyApiClientAction(role, selectedRecord, "block_client") ?? false,
+        restore_client: canApplyApiClientAction(role, selectedRecord, "restore_client") ?? false,
         update_plan: canApplyApiClientAction(role, selectedRecord, "update_plan") ?? false,
       }
     : null;
@@ -87,7 +112,7 @@ export function ApiClientsWorkspace({
     setFilters({
       query: query ?? "",
       status:
-        status === "pending_review" || status === "approved" || status === "rejected" || status === "blocked"
+        status === "pending_review" || status === "under_review" || status === "approved" || status === "rejected" || status === "blocked"
           ? status
           : "all",
       plan: planParam === "starter" || planParam === "growth" || planParam === "enterprise" ? planParam : "all",
@@ -100,6 +125,11 @@ export function ApiClientsWorkspace({
       setNote(target?.note ?? "");
       setPlan(target?.plan ?? "starter");
       setRateLimitPerMinute(target?.usage.rateLimitPerMinute ?? 60);
+      setPolicyEnvironment(target?.policy.environment ?? "sandbox");
+      setPolicyTier(target?.policy.tier ?? "standard");
+      setPolicyScopes(withDefaultPolicyScopes(target?.policy.scopes));
+      setPolicyProducts(withDefaultPolicyProducts(target?.policy.products));
+      setPolicyAlertProfile(target?.policy.alertProfile ?? "balanced");
     }
 
     setHasLoadedUrlState(true);
@@ -131,6 +161,11 @@ export function ApiClientsWorkspace({
     setNote(record.note);
     setPlan(record.plan);
     setRateLimitPerMinute(record.usage.rateLimitPerMinute);
+    setPolicyEnvironment(record.policy.environment);
+    setPolicyTier(record.policy.tier);
+    setPolicyScopes(withDefaultPolicyScopes(record.policy.scopes));
+    setPolicyProducts(withDefaultPolicyProducts(record.policy.products));
+    setPolicyAlertProfile(record.policy.alertProfile);
   }
 
   function handleSelect(clientId: string) {
@@ -146,17 +181,32 @@ export function ApiClientsWorkspace({
     setPendingAction(action);
     setFeedback(null);
 
+    const payload = {
+      actor,
+      clientId: selectedRecord.id,
+      action,
+      note,
+      plan,
+      rateLimitPerMinute,
+      policyEnvironment,
+      policyTier,
+      policyScopes,
+      policyProducts,
+      policyAlertProfile,
+      reasonCode,
+      effectiveAt,
+    } as const;
+    const validationError = validateApiClientActionPayload(payload);
+    if (validationError) {
+      setFeedback({ tone: "error", message: validationError });
+      setPendingAction(null);
+      return;
+    }
+
     try {
       const result = await repository.applyAction(
         records,
-        {
-          actor,
-          clientId: selectedRecord.id,
-          action,
-          note,
-          plan,
-          rateLimitPerMinute,
-        },
+        payload,
         role,
       );
 
@@ -225,6 +275,20 @@ export function ApiClientsWorkspace({
         onNoteChange={setNote}
         onPlanChange={setPlan}
         onRateLimitChange={setRateLimitPerMinute}
+        policyEnvironment={policyEnvironment}
+        policyTier={policyTier}
+        policyScopes={policyScopes}
+        policyProducts={policyProducts}
+        policyAlertProfile={policyAlertProfile}
+        onPolicyEnvironmentChange={setPolicyEnvironment}
+        onPolicyTierChange={setPolicyTier}
+        onPolicyScopesChange={setPolicyScopes}
+        onPolicyProductsChange={setPolicyProducts}
+        onPolicyAlertProfileChange={setPolicyAlertProfile}
+        reasonCode={reasonCode}
+        onReasonCodeChange={setReasonCode}
+        effectiveAt={effectiveAt}
+        onEffectiveAtChange={setEffectiveAt}
         onResetSelection={resetSelection}
         pendingAction={pendingAction}
         plan={plan}

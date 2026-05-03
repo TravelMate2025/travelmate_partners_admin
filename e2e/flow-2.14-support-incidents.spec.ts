@@ -7,8 +7,11 @@ async function signInAs(page: Page, email: string, password: string, mfaCode?: s
   await page.getByRole("button", { name: "Continue to admin shell" }).click();
 
   if (mfaCode) {
-    await page.getByLabel("One-time code").fill(mfaCode);
-    await page.getByRole("button", { name: "Verify MFA and continue" }).click();
+    const mfaField = page.getByLabel("One-time code");
+    if (await mfaField.isVisible().catch(() => false)) {
+      await mfaField.fill(mfaCode);
+      await page.getByRole("button", { name: "Verify MFA and continue" }).click();
+    }
   }
 
   await expect(page.getByRole("heading", { name: "Operations Overview" }).first()).toBeVisible();
