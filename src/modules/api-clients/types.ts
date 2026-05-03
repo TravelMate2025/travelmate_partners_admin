@@ -11,7 +11,9 @@ export type ApiPolicyScope =
   | "inventory.read"
   | "pricing.read"
   | "bookings.read"
-  | "bookings.write";
+  | "bookings.write"
+  | "payments.read"
+  | "payments.write";
 export type ApiPolicyProduct = "stays" | "transfers";
 export type ApiClientAction =
   | "start_review"
