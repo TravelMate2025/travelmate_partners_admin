@@ -23,7 +23,7 @@ export function SectionPlaceholder({
       <div className="tm-panel tm-panel-hero p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="tm-kicker">Flow 2.0 Scaffold</p>
+            <p className="tm-kicker">Admin Operations</p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-950">{title}</h1>
             <p className="tm-muted mt-3 max-w-2xl text-sm">{description}</p>
           </div>
@@ -38,9 +38,9 @@ export function SectionPlaceholder({
         <article className="tm-panel p-6">
           <h2 className="text-lg font-semibold text-slate-950">Shell Readiness</h2>
           <ul className="tm-bullet-list mt-4">
-            <li>Route scaffold is live inside the shared admin shell.</li>
+            <li>Route is active inside the shared admin shell.</li>
             <li>Table, filter, alert, and drawer primitives are available for this module.</li>
-            <li>This placeholder will be replaced by a module-specific workflow in later phases.</li>
+            <li>This section is ready for the module-specific workflow configuration used in your environment.</li>
           </ul>
           <div className="mt-6 flex flex-wrap gap-3">
             <button className="tm-btn tm-btn-primary" type="button">
