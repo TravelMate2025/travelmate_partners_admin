@@ -1,7 +1,6 @@
 import { AdminShell } from "@/components/common/admin-shell";
 import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
-import { getInitialReportExports } from "@/modules/reports/data";
 import { getReportsFromApi } from "@/modules/reports/server";
 import { ReportsWorkspace } from "@/modules/reports/workspace";
 
@@ -18,7 +17,7 @@ export default async function ReportsPage() {
       <ReportsWorkspace
         actor={session.user.name}
         initialSnapshot={snapshot ?? undefined}
-        initialExports={exports.length > 0 ? exports : getInitialReportExports()}
+        initialExports={exports}
         mode="real"
         surfaceState={
           error
