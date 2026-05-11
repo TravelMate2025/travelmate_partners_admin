@@ -185,8 +185,15 @@ export function ListingModerationDetailPanel({
           {activeMedia ? (
             <div className="tm-document-preview mt-4">
               <p className="text-base font-semibold text-slate-950">{activeMedia.fileName}</p>
+              {activeMedia.secureUrl ? (
+                <img
+                  src={activeMedia.secureUrl}
+                  alt={activeMedia.fileName}
+                  className="mt-3 h-44 w-full rounded-md border border-slate-200 object-cover"
+                />
+              ) : null}
               <p className="tm-muted mt-2 text-sm">{activeMedia.previewSummary}</p>
-              <p className="tm-muted mt-3 text-sm">{activeMedia.securePath}</p>
+              <p className="tm-muted mt-3 text-sm">{activeMedia.secureUrl ?? activeMedia.securePath}</p>
             </div>
           ) : (
             <div className="mt-4">
