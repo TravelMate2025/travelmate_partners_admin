@@ -9,6 +9,7 @@ import {
 const actionEndpointMap = {
   resend_invite: "resend-invite",
   revoke_invite: "revoke-invite",
+  reinvite_admin: "reinvite",
   activate_admin: "activate",
   deactivate_admin: "deactivate",
   delete_admin: "delete",

@@ -68,6 +68,8 @@ function buildAuditSummary(actor: string, action: AdminGovernanceAction, record:
       return `${actor} resent the admin invite for ${record.name} and queued access governance follow-up.`;
     case "revoke_invite":
       return `${actor} revoked the pending admin invite for ${record.name} and queued access governance follow-up.`;
+    case "reinvite_admin":
+      return `${actor} reinstated the admin invite for ${record.name} and queued access governance follow-up.`;
     case "activate_admin":
       return `${actor} activated the admin account for ${record.name} and queued access governance follow-up.`;
     case "deactivate_admin":
@@ -84,6 +86,7 @@ function buildActivityTitle(action: AdminGovernanceAction) {
     invite_admin: "Admin invite created",
     resend_invite: "Admin invite resent",
     revoke_invite: "Admin invite revoked",
+    reinvite_admin: "Admin invite reinstated",
     activate_admin: "Admin account activated",
     deactivate_admin: "Admin account deactivated",
     delete_admin: "Admin account deleted",
@@ -213,14 +216,18 @@ export const mockAdminUsersRepository: AdminUsersRepository = {
       status:
         payload.action === "revoke_invite"
           ? "revoked"
-          : payload.action === "activate_admin"
-            ? "active"
-            : payload.action === "deactivate_admin"
-              ? "inactive"
-              : record.status,
+          : payload.action === "reinvite_admin"
+            ? "pending_invite"
+            : payload.action === "activate_admin"
+              ? "active"
+              : payload.action === "deactivate_admin"
+                ? "inactive"
+                : record.status,
       inviteState:
         payload.action === "revoke_invite"
           ? "revoked"
+          : payload.action === "reinvite_admin"
+            ? "pending"
             : record.inviteState,
       mfaState:
         record.mfaState,

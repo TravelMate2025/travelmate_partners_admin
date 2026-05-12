@@ -21,6 +21,7 @@ function getActionLabel(action: AdminGovernanceAction) {
   const labels: Record<Exclude<AdminGovernanceAction, "invite_admin">, { idle: string; pending: string }> = {
     resend_invite: { idle: "Resend invite", pending: "Resending..." },
     revoke_invite: { idle: "Revoke invite", pending: "Revoking..." },
+    reinvite_admin: { idle: "Reinvite", pending: "Reinviting..." },
     activate_admin: { idle: "Activate admin", pending: "Activating..." },
     deactivate_admin: { idle: "Deactivate admin", pending: "Deactivating..." },
     delete_admin: { idle: "Delete admin", pending: "Deleting..." },
@@ -171,7 +172,7 @@ export function AdminUsersDetailPanel({
             <div className="mt-3 rounded-2xl border border-slate-200 bg-white/70 p-4">
               <p className="text-sm font-semibold text-slate-950">Invitation governance is locked to the original request.</p>
               <p className="tm-muted mt-2 text-sm">
-                You can resend, revoke, or activate this invite state, but role changes and invite-rationale edits stay locked to avoid overlapping controls.
+                You can resend or revoke this invite. Role changes and invite-rationale edits stay locked to avoid overlapping controls.
               </p>
             </div>
           ) : (

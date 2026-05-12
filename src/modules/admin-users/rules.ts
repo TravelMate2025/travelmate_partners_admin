@@ -24,6 +24,7 @@ export function getAdminAccessPolicy(role: AdminRole): AdminAccessPolicy {
     canInvite: canGovern,
     canResendInvite: canGovern,
     canRevokeInvite: canGovern,
+    canReinvite: canGovern,
     canActivate: canGovern,
     canDeactivate: canGovern,
     canDelete: canGovern,
@@ -68,6 +69,7 @@ export function validateAdminGovernanceAction(
 
   if (action === "resend_invite" && !policy.canResendInvite) return "This role cannot resend admin invites.";
   if (action === "revoke_invite" && !policy.canRevokeInvite) return "This role cannot revoke admin invites.";
+  if (action === "reinvite_admin" && !policy.canReinvite) return "This role cannot reinvite admin users.";
   if (action === "activate_admin" && !policy.canActivate) return "This role cannot activate admin accounts.";
   if (action === "deactivate_admin" && !policy.canDeactivate) return "This role cannot deactivate admin accounts.";
   if (action === "delete_admin" && !policy.canDelete) return "This role cannot delete admin accounts.";
@@ -75,6 +77,10 @@ export function validateAdminGovernanceAction(
 
   if ((action === "resend_invite" || action === "revoke_invite") && record.status !== "pending_invite") {
     return "Invite controls are only available while the admin invite is pending.";
+  }
+
+  if (action === "reinvite_admin" && record.status !== "revoked") {
+    return "Reinvite is only available for revoked invitations.";
   }
 
   if (action === "activate_admin" && record.status !== "inactive") {
@@ -126,6 +132,9 @@ export function getAvailableAdminGovernanceActions(record: AdminAccessRecord, ro
   }
   if (policy.canRevokeInvite && record.status === "pending_invite") {
     actions.push("revoke_invite");
+  }
+  if (policy.canReinvite && record.status === "revoked") {
+    actions.push("reinvite_admin");
   }
   if (policy.canActivate && record.status === "inactive") {
     actions.push("activate_admin");
