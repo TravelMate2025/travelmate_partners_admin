@@ -1,29 +1,30 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { resolveAdminAccess } from "@/modules/auth/access";
+import { isPublicAdminPath } from "@/modules/auth/access";
 import { ADMIN_SESSION_COOKIE, parseAdminSession } from "@/modules/auth/session";
 
+// Middleware only checks authentication (session exists).
+// Role-based access is enforced by requireAdminRouteAccess in each page server component,
+// which re-fetches the current user from the backend on every request.
+// This avoids stale-role issues where a role change made after login would be
+// invisible to the middleware's locally-parsed JWT cookie.
 export async function middleware(request: NextRequest) {
-  const session = await parseAdminSession(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
-  const outcome = resolveAdminAccess(request.nextUrl.pathname, session);
+  const pathname = request.nextUrl.pathname;
 
-  if (outcome.type === "allow") {
+  if (isPublicAdminPath(pathname)) {
     return NextResponse.next();
   }
 
-  const redirectUrl = new URL(
-    outcome.type === "redirect_login" ? "/auth/login" : "/auth/access-denied",
-    request.url,
-  );
+  const session = await parseAdminSession(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 
-  redirectUrl.searchParams.set("next", outcome.nextPath);
-
-  if (outcome.type === "redirect_forbidden") {
-    redirectUrl.searchParams.set("required", outcome.requiredRoles.join(","));
+  if (!session) {
+    const redirectUrl = new URL("/auth/login", request.url);
+    redirectUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  return NextResponse.redirect(redirectUrl);
+  return NextResponse.next();
 }
 
 export const config = {
