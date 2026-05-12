@@ -29,6 +29,8 @@ export type ModerationMediaAsset = {
   id: string;
   fileName: string;
   fileType: string;
+  secureUrl?: string | null;
+  publicId?: string | null;
   uploadedAt: string;
   previewSummary: string;
   securePath: string;

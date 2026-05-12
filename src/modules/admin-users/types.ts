@@ -11,6 +11,7 @@ export type AdminGovernanceAction =
   | "invite_admin"
   | "resend_invite"
   | "revoke_invite"
+  | "reinvite_admin"
   | "activate_admin"
   | "deactivate_admin"
   | "delete_admin"
@@ -67,6 +68,7 @@ export type AdminAccessPolicy = {
   canInvite: boolean;
   canResendInvite: boolean;
   canRevokeInvite: boolean;
+  canReinvite: boolean;
   canActivate: boolean;
   canDeactivate: boolean;
   canDelete: boolean;

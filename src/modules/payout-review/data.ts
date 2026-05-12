@@ -121,7 +121,7 @@ export function getPayoutReviewRecords(): PayoutReviewRecord[] {
         {
           id: "act-004",
           title: "Payout method submitted",
-          detail: "Partner created a new payout method and mock OTP verification completed with a mismatch outcome.",
+          detail: "Partner created a new payout method and OTP verification completed with a mismatch outcome.",
           time: "14:10 UTC",
           tone: "info",
         },
