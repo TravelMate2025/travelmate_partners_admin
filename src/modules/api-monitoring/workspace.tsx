@@ -79,6 +79,10 @@ export function ApiMonitoringWorkspace({
     : null;
 
   useEffect(() => {
+    if (pendingAction === null) {
+      setRecords(initialRecords);
+    }
+
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q");
     const category = params.get("category");
