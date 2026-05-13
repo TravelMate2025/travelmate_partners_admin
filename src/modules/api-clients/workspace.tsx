@@ -102,6 +102,14 @@ export function ApiClientsWorkspace({
     : null;
 
   useEffect(() => {
+    // Sync records from the latest server snapshot so the queue list and
+    // selectedRecord stay accurate after client-side navigation (not just
+    // on full browser reload). Actions set records via setRecords directly,
+    // so this only runs when the server provides genuinely fresh data.
+    if (pendingAction === null) {
+      setRecords(initialRecords);
+    }
+
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q");
     const status = params.get("status");
