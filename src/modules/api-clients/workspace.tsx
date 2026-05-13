@@ -212,6 +212,7 @@ export function ApiClientsWorkspace({
 
       setRecords(result.records);
       syncSelection(result.updatedRecord);
+      setNote("");
       setFeedback({ tone: "success", message: result.auditRecord.summary });
     } catch (error) {
       setFeedback({

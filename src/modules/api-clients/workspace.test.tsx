@@ -45,6 +45,9 @@ describe("ApiClientsWorkspace", () => {
     await waitFor(() => {
       expect(screen.getAllByText(/started API client review/i).length).toBeGreaterThan(0);
     });
+    fireEvent.change(screen.getByPlaceholderText(/Capture approval context/i), {
+      target: { value: "Approval confirmed after procurement validation." },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Approve client" }));
 
     await waitFor(() => {
