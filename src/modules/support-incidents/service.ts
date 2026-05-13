@@ -97,6 +97,8 @@ function buildDiagnosticChecks(record: SupportIncidentRecord): SupportDiagnostic
       return [
         { id: `${record.id}-diag-policy`, label: "Policy trace", status: "blocked", detail: "Trust review is still required before support can close the concern." },
       ];
+    default:
+      return [];
   }
 }
 
