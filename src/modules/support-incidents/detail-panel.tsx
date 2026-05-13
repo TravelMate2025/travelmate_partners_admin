@@ -109,14 +109,14 @@ export function SupportIncidentsDetailPanel({
         <div className="tm-soft-band">
           <p className="tm-label">Linked context</p>
           <div className="mt-4 grid gap-3">
-            {selectedRecord.linkedContext.map((item) => (
-              <Link className="tm-document-card block" href={item.href} key={item.id}>
+            {selectedRecord.linkedContext.filter((item) => item.href && item.label).map((item, idx) => (
+              <Link className="tm-document-card block" href={item.href} key={item.id ?? idx}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-950">{item.label}</p>
                     <p className="tm-muted mt-2 text-sm capitalize">{item.kind}</p>
                   </div>
-                  <StatusBadge label={item.statusLabel} tone="info" />
+                  <StatusBadge label={item.statusLabel ?? "context"} tone="info" />
                 </div>
               </Link>
             ))}
@@ -188,25 +188,27 @@ export function SupportIncidentsDetailPanel({
                     <div>
                       <p className="text-sm font-semibold text-slate-950">{snapshot.summary}</p>
                       <p className="tm-muted mt-2 text-sm">
-                        {snapshot.actor} · {snapshot.runAt.slice(0, 16).replace("T", " ")}
+                        {snapshot.actor} · {snapshot.runAt ? snapshot.runAt.slice(0, 16).replace("T", " ") : "—"}
                       </p>
                     </div>
                     <StatusBadge label="safe only" tone="success" />
                   </div>
-                  <div className="mt-4 grid gap-2">
-                    {snapshot.checks.map((check) => (
-                      <div className="tm-soft-band" key={check.id}>
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm font-semibold text-slate-950">{check.label}</p>
-                          <StatusBadge
-                            label={check.status}
-                            tone={check.status === "pass" ? "success" : check.status === "warn" ? "warning" : "danger"}
-                          />
+                  {(snapshot.checks ?? []).length > 0 && (
+                    <div className="mt-4 grid gap-2">
+                      {(snapshot.checks ?? []).map((check) => (
+                        <div className="tm-soft-band" key={check.id}>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold text-slate-950">{check.label}</p>
+                            <StatusBadge
+                              label={check.status}
+                              tone={check.status === "pass" ? "success" : check.status === "warn" ? "warning" : "danger"}
+                            />
+                          </div>
+                          <p className="tm-muted mt-2 text-sm">{check.detail}</p>
                         </div>
-                        <p className="tm-muted mt-2 text-sm">{check.detail}</p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
