@@ -12,6 +12,7 @@ describe("ReportsWorkspace", () => {
     fireEvent.click(screen.getByLabelText(/Verification funnel/i));
     fireEvent.click(screen.getByLabelText(/Listing conversion/i));
     fireEvent.click(screen.getByLabelText(/Supply mix/i));
+    fireEvent.click(screen.getByLabelText(/Booking activity/i));
     fireEvent.click(screen.getByRole("button", { name: "Export report" }));
 
     await waitFor(() => {

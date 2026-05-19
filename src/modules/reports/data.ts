@@ -20,6 +20,11 @@ type RegionMetrics = {
   apiClientsApproved: number;
   apiClientsPending: number;
   rateLimitChanges: number;
+  totalBookings: number;
+  cancelledBookings: number;
+  grossRevenue: number;
+  staysBooked: number;
+  transfersBooked: number;
 };
 
 type ReportSourceWindow = {
@@ -48,6 +53,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 9,
         apiClientsPending: 2,
         rateLimitChanges: 2,
+        totalBookings: 84,
+        cancelledBookings: 11,
+        grossRevenue: 4200000,
+        staysBooked: 61,
+        transfersBooked: 23,
       },
       east_africa: {
         verifiedPartners: 92,
@@ -64,6 +74,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 6,
         apiClientsPending: 2,
         rateLimitChanges: 1,
+        totalBookings: 58,
+        cancelledBookings: 7,
+        grossRevenue: 2900000,
+        staysBooked: 41,
+        transfersBooked: 17,
       },
       southern_africa: {
         verifiedPartners: 68,
@@ -80,6 +95,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 4,
         apiClientsPending: 1,
         rateLimitChanges: 1,
+        totalBookings: 39,
+        cancelledBookings: 5,
+        grossRevenue: 1950000,
+        staysBooked: 28,
+        transfersBooked: 11,
       },
     },
   },
@@ -102,6 +122,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 14,
         apiClientsPending: 4,
         rateLimitChanges: 4,
+        totalBookings: 312,
+        cancelledBookings: 38,
+        grossRevenue: 15600000,
+        staysBooked: 224,
+        transfersBooked: 88,
       },
       east_africa: {
         verifiedPartners: 176,
@@ -118,6 +143,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 11,
         apiClientsPending: 3,
         rateLimitChanges: 3,
+        totalBookings: 214,
+        cancelledBookings: 27,
+        grossRevenue: 10700000,
+        staysBooked: 153,
+        transfersBooked: 61,
       },
       southern_africa: {
         verifiedPartners: 132,
@@ -134,6 +164,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 7,
         apiClientsPending: 2,
         rateLimitChanges: 2,
+        totalBookings: 151,
+        cancelledBookings: 19,
+        grossRevenue: 7550000,
+        staysBooked: 109,
+        transfersBooked: 42,
       },
     },
   },
@@ -156,6 +191,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 22,
         apiClientsPending: 5,
         rateLimitChanges: 7,
+        totalBookings: 891,
+        cancelledBookings: 104,
+        grossRevenue: 44550000,
+        staysBooked: 632,
+        transfersBooked: 259,
       },
       east_africa: {
         verifiedPartners: 287,
@@ -172,6 +212,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 17,
         apiClientsPending: 4,
         rateLimitChanges: 5,
+        totalBookings: 614,
+        cancelledBookings: 72,
+        grossRevenue: 30700000,
+        staysBooked: 436,
+        transfersBooked: 178,
       },
       southern_africa: {
         verifiedPartners: 209,
@@ -188,6 +233,11 @@ const reportSourceWindows: ReportSourceWindow[] = [
         apiClientsApproved: 12,
         apiClientsPending: 3,
         rateLimitChanges: 3,
+        totalBookings: 431,
+        cancelledBookings: 51,
+        grossRevenue: 21550000,
+        staysBooked: 308,
+        transfersBooked: 123,
       },
     },
   },
@@ -238,6 +288,11 @@ function sumRegionMetrics(metrics: RegionMetrics[]) {
       apiClientsApproved: total.apiClientsApproved + item.apiClientsApproved,
       apiClientsPending: total.apiClientsPending + item.apiClientsPending,
       rateLimitChanges: total.rateLimitChanges + item.rateLimitChanges,
+      totalBookings: total.totalBookings + item.totalBookings,
+      cancelledBookings: total.cancelledBookings + item.cancelledBookings,
+      grossRevenue: total.grossRevenue + item.grossRevenue,
+      staysBooked: total.staysBooked + item.staysBooked,
+      transfersBooked: total.transfersBooked + item.transfersBooked,
     }),
     {
       verifiedPartners: 0,
@@ -254,6 +309,11 @@ function sumRegionMetrics(metrics: RegionMetrics[]) {
       apiClientsApproved: 0,
       apiClientsPending: 0,
       rateLimitChanges: 0,
+      totalBookings: 0,
+      cancelledBookings: 0,
+      grossRevenue: 0,
+      staysBooked: 0,
+      transfersBooked: 0,
     },
   );
 }
@@ -277,6 +337,9 @@ export function getAggregatedReportSource(region: ReportsRegion, timeframe: Repo
 export function getReportSnapshot(region: ReportsRegion, timeframe: ReportsTimeframe): ReportSnapshot {
   const source = getAggregatedReportSource(region, timeframe);
   const listingConversionPercent = Math.round((source.listingsLive / Math.max(source.listingsLive + source.listingsSentBack, 1)) * 100);
+  const totalAll = source.totalBookings + source.cancelledBookings;
+  const cancellationRate = totalAll > 0 ? Math.round((source.cancelledBookings / totalAll) * 100 * 10) / 10 : 0;
+  const grossRevenueFormatted = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(source.grossRevenue);
 
   return {
     id: `reports-${region}-${timeframe}`,
@@ -325,6 +388,14 @@ export function getReportSnapshot(region: ReportsRegion, timeframe: ReportsTimef
         accent: "linear-gradient(90deg, #2f4858 0%, #40667a 100%)",
         badge: { label: `${source.rateLimitChanges} quota changes`, tone: "info" },
       },
+      {
+        key: "booking_activity",
+        label: "Booking activity",
+        value: `${source.totalBookings}`,
+        note: "Platform-wide confirmed and completed bookings in the selected window.",
+        accent: "linear-gradient(90deg, #1a3a5c 0%, #2e5f8a 100%)",
+        badge: { label: `${source.cancelledBookings} cancelled`, tone: "warning" },
+      },
     ],
     partnerGrowth: [
       { id: "pg-1", label: "Verified partners", value: `${source.verifiedPartners}`, note: "Partners in a verified lifecycle state." },
@@ -351,7 +422,15 @@ export function getReportSnapshot(region: ReportsRegion, timeframe: ReportsTimef
       { id: "aa-2", label: "Pending review", value: `${source.apiClientsPending}`, note: "Applications still in admin review." },
       { id: "aa-3", label: "Rate-limit changes", value: `${source.rateLimitChanges}`, note: "Quota changes recorded in the selected period." },
     ],
-    narrative: `${source.regionLabel} shows ${source.newApprovals} new approvals feeding verified partner growth, ${listingConversionPercent}% listing conversion to live supply, and ${source.apiClientsApproved} approved API clients in ${source.timeframeLabel.toLowerCase()}.`,
+    bookingActivity: [
+      { id: "ba-1", label: "Total bookings", value: `${source.totalBookings}`, note: "Confirmed and completed bookings in the reporting window." },
+      { id: "ba-2", label: "Cancelled bookings", value: `${source.cancelledBookings}`, note: "Cancellations recorded in the reporting window." },
+      { id: "ba-3", label: "Gross revenue", value: grossRevenueFormatted, note: "Sum of gross amounts from confirmed and completed bookings." },
+      { id: "ba-4", label: "Cancellation rate", value: `${cancellationRate}%`, note: "Cancelled bookings as a share of all bookings." },
+      { id: "ba-5", label: "Stays booked", value: `${source.staysBooked}`, note: "Booking volume from stay-type listings." },
+      { id: "ba-6", label: "Transfers booked", value: `${source.transfersBooked}`, note: "Booking volume from transfer-type listings." },
+    ],
+    narrative: `${source.regionLabel} shows ${source.newApprovals} new approvals feeding verified partner growth, ${listingConversionPercent}% listing conversion to live supply, ${source.apiClientsApproved} approved API clients, and ${source.totalBookings} confirmed bookings in ${source.timeframeLabel.toLowerCase()}.`,
   };
 }
 
@@ -364,8 +443,8 @@ export function getInitialReportExports() {
       timeframe: "30d" as const,
       fileName: "travelmate-report-all-30d.csv",
       exportedAt: "18/04/2026 11:20 UTC",
-      includedSections: ["partner_growth", "verification_funnel", "listing_conversion", "supply_mix", "api_adoption"],
-      sectionLabels: ["Partner growth", "Verification funnel", "Listing conversion", "Supply mix", "API adoption"],
+      includedSections: ["partner_growth", "verification_funnel", "listing_conversion", "supply_mix", "api_adoption", "booking_activity"],
+      sectionLabels: ["Partner growth", "Verification funnel", "Listing conversion", "Supply mix", "API adoption", "Booking activity"],
       contextSummary: "All regions · Last 30 days · 5 sections",
       csvPreviewRows: [
         "section,label,value,note",

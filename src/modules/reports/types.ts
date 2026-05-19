@@ -6,7 +6,8 @@ export type ReportMetricKey =
   | "verification_funnel"
   | "listing_conversion"
   | "supply_mix"
-  | "api_adoption";
+  | "api_adoption"
+  | "booking_activity";
 
 export type ReportMetric = {
   key: ReportMetricKey;
@@ -39,6 +40,7 @@ export type ReportSnapshot = {
   listingConversion: ReportBreakdownEntry[];
   supplyMix: ReportBreakdownEntry[];
   apiAdoption: ReportBreakdownEntry[];
+  bookingActivity: ReportBreakdownEntry[];
   narrative: string;
 };
 

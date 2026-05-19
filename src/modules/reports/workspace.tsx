@@ -37,6 +37,7 @@ export function ReportsWorkspace({
     "listing_conversion",
     "supply_mix",
     "api_adoption",
+    "booking_activity",
   ]);
   const [exports, setExports] = useState(initialExports);
   const [snapshot, setSnapshot] = useState<ReportSnapshot>(initialSnapshot ?? getReportSnapshot("all", "30d"));

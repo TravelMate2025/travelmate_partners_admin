@@ -112,7 +112,7 @@ export function ReportsDetailPanel({
       <div className="tm-soft-band mt-5">
         <p className="tm-label">Export sections</p>
         <div className="mt-3 flex flex-wrap gap-3">
-          {(["partner_growth", "verification_funnel", "listing_conversion", "supply_mix", "api_adoption"] as ReportMetricKey[]).map((section) => (
+          {(["partner_growth", "verification_funnel", "listing_conversion", "supply_mix", "api_adoption", "booking_activity"] as ReportMetricKey[]).map((section) => (
             <label className="inline-flex items-center gap-2 text-sm text-slate-900" key={section}>
               <input checked={selectedSections.includes(section)} onChange={() => onSectionToggle(section)} type="checkbox" />
               <span>{getReportSectionLabel(section)}</span>
@@ -133,6 +133,7 @@ export function ReportsDetailPanel({
         <BreakdownSection entries={snapshot.listingConversion} title="Listing conversion" />
         <BreakdownSection entries={snapshot.supplyMix} title="Supply mix" />
         <BreakdownSection entries={snapshot.apiAdoption} title="API adoption" />
+        <BreakdownSection entries={snapshot.bookingActivity} title="Booking activity" />
       </div>
 
       <div className="mt-5">

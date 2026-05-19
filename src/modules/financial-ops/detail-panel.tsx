@@ -101,6 +101,12 @@ export function FinancialOpsDetailPanel({
           <p className="tm-label">Booking</p>
           <p className="mt-2 text-sm text-slate-900">{selectedRecord.bookingReference}</p>
         </div>
+        {selectedRecord.flutterwaveRef ? (
+          <div className="tm-soft-band md:col-span-2">
+            <p className="tm-label">Flutterwave reference</p>
+            <p className="mt-2 break-all font-mono text-sm text-slate-900">{selectedRecord.flutterwaveRef}</p>
+          </div>
+        ) : null}
         <div className="tm-soft-band">
           <p className="tm-label">Expected payout</p>
           <p className="mt-2 text-sm text-slate-900">

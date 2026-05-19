@@ -38,6 +38,8 @@ export function getReportSectionLabel(section: ReportMetricKey) {
       return "Supply mix";
     case "api_adoption":
       return "API adoption";
+    case "booking_activity":
+      return "Booking activity";
   }
 }
 
@@ -57,6 +59,8 @@ export function getReportSectionEntries(snapshot: ReportSnapshot, section: Repor
       return snapshot.supplyMix;
     case "api_adoption":
       return snapshot.apiAdoption;
+    case "booking_activity":
+      return snapshot.bookingActivity;
   }
 }
 

@@ -40,6 +40,7 @@ export type FinancialOpsRecord = {
   summary: string;
   partnerName: string;
   bookingReference: string;
+  flutterwaveRef: string;
   supplyType: "stay" | "transfer";
   region: string;
   currency: string;
@@ -98,4 +99,77 @@ export type FinancialOpsActionResult = {
   records: FinancialOpsRecord[];
   updatedRecord: FinancialOpsRecord;
   auditRecord: FinancialOpsAuditRecord;
+};
+
+export type PlatformBalance = {
+  currency: string;
+  available_balance: number | null;
+  ledger_balance: number | null;
+  error: string | null;
+};
+
+export type FailedPaymentAttempt = {
+  id: string;
+  bookingReference: string;
+  appExternalId: string | null;
+  status: string;
+  currency: string;
+  amount: number | null;
+  flutterwaveRef: string;
+  paymentIntentId: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type DisbursementStatus =
+  | "queued"
+  | "initiated"
+  | "processing"
+  | "success"
+  | "failed"
+  | "cancelled";
+
+export type DisbursementRecord = {
+  id: string;
+  settlementId: string;
+  bookingReference: string;
+  provider: string;
+  providerReference: string;
+  amount: number;
+  currency: string;
+  status: DisbursementStatus;
+  retryCount: number;
+  initiatedAt: string | null;
+  confirmedAt: string | null;
+  failedAt: string | null;
+  failureReason: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type DisbursementListResult = {
+  results: DisbursementRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type DisbursementBalanceCheck = {
+  currency: string;
+  platformBalance: number | null;
+  pendingDisbursementTotal: number;
+  isSufficient: boolean | null;
+  balanceError: string | null;
+};
+
+export type BatchDisbursementResult = {
+  processed: number;
+  succeeded: number;
+  failed: number;
+  results: Array<{
+    settlementId: string;
+    result: DisbursementRecord | null;
+    error: string | null;
+  }>;
 };
