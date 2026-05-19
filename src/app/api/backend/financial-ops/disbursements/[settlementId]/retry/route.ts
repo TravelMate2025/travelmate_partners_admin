@@ -4,7 +4,7 @@ import { ADMIN_API_SESSION_COOKIE, getAdminApiBaseUrl, getStoredAdminSession } f
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { settlementId: string } },
+  { params }: { params: Promise<{ settlementId: string }> },
 ) {
   const session = await getStoredAdminSession();
   if (!session) {
@@ -14,7 +14,7 @@ export async function POST(
     );
   }
 
-  const { settlementId } = params;
+  const { settlementId } = await params;
 
   const response = await fetch(
     `${getAdminApiBaseUrl()}/admin/financial-ops/disbursements/${encodeURIComponent(settlementId)}/retry`,
