@@ -58,7 +58,7 @@ export function ListingModerationDetailPanel({
 }) {
   if (!selectedRecord) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset moderation selection"
           description="The selected listing is no longer available in the moderation queue snapshot."
@@ -85,7 +85,7 @@ export function ListingModerationDetailPanel({
     !allowedActions.emergency_unpublish;
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

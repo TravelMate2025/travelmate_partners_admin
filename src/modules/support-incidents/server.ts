@@ -108,7 +108,7 @@ export async function getListingAppealSupportCasesFromApi(): Promise<{ records: 
       records.push(mapAppealToSupportRecord(appeal, detailBody?.data));
     }
 
-    return { records, error: null };
+    return { records: sortNewestFirst(records), error: null };
   } catch {
     return { records: [], error: "Unable to load listing appeals." };
   }
@@ -119,6 +119,14 @@ type SupportEnvelope = {
   message?: string;
   error?: { message?: string };
 };
+
+function sortNewestFirst(records: SupportIncidentRecord[]) {
+  return [...records].sort(
+    (a, b) =>
+      Math.max(new Date(b.lastUpdatedAt).getTime(), new Date(b.openedAt).getTime())
+      - Math.max(new Date(a.lastUpdatedAt).getTime(), new Date(a.openedAt).getTime()),
+  );
+}
 
 export async function getSupportIncidentsFromApi(): Promise<{ records: SupportIncidentRecord[]; error: string | null }> {
   const session = await getStoredAdminSession();
@@ -140,7 +148,7 @@ export async function getSupportIncidentsFromApi(): Promise<{ records: SupportIn
         error: body?.message ?? body?.error?.message ?? "Unable to load support incidents.",
       };
     }
-    return { records: body.data.records, error: null };
+    return { records: sortNewestFirst(body.data.records), error: null };
   } catch {
     return { records: [], error: "Unable to load support incidents." };
   }

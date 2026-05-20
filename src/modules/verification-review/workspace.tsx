@@ -44,12 +44,20 @@ export function VerificationReviewWorkspace({
   actor: string;
   mode?: "mock" | "real";
 }) {
-  const [cases, setCases] = useState(initialCases);
-  const [selectedId, setSelectedId] = useState(initialCases[0]?.id ?? "");
-  const [note, setNote] = useState(initialCases[0]?.noteDraft ?? "");
+  const sortedInitialCases = useMemo(
+    () =>
+      [...initialCases].sort(
+        (a, b) =>
+          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+      ),
+    [initialCases],
+  );
+  const [cases, setCases] = useState(sortedInitialCases);
+  const [selectedId, setSelectedId] = useState(sortedInitialCases[0]?.id ?? "");
+  const [note, setNote] = useState(sortedInitialCases[0]?.noteDraft ?? "");
   const [pendingAction, setPendingAction] = useState<VerificationDecisionAction | null>(null);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
-  const [activeDocumentId, setActiveDocumentId] = useState(initialCases[0]?.documents[0]?.id ?? "");
+  const [activeDocumentId, setActiveDocumentId] = useState(sortedInitialCases[0]?.documents[0]?.id ?? "");
 
   const selectedCase = useMemo(
     () => cases.find((item) => item.id === selectedId) ?? cases[0],

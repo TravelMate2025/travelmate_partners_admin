@@ -103,7 +103,7 @@ export function AuditComplianceDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -111,7 +111,7 @@ export function AuditComplianceDetailPanel({
 
   if (!selectedEntry) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset selection"
           description="The selected audit event is no longer available in the current log snapshot."
@@ -124,7 +124,7 @@ export function AuditComplianceDetailPanel({
   }
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Event Detail</p>

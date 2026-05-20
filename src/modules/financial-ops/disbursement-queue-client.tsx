@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import type { DisbursementListResult, DisbursementRecord, DisbursementStatus } from "@/modules/financial-ops/types";
 
@@ -29,6 +28,80 @@ export function DisbursementQueueClient({
   const [fetchError] = useState(initialError);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [retryFeedback, setRetryFeedback] = useState<{ id: string; tone: "success" | "error"; message: string } | null>(null);
+  const [runSettlementId, setRunSettlementId] = useState("");
+  const [runBusy, setRunBusy] = useState(false);
+  const [runBatchBusy, setRunBatchBusy] = useState(false);
+  const [runFeedback, setRunFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+
+  function mergeRecord(record: DisbursementRecord) {
+    setRecords((prev) => {
+      const existingIdx = prev.findIndex((d) => d.id === record.id);
+      if (existingIdx === -1) {
+        setTotal((current) => current + 1);
+        return [record, ...prev];
+      }
+      return prev.map((d) => (d.id === record.id ? record : d));
+    });
+  }
+
+  async function handleRunSingle() {
+    const settlementId = runSettlementId.trim();
+    if (!settlementId) {
+      setRunFeedback({ tone: "error", message: "Enter a settlement ID first." });
+      return;
+    }
+    setRunBusy(true);
+    setRunFeedback(null);
+    try {
+      const response = await fetch("/api/backend/financial-ops/disbursements/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settlementId }),
+      });
+      const body = (await response.json().catch(() => null)) as { data?: DisbursementRecord; message?: string } | null;
+      if (!response.ok || !body?.data) {
+        setRunFeedback({ tone: "error", message: body?.message ?? "Disbursement run failed." });
+      } else {
+        mergeRecord(body.data);
+        setRunFeedback({ tone: "success", message: `Disbursement initiated for ${settlementId}.` });
+      }
+    } catch {
+      setRunFeedback({ tone: "error", message: "Network error during disbursement run." });
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
+  async function handleRunBatch() {
+    setRunBatchBusy(true);
+    setRunFeedback(null);
+    try {
+      const response = await fetch("/api/backend/financial-ops/disbursements/run-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        data?: { processed: number; succeeded: number; failed: number; results: Array<{ result: DisbursementRecord | null }> };
+        message?: string;
+      } | null;
+      if (!response.ok || !body?.data) {
+        setRunFeedback({ tone: "error", message: body?.message ?? "Batch run failed." });
+      } else {
+        for (const row of body.data.results) {
+          if (row.result) mergeRecord(row.result);
+        }
+        setRunFeedback({
+          tone: "success",
+          message: `Batch complete: processed ${body.data.processed}, succeeded ${body.data.succeeded}, failed ${body.data.failed}.`,
+        });
+      }
+    } catch {
+      setRunFeedback({ tone: "error", message: "Network error during batch run." });
+    } finally {
+      setRunBatchBusy(false);
+    }
+  }
 
   async function handleRetry(settlementId: string, disbursementId: string) {
     setRetrying(disbursementId);
@@ -59,6 +132,35 @@ export function DisbursementQueueClient({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Disbursement Queue</h2>
         {total > 0 ? <span className="text-xs text-slate-500">{total} total</span> : null}
       </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          className="tm-input min-w-[13rem] px-3 py-1.5 text-xs"
+          placeholder="Settlement ID"
+          value={runSettlementId}
+          onChange={(event) => setRunSettlementId(event.target.value)}
+        />
+        <button
+          className="rounded bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+          onClick={() => void handleRunSingle()}
+          disabled={runBusy || runBatchBusy}
+          type="button"
+        >
+          {runBusy ? "Running…" : "Run Disbursement"}
+        </button>
+        <button
+          className="rounded bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+          onClick={() => void handleRunBatch()}
+          disabled={runBatchBusy || runBusy}
+          type="button"
+        >
+          {runBatchBusy ? "Running Batch…" : "Run Batch"}
+        </button>
+      </div>
+      {runFeedback ? (
+        <p className={`mt-2 text-xs ${runFeedback.tone === "success" ? "text-emerald-700" : "text-red-700"}`}>
+          {runFeedback.message}
+        </p>
+      ) : null}
       {fetchError ? (
         <p className="mt-3 text-sm text-amber-700">{fetchError}</p>
       ) : records.length === 0 ? (
@@ -81,8 +183,8 @@ export function DisbursementQueueClient({
             </thead>
             <tbody>
               {records.map((d) => (
-                <>
-                  <tr className="border-b border-slate-100" key={d.id}>
+                <Fragment key={d.id}>
+                  <tr className="border-b border-slate-100">
                     <td className="py-2 pr-4 font-mono text-xs">{d.settlementId.slice(0, 8)}…</td>
                     <td className="py-2 pr-4 font-mono text-xs">{d.bookingReference || "—"}</td>
                     <td className="py-2 pr-4">
@@ -117,7 +219,7 @@ export function DisbursementQueueClient({
                     </td>
                   </tr>
                   {retryFeedback && retryFeedback.id === d.id ? (
-                    <tr key={`${d.id}-feedback`}>
+                    <tr>
                       <td
                         className={`py-1 text-xs ${retryFeedback.tone === "success" ? "text-emerald-700" : "text-red-700"}`}
                         colSpan={9}
@@ -126,7 +228,7 @@ export function DisbursementQueueClient({
                       </td>
                     </tr>
                   ) : null}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

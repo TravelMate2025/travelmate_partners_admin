@@ -37,7 +37,7 @@ export function ApiMonitoringDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -45,7 +45,7 @@ export function ApiMonitoringDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset monitoring selection"
           description="The selected API anomaly is no longer available in the current monitoring snapshot."
@@ -60,7 +60,7 @@ export function ApiMonitoringDetailPanel({
   const tags = detectApiMonitoringTags(selectedRecord);
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Anomaly Detail</p>

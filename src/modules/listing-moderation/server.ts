@@ -15,6 +15,20 @@ type ModerationPage = {
   results: ModerationListingRecord[];
 };
 
+function sortNewestFirst(records: ModerationListingRecord[]) {
+  return [...records].sort(
+    (a, b) =>
+      Math.max(
+        new Date(b.submittedAt).getTime(),
+        new Date(b.lastReviewedAt).getTime(),
+      )
+      - Math.max(
+        new Date(a.submittedAt).getTime(),
+        new Date(a.lastReviewedAt).getTime(),
+      ),
+  );
+}
+
 export async function getModerationListingsFromApi(): Promise<{
   records: ModerationListingRecord[];
   error: string | null;
@@ -44,7 +58,7 @@ export async function getModerationListingsFromApi(): Promise<{
       };
     }
 
-    return { records: body.data.results ?? [], error: null };
+    return { records: sortNewestFirst(body.data.results ?? []), error: null };
   } catch {
     return { records: [], error: "Unable to load moderation queue." };
   }

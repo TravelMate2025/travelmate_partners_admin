@@ -14,7 +14,12 @@ type VerificationCasesPayload =
     };
 
 function mapCasePaths(cases: VerificationCase[]) {
-  return cases.map((item) => ({
+  return [...cases]
+    .sort(
+      (a, b) =>
+        new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+    )
+    .map((item) => ({
     ...item,
     documents: item.documents.map((document) => ({
       ...document,

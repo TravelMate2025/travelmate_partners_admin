@@ -3,6 +3,14 @@ import type { NotificationRecord } from "@/modules/notifications/types";
 
 type Envelope<T> = { data?: T; message?: string; error?: { message?: string } };
 
+function sortNewestFirst(records: NotificationRecord[]) {
+  return [...records].sort(
+    (a, b) =>
+      new Date(b.deliveryMetadata?.sentAt ?? b.createdAt).getTime()
+      - new Date(a.deliveryMetadata?.sentAt ?? a.createdAt).getTime(),
+  );
+}
+
 export async function getNotificationsFromApi(): Promise<{ records: NotificationRecord[]; error: string | null }> {
   const session = await getStoredAdminSession();
   if (!session) {
@@ -24,7 +32,7 @@ export async function getNotificationsFromApi(): Promise<{ records: Notification
         error: body?.message ?? body?.error?.message ?? "Unable to load notifications.",
       };
     }
-    return { records: body.data, error: null };
+    return { records: sortNewestFirst(body.data), error: null };
   } catch {
     return { records: [], error: "Unable to load notifications." };
   }

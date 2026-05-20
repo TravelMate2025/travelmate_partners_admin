@@ -3,6 +3,14 @@ import type { ApiMonitoringRecord } from "@/modules/api-monitoring/types";
 
 type Envelope<T> = { data?: T; message?: string; error?: { message?: string } };
 
+function sortNewestFirst(records: ApiMonitoringRecord[]) {
+  return [...records].sort(
+    (a, b) =>
+      Math.max(new Date(b.lastSeenAt).getTime(), new Date(b.firstDetectedAt).getTime())
+      - Math.max(new Date(a.lastSeenAt).getTime(), new Date(a.firstDetectedAt).getTime()),
+  );
+}
+
 export async function getApiMonitoringFromApi(): Promise<{ records: ApiMonitoringRecord[]; error: string | null }> {
   const session = await getStoredAdminSession();
   if (!session) return { records: [], error: "Admin session is not available for API monitoring." };
@@ -16,7 +24,7 @@ export async function getApiMonitoringFromApi(): Promise<{ records: ApiMonitorin
     if (!response.ok || !body?.data?.records) {
       return { records: [], error: body?.message ?? body?.error?.message ?? "Unable to load API monitoring queue." };
     }
-    return { records: body.data.records, error: null };
+    return { records: sortNewestFirst(body.data.records), error: null };
   } catch {
     return { records: [], error: "Unable to load API monitoring queue." };
   }

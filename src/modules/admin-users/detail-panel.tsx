@@ -64,7 +64,7 @@ export function AdminUsersDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -72,7 +72,7 @@ export function AdminUsersDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset selection"
           description="The selected admin account is no longer available in this governance snapshot."
@@ -94,7 +94,7 @@ export function AdminUsersDetailPanel({
   const inviteExpiry = selectedRecord.inviteState === "pending" ? "Invitation is still awaiting acceptance." : "Invitation is no longer pending.";
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Admin Detail</p>

@@ -63,7 +63,7 @@ export function VerificationCaseDetail({
 }) {
   if (!selectedCase) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset to first case"
           description="The selected case is no longer available in this queue snapshot."
@@ -79,7 +79,7 @@ export function VerificationCaseDetail({
   const latestDecision = selectedCase.history[0];
 
   return (
-    <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Case Detail</p>

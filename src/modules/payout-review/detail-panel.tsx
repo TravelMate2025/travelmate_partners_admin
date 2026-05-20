@@ -73,7 +73,7 @@ export function PayoutReviewDetailPanel({
 }) {
   if (emptyState) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState description={emptyState.description} title={emptyState.title} tone="empty" />
       </article>
     );
@@ -81,7 +81,7 @@ export function PayoutReviewDetailPanel({
 
   if (!selectedRecord) {
     return (
-      <article className="tm-panel min-w-0 h-fit xl:sticky xl:top-24">
+      <article className="tm-panel min-w-0 h-fit">
         <SurfaceState
           actionLabel="Reset selection"
           description="The selected payout review case is no longer available in this snapshot."
@@ -94,7 +94,7 @@ export function PayoutReviewDetailPanel({
   }
 
   return (
-    <article className="tm-panel min-w-0 h-fit overflow-x-hidden xl:sticky xl:top-24">
+    <article className="tm-panel min-w-0 h-fit overflow-x-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Payout Detail</p>

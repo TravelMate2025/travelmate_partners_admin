@@ -3,6 +3,20 @@ import type { PayoutReviewRecord } from "@/modules/payout-review/types";
 
 type Envelope<T> = { data?: T; message?: string; error?: { message?: string } };
 
+function sortNewestFirst(records: PayoutReviewRecord[]) {
+  return [...records].sort(
+    (a, b) =>
+      Math.max(
+        new Date(b.lastUpdatedAt).getTime(),
+        new Date(b.verificationSubmittedAt).getTime(),
+      )
+      - Math.max(
+        new Date(a.lastUpdatedAt).getTime(),
+        new Date(a.verificationSubmittedAt).getTime(),
+      ),
+  );
+}
+
 export async function getPayoutReviewFromApi(): Promise<{
   records: PayoutReviewRecord[];
   error: string | null;
@@ -27,7 +41,7 @@ export async function getPayoutReviewFromApi(): Promise<{
         error: body?.message ?? body?.error?.message ?? "Unable to load payout review queue.",
       };
     }
-    return { records: body.data.records, error: null };
+    return { records: sortNewestFirst(body.data.records), error: null };
   } catch {
     return { records: [], error: "Unable to load payout review queue." };
   }
