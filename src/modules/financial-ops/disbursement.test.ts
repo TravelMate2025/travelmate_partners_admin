@@ -37,6 +37,7 @@ function makeDisbursementRecord(overrides: Partial<DisbursementRecord> = {}): Di
     confirmedAt: null,
     failedAt: null,
     failureReason: null,
+    cancellationOptionSelection: null,
     createdAt: "2026-05-19T09:55:00Z",
     updatedAt: "2026-05-19T10:00:01Z",
     ...overrides,

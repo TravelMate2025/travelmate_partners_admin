@@ -21,6 +21,7 @@ function makeData(): DisbursementListResult {
         confirmedAt: null,
         failedAt: "2026-05-19T10:00:00Z",
         failureReason: "timeout",
+        cancellationOptionSelection: null,
         createdAt: "2026-05-19T09:00:00Z",
         updatedAt: "2026-05-19T10:00:00Z",
       },
@@ -56,6 +57,7 @@ describe("DisbursementQueueClient", () => {
           confirmedAt: null,
           failedAt: null,
           failureReason: null,
+          cancellationOptionSelection: null,
           createdAt: "2026-05-19T11:00:00Z",
           updatedAt: "2026-05-19T11:00:00Z",
         },
@@ -101,6 +103,7 @@ describe("DisbursementQueueClient", () => {
                 confirmedAt: null,
                 failedAt: null,
                 failureReason: null,
+                cancellationOptionSelection: null,
                 createdAt: "2026-05-19T11:00:00Z",
                 updatedAt: "2026-05-19T11:00:00Z",
               },
@@ -124,4 +127,3 @@ describe("DisbursementQueueClient", () => {
     expect(await screen.findByText("Batch complete: processed 2, succeeded 2, failed 0.")).toBeInTheDocument();
   });
 });
-

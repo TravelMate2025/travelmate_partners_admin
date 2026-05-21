@@ -143,6 +143,14 @@ export type DisbursementRecord = {
   confirmedAt: string | null;
   failedAt: string | null;
   failureReason: string | null;
+  cancellationOptionSelection: {
+    optionId: "NON_CANCELLABLE" | "FREE_CANCELLATION";
+    label: string;
+    amount: number;
+    currency: string;
+    cancelDeadlineHoursBeforeCheckIn: number | null;
+    selectedAt: string;
+  } | null;
   createdAt: string | null;
   updatedAt: string | null;
 };

@@ -172,6 +172,7 @@ export function DisbursementQueueClient({
               <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <th className="pb-2 pr-4">Settlement</th>
                 <th className="pb-2 pr-4">Booking ref</th>
+                <th className="pb-2 pr-4">Cancellation option</th>
                 <th className="pb-2 pr-4">Amount</th>
                 <th className="pb-2 pr-4">Status</th>
                 <th className="pb-2 pr-4">Retries</th>
@@ -187,6 +188,11 @@ export function DisbursementQueueClient({
                   <tr className="border-b border-slate-100">
                     <td className="py-2 pr-4 font-mono text-xs">{d.settlementId.slice(0, 8)}…</td>
                     <td className="py-2 pr-4 font-mono text-xs">{d.bookingReference || "—"}</td>
+                    <td className="py-2 pr-4 text-xs text-slate-700">
+                      {d.cancellationOptionSelection
+                        ? `${d.cancellationOptionSelection.label} (${d.cancellationOptionSelection.optionId})`
+                        : "—"}
+                    </td>
                     <td className="py-2 pr-4">
                       {d.currency} {d.amount.toLocaleString()}
                     </td>
@@ -222,7 +228,7 @@ export function DisbursementQueueClient({
                     <tr>
                       <td
                         className={`py-1 text-xs ${retryFeedback.tone === "success" ? "text-emerald-700" : "text-red-700"}`}
-                        colSpan={9}
+                        colSpan={10}
                       >
                         {retryFeedback.message}
                       </td>
