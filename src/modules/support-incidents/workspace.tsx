@@ -39,12 +39,17 @@ export function SupportIncidentsWorkspace({
   const repository = mode === "real" ? realSupportIncidentRepository : mockSupportIncidentRepository;
   function sortByMostRecentOpened(items: SupportIncidentRecord[]) {
     return [...items].sort((a, b) => {
-      const aTime = Date.parse(a.openedAt);
-      const bTime = Date.parse(b.openedAt);
-      if (Number.isNaN(aTime) || Number.isNaN(bTime)) {
-        return b.id.localeCompare(a.id);
+      const aOpened = Date.parse(a.openedAt);
+      const bOpened = Date.parse(b.openedAt);
+      if (!Number.isNaN(aOpened) && !Number.isNaN(bOpened) && bOpened !== aOpened) {
+        return bOpened - aOpened;
       }
-      return bTime - aTime;
+      const aUpdated = Date.parse(a.lastUpdatedAt);
+      const bUpdated = Date.parse(b.lastUpdatedAt);
+      if (!Number.isNaN(aUpdated) && !Number.isNaN(bUpdated) && bUpdated !== aUpdated) {
+        return bUpdated - aUpdated;
+      }
+      return b.id.localeCompare(a.id);
     });
   }
 
