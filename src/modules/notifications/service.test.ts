@@ -31,4 +31,30 @@ describe("notifications service", () => {
     expect(result.auditRecord.region).toBeNull();
     expect(result.auditRecord.channels).toEqual(["email", "in_app"]);
   });
+
+  it("returns selected partner label for partner-segment direct messages", async () => {
+    const records = getNotificationRecords();
+    const result = await mockNotificationsRepository.applyAction(
+      records,
+      {
+        actor: "Maya Singh",
+        notificationId: "notification-001",
+        action: "send_message",
+        title: "Appeal response",
+        body: "We reviewed your appeal and documented the next actions for reinstatement.",
+        kind: "direct",
+        audienceSegment: "partner",
+        region: null,
+        partnerIds: ["partner-1"],
+        partnerLabel: "Acme Travel Ltd (partner-1)",
+        channels: ["in_app"],
+        note: "Responding to a partner-specific appeal outcome.",
+      },
+      "support",
+    );
+
+    expect(result.updatedRecord.deliveryMetadata?.targetSummary).toBe("Acme Travel Ltd (partner-1)");
+    expect(result.auditRecord.targetSegment).toBe("partner");
+    expect(result.auditRecord.targetPartnerCount).toBe(1);
+  });
 });

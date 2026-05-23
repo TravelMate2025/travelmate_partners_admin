@@ -9,17 +9,23 @@ function toneForStatus(status: NotificationRecord["status"]) {
 }
 
 export function NotificationsQueuePanel({
+  activeTab,
   records,
   selectedId,
   filters,
+  onTabChange,
+  onCreateDraft,
   onFilterChange,
   onResetFilters,
   onSelect,
   summary,
 }: {
+  activeTab: "workflow" | "partner_messages";
   records: NotificationRecord[];
   selectedId: string;
   filters: NotificationFilterState;
+  onTabChange: (tab: "workflow" | "partner_messages") => void;
+  onCreateDraft: () => void;
   onFilterChange: (value: NotificationFilterState) => void;
   onResetFilters: () => void;
   onSelect: (id: string) => void;
@@ -28,20 +34,46 @@ export function NotificationsQueuePanel({
     sent: number;
     broadcasts: number;
     failedDeliveries: number;
+    workflowAlerts: number;
+    outboundMessages: number;
   };
 }) {
   return (
     <article className="tm-panel">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="tm-kicker">Partner Messaging</p>
-          <h2 className="mt-2 text-2xl font-semibold text-slate-950">Compose and track partner communications</h2>
+          <p className="tm-kicker">Admin Notifications</p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-950">Central notifications and partner messaging</h2>
           <p className="tm-muted mt-2 text-sm">
-            Send direct messages, transactional notices, and announcements with audience validation and delivery metadata.
+            Review workflow alerts and outbound partner communications from one center, then route into the right operational module.
           </p>
         </div>
-        <button className="tm-btn tm-btn-outline" onClick={onResetFilters} type="button">
-          Reset filters
+        <div className="flex flex-wrap gap-2">
+          {activeTab === "partner_messages" ? (
+            <button className="tm-btn tm-btn-primary" onClick={onCreateDraft} type="button">
+              New Message Draft
+            </button>
+          ) : null}
+          <button className="tm-btn tm-btn-outline" onClick={onResetFilters} type="button">
+            Reset filters
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          className={`tm-tag-pill ${activeTab === "workflow" ? "tm-tag-pill-active" : ""}`}
+          onClick={() => onTabChange("workflow")}
+          type="button"
+        >
+          Workflow Alerts
+        </button>
+        <button
+          className={`tm-tag-pill ${activeTab === "partner_messages" ? "tm-tag-pill-active" : ""}`}
+          onClick={() => onTabChange("partner_messages")}
+          type="button"
+        >
+          Partner Messages
         </button>
       </div>
 
@@ -61,6 +93,14 @@ export function NotificationsQueuePanel({
         <div className="tm-soft-band">
           <p className="tm-label">Failed deliveries</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.failedDeliveries}</p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Workflow alerts</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.workflowAlerts}</p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Outbound messages</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.outboundMessages}</p>
         </div>
       </div>
 
@@ -101,6 +141,14 @@ export function NotificationsQueuePanel({
             <option value="sms">sms</option>
           </select>
         </label>
+        <label className="block md:col-span-2">
+          <span className="tm-label">Source</span>
+          <select className="tm-input mt-3" onChange={(event) => onFilterChange({ ...filters, source: event.target.value as NotificationFilterState["source"] })} value={filters.source}>
+            <option value="all">all</option>
+            <option value="workflow_alert">workflow alerts</option>
+            <option value="admin_outbound">outbound messages</option>
+          </select>
+        </label>
       </div>
 
       <div className="mt-6 grid gap-3">
@@ -122,6 +170,7 @@ export function NotificationsQueuePanel({
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge label={record.kind} tone="info" />
                   <StatusBadge label={record.status} tone={toneForStatus(record.status)} />
+                  <StatusBadge label={record.source ?? "admin_outbound"} tone={(record.source ?? "admin_outbound") === "workflow_alert" ? "warning" : "neutral"} />
                 </div>
               </div>
               <p className="tm-muted mt-3 text-sm">{record.summary}</p>

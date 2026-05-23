@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { StatusBadge } from "@/components/common/status-badge";
 import { SurfaceState } from "@/components/common/surface-state";
 import type {
@@ -5,6 +6,7 @@ import type {
   NotificationAudienceSegment,
   NotificationChannel,
   NotificationKind,
+  NotificationPartnerOption,
   NotificationRecord,
 } from "@/modules/notifications/types";
 
@@ -43,6 +45,7 @@ function renderDeliveryMetadata(record: NotificationRecord) {
 }
 
 export function NotificationsDetailPanel({
+  activeTab,
   selectedRecord,
   emptyState,
   title,
@@ -51,6 +54,7 @@ export function NotificationsDetailPanel({
   audienceSegment,
   region,
   partnerIdsInput,
+  partnerOptions,
   channels,
   note,
   pendingAction,
@@ -70,6 +74,7 @@ export function NotificationsDetailPanel({
   onAction,
   onResetSelection,
 }: {
+  activeTab: "workflow" | "partner_messages";
   selectedRecord: NotificationRecord | null;
   emptyState?: { title: string; description: string } | null;
   title: string;
@@ -78,6 +83,7 @@ export function NotificationsDetailPanel({
   audienceSegment: NotificationAudienceSegment;
   region: string;
   partnerIdsInput: string;
+  partnerOptions: NotificationPartnerOption[];
   channels: NotificationChannel[];
   note: string;
   pendingAction: NotificationAction | null;
@@ -124,7 +130,9 @@ export function NotificationsDetailPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="tm-kicker">Message Detail</p>
-          <h2 className="mt-2 text-2xl font-semibold text-slate-950">{selectedRecord.title}</h2>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+            {selectedRecord.title || "Untitled draft"}
+          </h2>
           <p className="tm-muted mt-2 text-sm">
             Created by {selectedRecord.createdBy} · {selectedRecord.targetPartnerCount} recipients
           </p>
@@ -135,6 +143,34 @@ export function NotificationsDetailPanel({
         </div>
       </div>
 
+      {activeTab === "workflow" ? (
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="tm-soft-band">
+            <p className="tm-label">Workflow alert details</p>
+            <p className="mt-3 text-sm text-slate-900">{selectedRecord.body}</p>
+            <p className="tm-muted mt-3 text-sm">{selectedRecord.summary}</p>
+            {renderDeliveryMetadata(selectedRecord)}
+          </div>
+          <div className="tm-soft-band">
+            <p className="tm-label">Routing</p>
+            {selectedRecord.routing?.href ? (
+              <div className="mt-3">
+                <p className="tm-muted text-sm">
+                  Open the related operations module to continue triage.
+                </p>
+                <Link className="tm-btn tm-btn-outline mt-3" href={String(selectedRecord.routing.href)}>
+                  Open related screen
+                </Link>
+              </div>
+            ) : (
+              <p className="tm-muted mt-3 text-sm">No workflow route is attached to this alert.</p>
+            )}
+            <p className="tm-muted mt-4 text-sm">
+              Workflow alerts are read-only in this tab.
+            </p>
+          </div>
+        </div>
+      ) : (
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div className="tm-soft-band">
           <p className="tm-label">Compose message</p>
@@ -190,28 +226,41 @@ export function NotificationsDetailPanel({
                 <option value="partner">partner</option>
               </select>
             </label>
-            <label className="block md:col-span-2">
-              <span className="tm-label">Region</span>
-              <input
-                aria-label="Target region"
-                className="tm-input mt-3"
-                disabled={audienceSegment !== "region"}
-                onChange={(event) => onRegionChange(event.target.value)}
-                placeholder="East Africa"
-                value={region}
-              />
-            </label>
-            <label className="block md:col-span-2">
-              <span className="tm-label">Partner IDs</span>
-              <input
-                aria-label="Target partner IDs"
-                className="tm-input mt-3"
-                disabled={audienceSegment !== "partner" || isAppealCompose}
-                onChange={(event) => onPartnerIdsInputChange(event.target.value)}
-                placeholder="partner-id-1, partner-id-2"
-                value={partnerIdsInput}
-              />
-            </label>
+            {audienceSegment === "region" ? (
+              <label className="block md:col-span-2">
+                <span className="tm-label">Region</span>
+                <input
+                  aria-label="Target region"
+                  className="tm-input mt-3"
+                  onChange={(event) => onRegionChange(event.target.value)}
+                  placeholder="East Africa"
+                  value={region}
+                />
+              </label>
+            ) : null}
+            {audienceSegment === "partner" ? (
+              <label className="block md:col-span-2">
+                <span className="tm-label">Partner</span>
+                <select
+                  aria-label="Target partner"
+                  className="tm-input mt-3"
+                  disabled={isAppealCompose}
+                  onChange={(event) => onPartnerIdsInputChange(event.target.value)}
+                  value={partnerIdsInput}
+                >
+                  <option value="">Select partner</option>
+                  {partnerOptions.map((partner) => (
+                    <option key={partner.id} value={partner.id}>
+                      {partner.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <p className="tm-muted md:col-span-2 text-sm">
+                Audience is resolved automatically from the selected segment.
+              </p>
+            )}
           </div>
           {isAppealCompose ? (
             <p className="tm-muted mt-3 text-sm">Appeal response mode locks message targeting to the selected partner.</p>
@@ -234,8 +283,15 @@ export function NotificationsDetailPanel({
           <p className="tm-muted mt-4 text-sm">{policySummary}</p>
         </div>
       </div>
+      )}
 
+      {activeTab === "partner_messages" ? (
       <div className="tm-soft-band mt-5">
+        {selectedRecord.status === "draft" ? (
+          <div className="tm-alert tm-alert-warning">
+            Draft mode: this message has not been sent yet.
+          </div>
+        ) : null}
         <p className="tm-label">Operator note</p>
         <textarea
           className="tm-textarea mt-3"
@@ -257,6 +313,7 @@ export function NotificationsDetailPanel({
           </button>
         </div>
       </div>
+      ) : null}
 
       <div className="mt-5">
         <p className="tm-kicker">Delivery History</p>

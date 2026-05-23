@@ -21,7 +21,7 @@ function formatTimestamp(date: string) {
     .replace(",", " UTC");
 }
 
-function targetSummary(segment: NotificationAudienceSegment, region: string | null) {
+function targetSummary(segment: NotificationAudienceSegment, region: string | null, partnerLabel?: string | null) {
   switch (segment) {
     case "all_partners":
       return "all partners";
@@ -34,7 +34,7 @@ function targetSummary(segment: NotificationAudienceSegment, region: string | nu
     case "region":
       return region ? `${region} partners` : "regional partners";
     case "partner":
-      return "selected partner(s)";
+      return partnerLabel && partnerLabel.trim().length > 0 ? partnerLabel.trim() : "selected partner(s)";
   }
 }
 
@@ -94,7 +94,7 @@ export const mockNotificationsRepository: NotificationsRepository = {
     }
 
     const timestamp = new Date().toISOString();
-    const target = targetSummary(payload.audienceSegment, payload.region);
+    const target = targetSummary(payload.audienceSegment, payload.region, payload.partnerLabel);
     const targetCount = estimatedTargetCount(payload.audienceSegment, payload.region, payload.partnerIds);
     const formattedTimestamp = formatTimestamp(timestamp);
 

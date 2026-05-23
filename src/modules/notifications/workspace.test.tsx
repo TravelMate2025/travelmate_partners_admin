@@ -71,7 +71,7 @@ describe("NotificationsWorkspace", () => {
     expect(screen.getAllByLabelText("Message type")[1]).toHaveValue("direct");
     expect(screen.getByLabelText("Audience segment")).toBeDisabled();
     expect(screen.getByLabelText("Audience segment")).toHaveValue("partner");
-    expect(screen.getByLabelText("Target partner IDs")).toBeDisabled();
+    expect(screen.getByLabelText("Target partner")).toBeDisabled();
     expect(screen.getByText(/Appeal response mode locks message targeting to the selected partner./i)).toBeInTheDocument();
   });
 
@@ -85,6 +85,39 @@ describe("NotificationsWorkspace", () => {
 
     expect(screen.getAllByLabelText("Message type")[1]).toHaveValue("direct");
     expect(screen.getByLabelText("Audience segment")).toHaveValue("partner");
-    expect(screen.getByLabelText("Target partner IDs")).toHaveValue("partner-1");
+    expect(screen.getByLabelText("Target partner")).toHaveValue("partner-1");
+  });
+
+  it("creates and selects a fresh draft from partner messages tab", async () => {
+    render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Partner Messages" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Message Draft" }));
+
+    expect(screen.getByText("Untitled draft")).toBeInTheDocument();
+    expect(screen.getByText("Draft mode: this message has not been sent yet.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Notification title")).toHaveValue("");
+    expect(screen.getByLabelText("Notification body")).toHaveValue("");
+    expect(screen.queryByPlaceholderText("partner-id-1, partner-id-2")).not.toBeInTheDocument();
+  });
+
+  it("sanitizes unsafe partnerId URL values and does not surface them in partner select", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/notifications?compose=1&composeSource=appeal&audience=partner&partnerId=ui%20flows%2C%20onboarding%20etc&title=Appeal+Response&body=This+is+a+sufficiently+long+appeal+response+message.&note=Documented+appeal+response+context+for+audit.",
+    );
+    render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);
+
+    expect(screen.getByLabelText("Target partner")).toHaveValue("");
+    expect(screen.queryByText(/ui flows, onboarding etc/i)).not.toBeInTheDocument();
+  });
+
+  it("hides partner selector for verified_partners audience and shows segment guidance", async () => {
+    render(<NotificationsWorkspace actor="Maya Singh" initialRecords={getNotificationRecords()} role="support" />);
+
+    expect(screen.getByLabelText("Audience segment")).toHaveValue("verified_partners");
+    expect(screen.queryByLabelText("Target partner")).not.toBeInTheDocument();
+    expect(screen.getByText("Audience is resolved automatically from the selected segment.")).toBeInTheDocument();
   });
 });

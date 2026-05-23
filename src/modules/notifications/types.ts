@@ -73,6 +73,7 @@ export type NotificationFilterState = {
   kind: NotificationKind | "all";
   status: NotificationStatus | "all";
   channel: NotificationChannel | "all";
+  source: "all" | "workflow_alert" | "admin_outbound";
 };
 
 export type NotificationsSurfaceState =
@@ -93,6 +94,7 @@ export type NotificationActionPayload = {
   audienceSegment: NotificationAudienceSegment;
   region: string | null;
   partnerIds?: string[];
+  partnerLabel?: string | null;
   channels: NotificationChannel[];
   note: string;
 };
@@ -108,4 +110,9 @@ export type NotificationsPolicy = {
   canBroadcast: boolean;
   summary: string;
   allowedRoles: AdminRole[];
+};
+
+export type NotificationPartnerOption = {
+  id: string;
+  label: string;
 };

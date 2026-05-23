@@ -76,11 +76,14 @@ export function validateNotificationPayload(payload: NotificationActionPayload, 
 }
 
 export function buildNotificationsSummary(records: NotificationRecord[]) {
+  const normalizedSource = (record: NotificationRecord) => record.source ?? "admin_outbound";
   return {
     drafts: records.filter((record) => record.status === "draft").length,
     sent: records.filter((record) => record.status === "sent").length,
     broadcasts: records.filter((record) => record.kind === "broadcast").length,
     failedDeliveries: records.reduce((total, record) => total + (record.deliveryMetadata?.failedCount ?? 0), 0),
+    workflowAlerts: records.filter((record) => normalizedSource(record) === "workflow_alert").length,
+    outboundMessages: records.filter((record) => normalizedSource(record) === "admin_outbound").length,
   };
 }
 
@@ -95,6 +98,7 @@ export function matchesNotificationFilter(record: NotificationRecord, filters: N
   const matchesKind = filters.kind === "all" || record.kind === filters.kind;
   const matchesStatus = filters.status === "all" || record.status === filters.status;
   const matchesChannel = filters.channel === "all" || record.channels.includes(filters.channel);
+  const matchesSource = filters.source === "all" || (record.source ?? "admin_outbound") === filters.source;
 
-  return matchesQuery && matchesKind && matchesStatus && matchesChannel;
+  return matchesQuery && matchesKind && matchesStatus && matchesChannel && matchesSource;
 }

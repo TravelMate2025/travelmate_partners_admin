@@ -318,7 +318,7 @@
 - Flow 2.14 Support and Incident Tools: `Completed`
 - Flow 2.15 Financial Operations and Settlement Management: `Completed`
 - Flow 2.16 Settlement Account (Payout Method) Review and Security Controls: `Not started`
-- Flow 2.17 Admin User Management and Access Governance: `In progress` (frontend workspace complete with mock data; backend API and real wiring pending — Phase 2.5 in api/plan.md)
+- Flow 2.17 Admin User Management and Access Governance: `In progress` (real API wiring is active for core governance workflows; final end-to-end signoff and any residual acceptance-invite hardening remain open)
 
 Current planning note:
 - This file initializes the admin application scope using the baseline from `app_features.md`, with explicit alignment to the completed partner app so the admin dashboard can act as the back office without conflicting ownership.
@@ -633,8 +633,8 @@ Alignment rule for this section:
 - Status:
   - In progress.
   - Frontend workspace implemented: admin directory, pending invites, activation and deactivation controls, resend and revoke invite actions, MFA posture, recent session context, permission policy summaries, and role assignment. Sensitive grants into `finance` and `super_admin` require explicit confirmation in the workspace. Local audit history records governance actions.
-  - Currently wired to `mockAdminUsersRepository` in `src/modules/admin-users/service.ts`. Real backend (AdminInvitation model, invite/activate/deactivate/assign-role endpoints, accept-invite page) is pending implementation as Phase 2.5 in `api/plan.md`.
-  - Remaining work: replace `mockAdminUsersRepository` with real API calls, add `/auth/accept-invite` page, run end-to-end signoff once backend is live.
+  - Real API wiring is active via `realAdminUsersRepository`; mock repository remains available only as a fallback/test adapter.
+  - Remaining work: complete final end-to-end signoff and keep acceptance-invite governance checks aligned with backend policy.
 
 ## 6. Test Strategy by Module
 

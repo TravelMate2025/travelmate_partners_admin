@@ -73,8 +73,32 @@ export function AdminShell({ title, description, children, headerAside }: AdminS
         }
         const unseen = records.filter((record) => !seenIds.has(record.id));
         setUnreadAlertsCount(unseen.length);
-        const prioritizedDestination =
-          unseen.find((record) => typeof record.routing?.href === "string" && record.routing.href.length > 0)?.routing?.href ?? null;
+        function routeFor(record: (typeof records)[number]): string | null {
+          const href = typeof record.routing?.href === "string" && record.routing.href.length > 0 ? record.routing.href : "";
+          if (!href) {
+            return null;
+          }
+          const params = new URLSearchParams();
+          if (record.routing?.module === "moderation") {
+            const listingId = String(record.routing?.listingId ?? "").trim();
+            const listingKind = String(record.routing?.listingKind ?? "").trim();
+            if (listingId) {
+              params.set("listing", listingId);
+            }
+            if (listingKind === "stay" || listingKind === "transfer") {
+              params.set("kind", listingKind);
+            }
+          }
+          if (record.routing?.module === "support_incidents") {
+            const caseId = String(record.routing?.caseId ?? "").trim();
+            if (caseId) {
+              params.set("case", caseId);
+            }
+          }
+          const query = params.toString();
+          return query ? `${href}?${query}` : href;
+        }
+        const prioritizedDestination = unseen.map((record) => routeFor(record)).find((value) => Boolean(value)) ?? null;
         setUnreadAlertsHref(prioritizedDestination);
 
         if (!alertsInitialized) {

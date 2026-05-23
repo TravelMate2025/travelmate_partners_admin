@@ -62,6 +62,7 @@ export function ListingModerationWorkspace({
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<ModerationAction | null>(null);
   const [hasLoadedUrlState, setHasLoadedUrlState] = useState(false);
+  const [listingResyncAttempted, setListingResyncAttempted] = useState(false);
 
   const filteredRecords = useMemo(() => records.filter((record) => matchesFilter(record, filters)), [records, filters]);
   const selectedRecord = useMemo(() => records.find((record) => record.id === selectedId) ?? null, [records, selectedId]);
@@ -116,6 +117,53 @@ export function ListingModerationWorkspace({
 
     setHasLoadedUrlState(true);
   }, [initialRecords]);
+
+  useEffect(() => {
+    if (!hasLoadedUrlState || listingResyncAttempted) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const listingId = params.get("listing");
+    if (!listingId) {
+      return;
+    }
+    if (records.some((record) => record.id === listingId)) {
+      return;
+    }
+
+    let active = true;
+    setListingResyncAttempted(true);
+    (async () => {
+      try {
+        const response = await fetch("/api/backend/moderation/listings?status=all&kind=all&page=1&pageSize=100", {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json().catch(() => null)) as
+          | { data?: { results?: ModerationListingRecord[] } }
+          | null;
+        const nextRecords = payload?.data?.results;
+        if (!active || !Array.isArray(nextRecords)) {
+          return;
+        }
+        setRecords(nextRecords);
+        const target = nextRecords.find((record) => record.id === listingId);
+        if (target) {
+          syncSelection(target);
+          setSelectedIds([target.id]);
+        }
+      } catch {
+        // no-op: keep current snapshot behavior if refresh fails
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [hasLoadedUrlState, listingResyncAttempted, records]);
 
   useEffect(() => {
     if (!hasLoadedUrlState) {
