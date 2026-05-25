@@ -58,5 +58,7 @@ describe("moderation decision route CSRF forwarding", () => {
     expect(headers["X-CSRFToken"]).toBe("csrf-from-header");
     expect(headers.Cookie).toContain("tm_partner_api_session=backend-session-key");
     expect(headers.Cookie).toContain("csrftoken=csrf-from-header");
+    expect(headers.Origin).toBe("http://127.0.0.1:8000");
+    expect(headers.Referer).toBe("http://127.0.0.1:8000/");
   });
 });

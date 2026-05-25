@@ -36,6 +36,8 @@ export async function POST(
   const { listingId } = await context.params;
   const body = await request.text();
   const baseUrl = getAdminApiBaseUrl();
+  const upstreamOrigin = new URL(baseUrl).origin;
+  const upstreamReferer = `${upstreamOrigin}/`;
   const upstream = new URL(
     `${baseUrl}/admin/moderation/listings/${listingId}/decision`,
   );
@@ -45,6 +47,8 @@ export async function POST(
     method: "GET",
     headers: {
       Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+      Origin: upstreamOrigin,
+      Referer: upstreamReferer,
     },
     cache: "no-store",
   });
@@ -61,6 +65,8 @@ export async function POST(
     headers: {
       "Content-Type": "application/json",
       ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+      Origin: upstreamOrigin,
+      Referer: upstreamReferer,
       Cookie: cookieParts.join("; "),
     },
     body,
