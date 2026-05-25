@@ -264,7 +264,9 @@ export async function getAdminSession() {
   }
 
   const inventory = await getAdminSessionInventoryFromApi(session);
-  return inventory ? toPublicAdminSession(inventory.storedSession) : null;
+  // Staging/network hiccups should not hard-drop authenticated users to guest UI.
+  // Fall back to the signed local session when live inventory refresh is temporarily unavailable.
+  return inventory ? toPublicAdminSession(inventory.storedSession) : toPublicAdminSession(session);
 }
 
 export async function getStoredAdminSession() {
