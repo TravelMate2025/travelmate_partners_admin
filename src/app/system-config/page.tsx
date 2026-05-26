@@ -2,6 +2,7 @@ import { AdminShell } from "@/components/common/admin-shell";
 import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getSystemConfigRecords } from "@/modules/system-config/data";
+import { BookingPricingRulesPanel } from "@/modules/system-config/booking-pricing-rules-panel";
 import { TaxonomyControlPanel } from "@/modules/system-config/taxonomy-control-panel";
 import { SystemConfigWorkspace } from "@/modules/system-config/workspace";
 
@@ -20,6 +21,7 @@ export default async function SystemConfigPage() {
         role={session.user.role}
       />
       <TaxonomyControlPanel role={session.user.role} />
+      <BookingPricingRulesPanel role={session.user.role} />
     </AdminShell>
   );
 }

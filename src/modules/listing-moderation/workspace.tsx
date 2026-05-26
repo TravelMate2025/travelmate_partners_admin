@@ -244,6 +244,50 @@ export function ListingModerationWorkspace({
     }
   }
 
+  async function applyCityAction(action: "approve" | "merge" | "reject" | "blacklist") {
+    if (!selectedRecord?.citySuggestionId) {
+      setFeedback({ tone: "error", message: "No city suggestion is linked to this listing." });
+      return;
+    }
+    setPendingAction("flag");
+    setFeedback(null);
+    try {
+      const decision = await fetch(
+        `/api/backend/locality-suggestions/${encodeURIComponent(selectedRecord.citySuggestionId)}/decision`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, note }),
+        },
+      );
+      if (!decision.ok) {
+        const body = (await decision.json().catch(() => ({}))) as Record<string, unknown>;
+        throw new Error((body?.message as string) ?? "Unable to apply city moderation action.");
+      }
+
+      const response = await fetch("/api/backend/moderation/listings?status=all&kind=all&page=1&pageSize=100", {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw new Error("City decision applied, but moderation queue refresh failed.");
+      }
+      const payload = (await response.json()) as { data?: { results?: ModerationListingRecord[] } };
+      const nextRecords = payload?.data?.results ?? [];
+      setRecords(nextRecords);
+      const target = nextRecords.find((record) => record.id === selectedId) ?? nextRecords[0];
+      syncSelection(target);
+      setFeedback({ tone: "success", message: `City moderation action '${action}' applied.` });
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to apply city moderation action.",
+      });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   function resetFilters() {
     setFilters({ query: "", kind: "all", status: "all" });
     setFeedback(null);
@@ -291,6 +335,7 @@ export function ListingModerationWorkspace({
         note={note}
         onAction={(action) => void applyAction(action, selectedRecord ? [selectedRecord.id] : [])}
         onBulkAction={(action) => void applyAction(action, selectedIds)}
+        onCityAction={(action) => void applyCityAction(action)}
         onNoteChange={setNote}
         onReasonCodeChange={setReasonCode}
         onResetSelection={resetSelection}

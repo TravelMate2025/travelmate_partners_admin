@@ -102,6 +102,8 @@ export type ModerationListingRecord = {
   compliance: ModerationComplianceContext;
   history: ModerationHistoryEntry[];
   reviewSignals: ModerationReviewSignals;
+  cityReviewStatus?: "pending" | "approved" | "rejected" | "merged" | "blacklisted" | null;
+  citySuggestionId?: string | null;
   latestAuditRecord?: ModerationAuditRecord;
   latestPartnerNotification?: ModerationPartnerNotification;
 };

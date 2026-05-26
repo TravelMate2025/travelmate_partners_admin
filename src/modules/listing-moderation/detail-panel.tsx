@@ -37,6 +37,7 @@ export function ListingModerationDetailPanel({
   onNoteChange,
   onAction,
   onBulkAction,
+  onCityAction,
   onResetSelection,
 }: {
   selectedRecord: ModerationListingRecord | null;
@@ -54,6 +55,7 @@ export function ListingModerationDetailPanel({
   onNoteChange: (value: string) => void;
   onAction: (action: ModerationAction) => void;
   onBulkAction: (action: ModerationAction) => void;
+  onCityAction: (action: "approve" | "merge" | "reject" | "blacklist") => void;
   onResetSelection: () => void;
 }) {
   if (!selectedRecord) {
@@ -120,6 +122,34 @@ export function ListingModerationDetailPanel({
           <p className="mt-2 text-sm text-slate-900">{selectedRecord.reviewSignals.priorityLabel}</p>
         </div>
       </div>
+
+      {selectedRecord.cityReviewStatus && selectedRecord.cityReviewStatus !== "approved" ? (
+        <div className="tm-soft-band mt-5">
+          <p className="tm-label">City moderation</p>
+          <p className="mt-2 text-sm text-slate-900">
+            City review status: <span className="font-semibold">{selectedRecord.cityReviewStatus}</span>
+          </p>
+          <p className="tm-muted mt-2 text-sm">
+            Listing approval is blocked until city is approved or merged into a canonical city.
+          </p>
+          {selectedRecord.citySuggestionId ? (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button className="tm-btn tm-btn-primary" onClick={() => onCityAction("approve")} type="button">
+                Approve city
+              </button>
+              <button className="tm-btn tm-btn-outline" onClick={() => onCityAction("merge")} type="button">
+                Merge city
+              </button>
+              <button className="tm-btn tm-btn-outline" onClick={() => onCityAction("reject")} type="button">
+                Reject city
+              </button>
+              <button className="tm-btn tm-btn-outline" onClick={() => onCityAction("blacklist")} type="button">
+                Blacklist city
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Listing context + Media packet — asymmetric 2-col, same as Admin Users */}
       <div className="mt-5 grid items-start gap-4 2xl:grid-cols-[0.95fr_1.05fr]">
