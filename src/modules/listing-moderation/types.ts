@@ -84,6 +84,18 @@ export type ModerationReviewSignals = {
   queueLabel: string;
 };
 
+export type ModerationCityContext = {
+  country: string;
+  adminLevel1: string;
+  submittedCity: string;
+  canonicalCityCount: number;
+  canonicalCities: string[];
+  isStateEmpty: boolean;
+  hasExactCanonicalMatch: boolean;
+  duplicateCandidates: string[];
+  recommendedAction: "approve" | "merge" | "review";
+};
+
 export type ModerationListingRecord = {
   id: string;
   kind: ModerationListingKind;
@@ -104,6 +116,7 @@ export type ModerationListingRecord = {
   reviewSignals: ModerationReviewSignals;
   cityReviewStatus?: "pending" | "approved" | "rejected" | "merged" | "blacklisted" | null;
   citySuggestionId?: string | null;
+  cityContext?: ModerationCityContext;
   latestAuditRecord?: ModerationAuditRecord;
   latestPartnerNotification?: ModerationPartnerNotification;
 };

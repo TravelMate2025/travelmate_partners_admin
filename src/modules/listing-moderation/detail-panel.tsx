@@ -132,6 +132,49 @@ export function ListingModerationDetailPanel({
           <p className="tm-muted mt-2 text-sm">
             Listing approval is blocked until city is approved or merged into a canonical city.
           </p>
+          {selectedRecord.cityContext ? (
+            <div className="mt-3 grid gap-2 text-sm text-slate-900">
+              <p>
+                Scope: <span className="font-semibold">{selectedRecord.cityContext.country || "Unknown country"}</span>
+                {" / "}
+                <span className="font-semibold">{selectedRecord.cityContext.adminLevel1 || "Unknown region"}</span>
+              </p>
+              <p>
+                Submitted city: <span className="font-semibold">{selectedRecord.cityContext.submittedCity || "N/A"}</span>
+              </p>
+              <p>
+                Canonical cities in scope:{" "}
+                <span className="font-semibold">{selectedRecord.cityContext.canonicalCityCount}</span>
+              </p>
+              {selectedRecord.cityContext.isStateEmpty ? (
+                <p className="tm-alert tm-alert-warning">
+                  No canonical cities exist yet in this state/region.
+                </p>
+              ) : null}
+              {selectedRecord.cityContext.canonicalCities.length > 0 ? (
+                <p className="tm-muted">
+                  Existing cities: {selectedRecord.cityContext.canonicalCities.join(", ")}
+                </p>
+              ) : null}
+              {selectedRecord.cityContext.hasExactCanonicalMatch ? (
+                <p className="tm-alert tm-alert-warning">
+                  Exact canonical match exists. Suggested action: <span className="font-semibold">Merge city</span>.
+                </p>
+              ) : null}
+              {selectedRecord.cityContext.duplicateCandidates.length > 0 ? (
+                <p className="tm-muted">
+                  Possible duplicates: {selectedRecord.cityContext.duplicateCandidates.join(", ")}
+                </p>
+              ) : null}
+              {!selectedRecord.cityContext.hasExactCanonicalMatch
+                && selectedRecord.cityContext.duplicateCandidates.length === 0
+                && selectedRecord.cityContext.recommendedAction === "approve" ? (
+                  <p className="tm-alert tm-alert-info">
+                    No duplicate candidate detected. Suggested action: <span className="font-semibold">Approve city</span>.
+                  </p>
+                ) : null}
+            </div>
+          ) : null}
           {selectedRecord.citySuggestionId ? (
             <div className="mt-4 flex flex-wrap gap-3">
               <button className="tm-btn tm-btn-primary" onClick={() => onCityAction("approve")} type="button">
