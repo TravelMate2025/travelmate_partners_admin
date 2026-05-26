@@ -38,6 +38,9 @@ export function ListingModerationDetailPanel({
   onAction,
   onBulkAction,
   onCityAction,
+  pendingCityAction,
+  mergeTargetCity,
+  onMergeTargetCityChange,
   onResetSelection,
 }: {
   selectedRecord: ModerationListingRecord | null;
@@ -56,6 +59,9 @@ export function ListingModerationDetailPanel({
   onAction: (action: ModerationAction) => void;
   onBulkAction: (action: ModerationAction) => void;
   onCityAction: (action: "approve" | "merge" | "reject" | "blacklist") => void;
+  pendingCityAction: "approve" | "merge" | "reject" | "blacklist" | null;
+  mergeTargetCity: string;
+  onMergeTargetCityChange: (value: string) => void;
   onResetSelection: () => void;
 }) {
   if (!selectedRecord) {
@@ -175,21 +181,43 @@ export function ListingModerationDetailPanel({
                 ) : null}
             </div>
           ) : null}
-          {selectedRecord.citySuggestionId ? (
+          {selectedRecord.citySuggestionId && selectedRecord.cityReviewStatus === "pending" ? (
             <div className="mt-4 flex flex-wrap gap-3">
-              <button className="tm-btn tm-btn-primary" onClick={() => onCityAction("approve")} type="button">
-                Approve city
+              {selectedRecord.cityContext?.canonicalCities?.length ? (
+                <label className="block min-w-[260px]">
+                  <span className="tm-label">Merge target city</span>
+                  <select
+                    className="tm-input mt-2"
+                    disabled={pendingCityAction !== null}
+                    value={mergeTargetCity}
+                    onChange={(event) => onMergeTargetCityChange(event.target.value)}
+                  >
+                    {selectedRecord.cityContext.canonicalCities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <button className="tm-btn tm-btn-primary" disabled={pendingCityAction !== null} onClick={() => onCityAction("approve")} type="button">
+                {pendingCityAction === "approve" ? "Approving..." : "Approve city"}
               </button>
-              <button className="tm-btn tm-btn-outline" onClick={() => onCityAction("merge")} type="button">
-                Merge city
+              <button className="tm-btn tm-btn-outline" disabled={pendingCityAction !== null} onClick={() => onCityAction("merge")} type="button">
+                {pendingCityAction === "merge" ? "Merging..." : "Merge city"}
               </button>
-              <button className="tm-btn tm-btn-outline" onClick={() => onCityAction("reject")} type="button">
-                Reject city
+              <button className="tm-btn tm-btn-outline" disabled={pendingCityAction !== null} onClick={() => onCityAction("reject")} type="button">
+                {pendingCityAction === "reject" ? "Rejecting..." : "Reject city"}
               </button>
-              <button className="tm-btn tm-btn-outline" onClick={() => onCityAction("blacklist")} type="button">
-                Blacklist city
+              <button className="tm-btn tm-btn-outline" disabled={pendingCityAction !== null} onClick={() => onCityAction("blacklist")} type="button">
+                {pendingCityAction === "blacklist" ? "Blacklisting..." : "Blacklist city"}
               </button>
             </div>
+          ) : null}
+          {selectedRecord.cityReviewStatus && selectedRecord.cityReviewStatus !== "pending" ? (
+            <p className="tm-muted mt-3 text-sm">
+              City action buttons are only available while city review is pending.
+            </p>
           ) : null}
         </div>
       ) : null}

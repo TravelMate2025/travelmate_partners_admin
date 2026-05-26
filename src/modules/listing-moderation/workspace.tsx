@@ -61,6 +61,8 @@ export function ListingModerationWorkspace({
   const [note, setNote] = useState(initialRecords[0]?.moderationFeedback ?? "");
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<ModerationAction | null>(null);
+  const [pendingCityAction, setPendingCityAction] = useState<"approve" | "merge" | "reject" | "blacklist" | null>(null);
+  const [mergeTargetCity, setMergeTargetCity] = useState("");
   const [hasLoadedUrlState, setHasLoadedUrlState] = useState(false);
   const [listingResyncAttempted, setListingResyncAttempted] = useState(false);
 
@@ -190,6 +192,7 @@ export function ListingModerationWorkspace({
     setSelectedId(record.id);
     setActiveMediaId(record.media[0]?.id ?? "");
     setNote(record.moderationFeedback ?? "");
+    setMergeTargetCity(record.cityContext?.canonicalCities?.[0] ?? "");
   }
 
   function handleSelect(recordId: string) {
@@ -249,7 +252,21 @@ export function ListingModerationWorkspace({
       setFeedback({ tone: "error", message: "No city suggestion is linked to this listing." });
       return;
     }
-    setPendingAction("flag");
+    if (selectedRecord.cityReviewStatus !== "pending") {
+      setFeedback({
+        tone: "error",
+        message: `City action is only available for pending city reviews. Current status: ${selectedRecord.cityReviewStatus ?? "unknown"}.`,
+      });
+      return;
+    }
+    if (action === "merge" && !mergeTargetCity.trim()) {
+      setFeedback({
+        tone: "error",
+        message: "Select a canonical target city before merging.",
+      });
+      return;
+    }
+    setPendingCityAction(action);
     setFeedback(null);
     try {
       const decision = await fetch(
@@ -257,7 +274,7 @@ export function ListingModerationWorkspace({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, note }),
+          body: JSON.stringify({ action, note, mergeTargetCity }),
         },
       );
       if (!decision.ok) {
@@ -284,7 +301,7 @@ export function ListingModerationWorkspace({
         message: error instanceof Error ? error.message : "Unable to apply city moderation action.",
       });
     } finally {
-      setPendingAction(null);
+      setPendingCityAction(null);
     }
   }
 
@@ -336,6 +353,9 @@ export function ListingModerationWorkspace({
         onAction={(action) => void applyAction(action, selectedRecord ? [selectedRecord.id] : [])}
         onBulkAction={(action) => void applyAction(action, selectedIds)}
         onCityAction={(action) => void applyCityAction(action)}
+        pendingCityAction={pendingCityAction}
+        mergeTargetCity={mergeTargetCity}
+        onMergeTargetCityChange={setMergeTargetCity}
         onNoteChange={setNote}
         onReasonCodeChange={setReasonCode}
         onResetSelection={resetSelection}
