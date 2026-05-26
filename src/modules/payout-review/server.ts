@@ -17,32 +17,55 @@ function sortNewestFirst(records: PayoutReviewRecord[]) {
   );
 }
 
-export async function getPayoutReviewFromApi(): Promise<{
+export async function getPayoutReviewFromApi(
+  page = 1,
+  pageSize = 20,
+): Promise<{
   records: PayoutReviewRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
   error: string | null;
 }> {
   const session = await getStoredAdminSession();
   if (!session) {
-    return { records: [], error: "Admin session is not available for payout review." };
+    return { records: [], total: 0, page, pageSize, error: "Admin session is not available for payout review." };
   }
 
   try {
-    const response = await fetch(`${getAdminApiBaseUrl()}/admin/payout-review/cases`, {
-      method: "GET",
-      headers: {
-        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+    const response = await fetch(
+      `${getAdminApiBaseUrl()}/admin/payout-review/cases?page=${page}&page_size=${pageSize}`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
-    const body = (await response.json().catch(() => null)) as Envelope<{ records: PayoutReviewRecord[] }> | null;
+    );
+    const body = (await response.json().catch(() => null)) as Envelope<{
+      records: PayoutReviewRecord[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }> | null;
     if (!response.ok || !body?.data?.records) {
       return {
         records: [],
+        total: 0,
+        page,
+        pageSize,
         error: body?.message ?? body?.error?.message ?? "Unable to load payout review queue.",
       };
     }
-    return { records: sortNewestFirst(body.data.records), error: null };
+    return {
+      records: sortNewestFirst(body.data.records),
+      total: body.data.total ?? body.data.records.length,
+      page: body.data.page ?? page,
+      pageSize: body.data.pageSize ?? pageSize,
+      error: null,
+    };
   } catch {
-    return { records: [], error: "Unable to load payout review queue." };
+    return { records: [], total: 0, page, pageSize, error: "Unable to load payout review queue." };
   }
 }

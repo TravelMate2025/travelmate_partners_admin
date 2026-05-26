@@ -11,33 +11,56 @@ import type {
 
 type Envelope<T> = { data?: T; message?: string; error?: { message?: string } };
 
-export async function getFinancialOpsFromApi(): Promise<{
+export async function getFinancialOpsFromApi(
+  page = 1,
+  pageSize = 20,
+): Promise<{
   records: FinancialOpsRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
   error: string | null;
 }> {
   const session = await getStoredAdminSession();
   if (!session) {
-    return { records: [], error: "Admin session is not available for financial operations." };
+    return { records: [], total: 0, page, pageSize, error: "Admin session is not available for financial operations." };
   }
 
   try {
-    const response = await fetch(`${getAdminApiBaseUrl()}/admin/financial-ops/cases`, {
-      method: "GET",
-      headers: {
-        Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+    const response = await fetch(
+      `${getAdminApiBaseUrl()}/admin/financial-ops/cases?page=${page}&page_size=${pageSize}`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}`,
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
-    const body = (await response.json().catch(() => null)) as Envelope<{ records: FinancialOpsRecord[] }> | null;
+    );
+    const body = (await response.json().catch(() => null)) as Envelope<{
+      records: FinancialOpsRecord[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }> | null;
     if (!response.ok || !body?.data?.records) {
       return {
         records: [],
+        total: 0,
+        page,
+        pageSize,
         error: body?.message ?? body?.error?.message ?? "Unable to load financial operations queue.",
       };
     }
-    return { records: body.data.records, error: null };
+    return {
+      records: body.data.records,
+      total: body.data.total ?? body.data.records.length,
+      page: body.data.page ?? page,
+      pageSize: body.data.pageSize ?? pageSize,
+      error: null,
+    };
   } catch {
-    return { records: [], error: "Unable to load financial operations queue." };
+    return { records: [], total: 0, page, pageSize, error: "Unable to load financial operations queue." };
   }
 }
 
