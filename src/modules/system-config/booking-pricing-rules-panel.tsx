@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { AdminRole } from "@/modules/auth/types";
 
 type RuleStatus = "active" | "inactive";
-type CalcMode = "percentage" | "fixed";
+type CalcMode = "percentage";
 type TaxRule = {
   id: string;
   name: string;
@@ -93,13 +93,13 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
       name: String(form.get("name") ?? ""),
       status: String(form.get("status") ?? "inactive"),
       applicability: "stay_unit_level",
-      country: String(form.get("country") ?? ""),
-      city: String(form.get("city") ?? ""),
-      currency: String(form.get("currency") ?? "NGN"),
+      country: "",
+      city: "",
+      currency: "",
       calculationMode: String(form.get("calculationMode") ?? "percentage"),
       value: String(form.get("value") ?? "0"),
       isInclusive: false,
-      priority: Number(form.get("priority") ?? 100),
+      priority: 100,
     };
     const response = await fetch("/api/backend/system-config/booking-pricing/tax-rules", {
       method: "POST",
@@ -125,20 +125,19 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
     setMessage("");
     const formEl = event.currentTarget;
     const form = new FormData(formEl);
-    const maxAmountRaw = String(form.get("maxAmount") ?? "").trim();
     const payload = {
       name: String(form.get("name") ?? ""),
       feeType: String(form.get("feeType") ?? "platform_fee"),
       status: String(form.get("status") ?? "inactive"),
       applicability: "stay_unit_level",
-      country: String(form.get("country") ?? ""),
-      city: String(form.get("city") ?? ""),
-      currency: String(form.get("currency") ?? "NGN"),
+      country: "",
+      city: "",
+      currency: "",
       calculationMode: String(form.get("calculationMode") ?? "percentage"),
       value: String(form.get("value") ?? "0"),
-      minAmount: String(form.get("minAmount") ?? "0"),
-      maxAmount: maxAmountRaw === "" ? null : maxAmountRaw,
-      priority: Number(form.get("priority") ?? 100),
+      minAmount: "0",
+      maxAmount: null,
+      priority: 100,
     };
     const response = await fetch("/api/backend/system-config/booking-pricing/fee-rules", {
       method: "POST",
@@ -185,7 +184,7 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
     <section className="tm-panel p-6">
       <h2 className="tm-section-title">Booking Tax And Fee Rules</h2>
       <p className="tm-muted mt-1 text-sm">
-        Configure backend-owned tax and fee rules for unit-level stay quote computation. Tax rules are exclusive-only.
+        Configure backend-owned global tax and fee rules used for booking quote computation across all listings and currencies. Tax rules are exclusive-only.
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -205,7 +204,7 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
               <li key={rule.id} className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="text-sm font-semibold text-slate-900">{rule.name}</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {rule.calculationMode} {rule.value} • {rule.currency || "ANY"} • {rule.country || "ANY"} • {rule.status}
+                  Percentage {rule.value}% • GLOBAL • {rule.status}
                 </p>
                 {canEdit ? (
                   <div className="mt-2 flex gap-2">
@@ -229,7 +228,7 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
               <li key={rule.id} className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="text-sm font-semibold text-slate-900">{rule.name}</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {rule.feeType} • {rule.calculationMode} {rule.value} • {rule.currency || "ANY"} • {rule.country || "ANY"} • {rule.status}
+                  {rule.feeType} • Percentage {rule.value}% • GLOBAL • {rule.status}
                 </p>
                 {canEdit ? (
                   <div className="mt-2 flex gap-2">
@@ -252,14 +251,17 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
           <form className="rounded-lg border border-slate-200 p-4" onSubmit={createTaxRule}>
             <p className="text-sm font-semibold text-slate-900">Add Tax Rule</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <input className="tm-input" name="name" placeholder="Name" required />
+              <div className="md:col-span-2">
+                <input className="tm-input" name="name" placeholder="Name (e.g., VAT 7.5%)" required />
+                <p className="mt-1 text-xs text-slate-500">Use clear names like "VAT 7.5%" for reporting and settlements.</p>
+              </div>
               <select className="tm-input" name="status" defaultValue="inactive"><option value="inactive">Inactive</option><option value="active">Active</option></select>
-              <input className="tm-input" name="country" placeholder="Country (optional)" />
-              <input className="tm-input" name="city" placeholder="City (optional)" />
-              <input className="tm-input" defaultValue="NGN" name="currency" placeholder="Currency" />
-              <select className="tm-input" name="calculationMode" defaultValue="percentage"><option value="percentage">Percentage</option><option value="fixed">Fixed</option></select>
-              <input className="tm-input" defaultValue="0" name="value" placeholder="Value" type="number" step="0.01" />
-              <input className="tm-input" defaultValue={100} name="priority" placeholder="Priority" type="number" />
+              <input className="tm-input" disabled value="GLOBAL" />
+              <input className="tm-input" disabled value="Percentage" />
+              <div>
+                <input className="tm-input" defaultValue="0" name="value" placeholder="Tax Percentage" type="number" step="0.01" />
+                <p className="mt-1 text-xs text-slate-500">Enter percent only (example: 7.5 means 7.5%).</p>
+              </div>
             </div>
             <button className="tm-btn tm-btn-primary mt-3" disabled={saving} type="submit">{saving ? "Saving..." : "Create Tax Rule"}</button>
           </form>
@@ -267,17 +269,18 @@ export function BookingPricingRulesPanel({ role }: { role: AdminRole }) {
           <form className="rounded-lg border border-slate-200 p-4" onSubmit={createFeeRule}>
             <p className="text-sm font-semibold text-slate-900">Add Fee Rule</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <input className="tm-input" name="name" placeholder="Name" required />
+              <div className="md:col-span-2">
+                <input className="tm-input" name="name" placeholder="Name (e.g., Platform Service Fee 2%)" required />
+                <p className="mt-1 text-xs text-slate-500">Use clear names like "Platform Service Fee 2%" for reporting and settlements.</p>
+              </div>
               <select className="tm-input" name="feeType" defaultValue="platform_fee"><option value="platform_fee">Platform fee</option><option value="service_fee">Service fee</option><option value="payment_fee">Payment fee</option></select>
               <select className="tm-input" name="status" defaultValue="inactive"><option value="inactive">Inactive</option><option value="active">Active</option></select>
-              <input className="tm-input" name="country" placeholder="Country (optional)" />
-              <input className="tm-input" name="city" placeholder="City (optional)" />
-              <input className="tm-input" defaultValue="NGN" name="currency" placeholder="Currency" />
-              <select className="tm-input" name="calculationMode" defaultValue="percentage"><option value="percentage">Percentage</option><option value="fixed">Fixed</option></select>
-              <input className="tm-input" defaultValue="0" name="value" placeholder="Value" type="number" step="0.01" />
-              <input className="tm-input" defaultValue="0" name="minAmount" placeholder="Min amount" type="number" step="0.01" />
-              <input className="tm-input" name="maxAmount" placeholder="Max amount (optional)" type="number" step="0.01" />
-              <input className="tm-input" defaultValue={100} name="priority" placeholder="Priority" type="number" />
+              <input className="tm-input" disabled value="GLOBAL" />
+              <input className="tm-input" disabled value="Percentage" />
+              <div>
+                <input className="tm-input" defaultValue="0" name="value" placeholder="Fee Percentage" type="number" step="0.01" />
+                <p className="mt-1 text-xs text-slate-500">Enter percent only (example: 2 means 2%).</p>
+              </div>
             </div>
             <button className="tm-btn tm-btn-primary mt-3" disabled={saving} type="submit">{saving ? "Saving..." : "Create Fee Rule"}</button>
           </form>
