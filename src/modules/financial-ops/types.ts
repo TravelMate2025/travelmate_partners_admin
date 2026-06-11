@@ -52,7 +52,7 @@ export type FinancialOpsRecord = {
   partnerName: string;
   bookingReference: string;
   flutterwaveRef: string;
-  supplyType: "stay" | "transfer";
+  supplyType: "stay" | "transfer" | "unknown";
   region: string;
   currency: string;
   owner: string;
@@ -60,6 +60,11 @@ export type FinancialOpsRecord = {
   partnerSettlementStatus: PartnerSettlementStatus;
   adminRunStatus: AdminSettlementRunStatus;
   refundStatus: RefundStatus | null;
+  sourceContextLabel: string;
+  traceSummary: string;
+  refundAmountTotal: number;
+  refundRecoveredAmount: number;
+  refundOutstandingAmount: number;
   netPayoutAmount: number;
   expectedPayoutAmount: number;
   reconciliationDeltaAmount: number;

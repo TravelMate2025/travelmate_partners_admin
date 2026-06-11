@@ -16,6 +16,15 @@ import {
 } from "@/modules/financial-ops/rules";
 import type { FinancialOpsFilterState, FinancialOpsRecord } from "@/modules/financial-ops/types";
 
+function formatSupplyTypeLabel(supplyType: FinancialOpsRecord["supplyType"]) {
+  const labels: Record<FinancialOpsRecord["supplyType"], string> = {
+    stay: "Stay",
+    transfer: "Transfer",
+    unknown: "Unknown",
+  };
+  return labels[supplyType];
+}
+
 export function FinancialOpsQueuePanel({
   records,
   selectedId,
@@ -176,6 +185,10 @@ export function FinancialOpsQueuePanel({
                 <StatusBadge label={formatAdminRunStatusLabel(record.adminRunStatus)} tone={adminRunTone(record.adminRunStatus)} />
               </div>
               <p className="tm-muted mt-3 text-sm">{record.summary}</p>
+              <p className="tm-muted mt-2 text-xs">
+                {formatSupplyTypeLabel(record.supplyType)} · {record.sourceContextLabel}
+              </p>
+              <p className="tm-muted mt-2 text-xs">{record.traceSummary}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {record.bookingStatus ? (
                   <StatusBadge

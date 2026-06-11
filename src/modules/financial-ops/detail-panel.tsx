@@ -19,6 +19,15 @@ import {
 } from "@/modules/financial-ops/rules";
 import type { FinancialOpsAction, FinancialOpsRecord } from "@/modules/financial-ops/types";
 
+function formatSupplyTypeLabel(supplyType: FinancialOpsRecord["supplyType"]) {
+  const labels: Record<FinancialOpsRecord["supplyType"], string> = {
+    stay: "Stay",
+    transfer: "Transfer",
+    unknown: "Unknown",
+  };
+  return labels[supplyType];
+}
+
 function getActionLabel(action: FinancialOpsAction) {
   const labels: Record<FinancialOpsAction, { idle: string; pending: string }> = {
     start_settlement_processing: { idle: "Start settlement processing", pending: "Starting..." },
@@ -127,6 +136,14 @@ export function FinancialOpsDetailPanel({
           <p className="tm-label">Booking</p>
           <p className="mt-2 text-sm text-slate-900">{selectedRecord.bookingReference}</p>
         </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Supply type</p>
+          <p className="mt-2 text-sm text-slate-900">{formatSupplyTypeLabel(selectedRecord.supplyType)}</p>
+        </div>
+        <div className="tm-soft-band md:col-span-2">
+          <p className="tm-label">Source context</p>
+          <p className="mt-2 text-sm text-slate-900">{selectedRecord.sourceContextLabel}</p>
+        </div>
         {selectedRecord.flutterwaveRef ? (
           <div className="tm-soft-band md:col-span-2">
             <p className="tm-label">Flutterwave reference</p>
@@ -172,6 +189,20 @@ export function FinancialOpsDetailPanel({
         <div className="tm-soft-band">
           <p className="tm-label">Settlement period</p>
           <p className="mt-2 text-sm text-slate-900">{selectedRecord.settlementPeriodLabel}</p>
+        </div>
+        <div className="tm-soft-band md:col-span-2">
+          <p className="tm-label">Trace summary</p>
+          <p className="mt-2 text-sm text-slate-900">{selectedRecord.traceSummary}</p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Refund exposure</p>
+          <p className="mt-2 text-sm text-slate-900">
+            Total {selectedRecord.currency} {selectedRecord.refundAmountTotal.toFixed(2)}
+            {" · "}
+            Recovered {selectedRecord.currency} {selectedRecord.refundRecoveredAmount.toFixed(2)}
+            {" · "}
+            Outstanding {selectedRecord.currency} {selectedRecord.refundOutstandingAmount.toFixed(2)}
+          </p>
         </div>
       </div>
 

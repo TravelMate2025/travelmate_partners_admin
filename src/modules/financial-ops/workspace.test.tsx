@@ -17,6 +17,8 @@ describe("FinancialOpsWorkspace", () => {
     expect(screen.getAllByText("Settlement run failed for Nairobi premium-stay payout batch").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Payment Succeeded").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Service Completed").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/API booking request/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Trace summary/i).length).toBeGreaterThan(0);
   });
 
   it("handles settlement retry and reconciliation with audit feedback", async () => {

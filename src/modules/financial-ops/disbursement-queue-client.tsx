@@ -156,6 +156,9 @@ export function DisbursementQueueClient({
           {runBatchBusy ? "Running Batch…" : "Run Batch"}
         </button>
       </div>
+      <p className="mt-2 text-xs text-slate-500">
+        Batch release only picks auto-release cadences; a single settlement run remains the explicit manual override.
+      </p>
       {runFeedback ? (
         <p className={`mt-2 text-xs ${runFeedback.tone === "success" ? "text-emerald-700" : "text-red-700"}`}>
           {runFeedback.message}
