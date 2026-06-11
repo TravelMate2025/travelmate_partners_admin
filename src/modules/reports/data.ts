@@ -392,7 +392,7 @@ export function getReportSnapshot(region: ReportsRegion, timeframe: ReportsTimef
         key: "booking_activity",
         label: "Booking activity",
         value: `${source.totalBookings}`,
-        note: "Platform-wide confirmed and completed bookings in the selected window.",
+        note: "Reservation-lifecycle bookings in active states for the selected window; this is not a payment-settled metric.",
         accent: "linear-gradient(90deg, #1a3a5c 0%, #2e5f8a 100%)",
         badge: { label: `${source.cancelledBookings} cancelled`, tone: "warning" },
       },
@@ -423,14 +423,14 @@ export function getReportSnapshot(region: ReportsRegion, timeframe: ReportsTimef
       { id: "aa-3", label: "Rate-limit changes", value: `${source.rateLimitChanges}`, note: "Quota changes recorded in the selected period." },
     ],
     bookingActivity: [
-      { id: "ba-1", label: "Total bookings", value: `${source.totalBookings}`, note: "Confirmed and completed bookings in the reporting window." },
+      { id: "ba-1", label: "Total bookings", value: `${source.totalBookings}`, note: "Reservation-lifecycle bookings in active states within the reporting window." },
       { id: "ba-2", label: "Cancelled bookings", value: `${source.cancelledBookings}`, note: "Cancellations recorded in the reporting window." },
-      { id: "ba-3", label: "Gross revenue", value: grossRevenueFormatted, note: "Sum of gross amounts from confirmed and completed bookings." },
+      { id: "ba-3", label: "Gross booked value", value: grossRevenueFormatted, note: "Sum of gross amounts from reservation records counted in booking activity; not a payment-settled total." },
       { id: "ba-4", label: "Cancellation rate", value: `${cancellationRate}%`, note: "Cancelled bookings as a share of all bookings." },
       { id: "ba-5", label: "Stays booked", value: `${source.staysBooked}`, note: "Booking volume from stay-type listings." },
       { id: "ba-6", label: "Transfers booked", value: `${source.transfersBooked}`, note: "Booking volume from transfer-type listings." },
     ],
-    narrative: `${source.regionLabel} shows ${source.newApprovals} new approvals feeding verified partner growth, ${listingConversionPercent}% listing conversion to live supply, ${source.apiClientsApproved} approved API clients, and ${source.totalBookings} confirmed bookings in ${source.timeframeLabel.toLowerCase()}.`,
+    narrative: `${source.regionLabel} shows ${source.newApprovals} new approvals feeding verified partner growth, ${listingConversionPercent}% listing conversion to live supply, ${source.apiClientsApproved} approved API clients, and ${source.totalBookings} active reservation-lifecycle bookings in ${source.timeframeLabel.toLowerCase()}.`,
   };
 }
 

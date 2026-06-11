@@ -24,6 +24,10 @@ export function getFinancialOpsRecords(): FinancialOpsRecord[] {
       riskWindowLabel: "48-hour settlement risk window",
       failureReason: "Payout batch halted after three completion records missed the settlement aggregation snapshot.",
       operationalNote: "Retry once booking completion evidence is reconciled and the run delta is documented.",
+      bookingStatus: "completed",
+      paymentStatus: "succeeded",
+      serviceStatus: "completed",
+      fulfillmentStatus: "completed",
       linkedContext: [
         { id: "fin-ctx-001", label: "Partner account · Safari Crest Residences", href: "/partners?partner=partner-001", statusLabel: "verified", kind: "partner" },
         { id: "fin-ctx-002", label: "Commercial controls · East Africa stays", href: "/commercial-controls?rule=rule-001", statusLabel: "active", kind: "commercial" },
@@ -66,6 +70,10 @@ export function getFinancialOpsRecords(): FinancialOpsRecord[] {
       riskWindowLabel: "Refund recovery escalation window",
       failureReason: "Refund reversal is still waiting for partner acknowledgement and finance recovery confirmation.",
       operationalNote: "Notify partner first, then track refund recovery before closing reconciliation.",
+      bookingStatus: "cancelled",
+      paymentStatus: "succeeded",
+      serviceStatus: "completed",
+      fulfillmentStatus: "completed",
       linkedContext: [
         { id: "fin-ctx-003", label: "Support & Incidents · refund dispute", href: "/support-incidents?case=sup-002", statusLabel: "monitoring", kind: "support" },
         { id: "fin-ctx-004", label: "Partner account · MetroRide Executive", href: "/partners?partner=partner-004", statusLabel: "verified", kind: "partner" },
@@ -116,6 +124,10 @@ export function getFinancialOpsRecords(): FinancialOpsRecord[] {
       riskWindowLabel: "Standard weekly settlement",
       failureReason: null,
       operationalNote: "Generate the statement so partner-facing payout records stay aligned with the completed run.",
+      bookingStatus: "completed",
+      paymentStatus: "succeeded",
+      serviceStatus: "completed",
+      fulfillmentStatus: "completed",
       linkedContext: [
         { id: "fin-ctx-005", label: "Partner account · Lagoon Suites", href: "/partners?partner=partner-010", statusLabel: "verified", kind: "partner" },
         { id: "fin-ctx-006", label: "Payout review · verified payout method", href: "/payout-review", statusLabel: "approved", kind: "payout_review" },
@@ -158,6 +170,10 @@ export function getFinancialOpsRecords(): FinancialOpsRecord[] {
       riskWindowLabel: "Recovered refund trail",
       failureReason: null,
       operationalNote: "Recovered refund trail retained for audit visibility.",
+      bookingStatus: "refunded",
+      paymentStatus: "succeeded",
+      serviceStatus: "completed",
+      fulfillmentStatus: "completed",
       linkedContext: [
         { id: "fin-ctx-007", label: "Support & Incidents · listing sync case", href: "/support-incidents?case=sup-003", statusLabel: "escalated", kind: "support" },
         { id: "fin-ctx-008", label: "Partner account · Desert Pearl Transfers", href: "/partners?partner=partner-008", statusLabel: "verified", kind: "partner" },

@@ -5,9 +5,15 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { SurfaceState } from "@/components/common/surface-state";
 import {
   adminRunTone,
+  bookingLifecycleTone,
+  formatBookingLifecycleStatusLabel,
   formatAdminRunStatusLabel,
+  formatFulfillmentLifecycleStatusLabel,
+  formatPaymentLifecycleStatusLabel,
   formatPartnerSettlementStatusLabel,
   formatRefundStatusLabel,
+  fulfillmentLifecycleTone,
+  paymentLifecycleTone,
   partnerSettlementTone,
   refundTone,
 } from "@/modules/financial-ops/rules";
@@ -15,6 +21,8 @@ import type { FinancialOpsAction, FinancialOpsRecord } from "@/modules/financial
 
 function getActionLabel(action: FinancialOpsAction) {
   const labels: Record<FinancialOpsAction, { idle: string; pending: string }> = {
+    start_settlement_processing: { idle: "Start settlement processing", pending: "Starting..." },
+    mark_settlement_paid: { idle: "Mark settlement paid", pending: "Marking paid..." },
     retry_settlement: { idle: "Retry settlement run", pending: "Retrying..." },
     reconcile_case: { idle: "Reconcile case", pending: "Reconciling..." },
     notify_partner_refund: { idle: "Notify partner refund", pending: "Queueing refund follow-up..." },
@@ -78,6 +86,24 @@ export function FinancialOpsDetailPanel({
           <p className="tm-muted mt-2 text-sm">{selectedRecord.summary}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {selectedRecord.bookingStatus ? (
+            <StatusBadge
+              label={formatBookingLifecycleStatusLabel(selectedRecord.bookingStatus)}
+              tone={bookingLifecycleTone(selectedRecord.bookingStatus)}
+            />
+          ) : null}
+          {selectedRecord.paymentStatus ? (
+            <StatusBadge
+              label={formatPaymentLifecycleStatusLabel(selectedRecord.paymentStatus)}
+              tone={paymentLifecycleTone(selectedRecord.paymentStatus)}
+            />
+          ) : null}
+          {selectedRecord.fulfillmentStatus ? (
+            <StatusBadge
+              label={formatFulfillmentLifecycleStatusLabel(selectedRecord.fulfillmentStatus)}
+              tone={fulfillmentLifecycleTone(selectedRecord.fulfillmentStatus)}
+            />
+          ) : null}
           <StatusBadge
             label={formatPartnerSettlementStatusLabel(selectedRecord.partnerSettlementStatus)}
             tone={partnerSettlementTone(selectedRecord.partnerSettlementStatus)}
@@ -107,6 +133,24 @@ export function FinancialOpsDetailPanel({
             <p className="mt-2 break-all font-mono text-sm text-slate-900">{selectedRecord.flutterwaveRef}</p>
           </div>
         ) : null}
+        <div className="tm-soft-band">
+          <p className="tm-label">Booking lifecycle</p>
+          <p className="mt-2 text-sm text-slate-900">
+            {selectedRecord.bookingStatus ? formatBookingLifecycleStatusLabel(selectedRecord.bookingStatus) : "Unknown"}
+          </p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Payment lifecycle</p>
+          <p className="mt-2 text-sm text-slate-900">
+            {selectedRecord.paymentStatus ? formatPaymentLifecycleStatusLabel(selectedRecord.paymentStatus) : "Unknown"}
+          </p>
+        </div>
+        <div className="tm-soft-band">
+          <p className="tm-label">Service lifecycle</p>
+          <p className="mt-2 text-sm text-slate-900">
+            {selectedRecord.fulfillmentStatus ? formatFulfillmentLifecycleStatusLabel(selectedRecord.fulfillmentStatus) : "Unknown"}
+          </p>
+        </div>
         <div className="tm-soft-band">
           <p className="tm-label">Expected payout</p>
           <p className="mt-2 text-sm text-slate-900">

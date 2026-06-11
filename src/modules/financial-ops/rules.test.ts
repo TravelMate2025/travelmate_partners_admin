@@ -20,6 +20,25 @@ describe("financial-ops rules", () => {
     const actions = getAvailableFinancialOpsActions(records[0], "finance");
     expect(actions).toContain("retry_settlement");
     expect(actions).toContain("reconcile_case");
+    expect(actions).not.toContain("mark_settlement_paid");
+  });
+
+  it("blocks mark paid until reconciliation delta is cleared", () => {
+    const processingWithDelta = {
+      ...records[0],
+      partnerSettlementStatus: "processing" as const,
+      adminRunStatus: "processing" as const,
+    };
+
+    expect(getAvailableFinancialOpsActions(processingWithDelta, "finance")).not.toContain("mark_settlement_paid");
+    expect(
+      validateFinancialOpsAction(
+        processingWithDelta,
+        "mark_settlement_paid",
+        "finance",
+        "Trying to complete payout before reconciling the remaining delta.",
+      ),
+    ).toBe("Reconcile the settlement delta before marking this settlement paid.");
   });
 
   it("offers refund follow-up actions only when refund work is active", () => {

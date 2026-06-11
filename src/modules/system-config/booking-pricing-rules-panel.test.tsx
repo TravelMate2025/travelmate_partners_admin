@@ -191,7 +191,7 @@ describe("BookingPricingRulesPanel", () => {
     render(<BookingPricingRulesPanel role="operations" />);
     await screen.findByText("Nigeria VAT");
 
-    const taxNameInput = screen.getAllByPlaceholderText("Name")[0];
+    const taxNameInput = screen.getByPlaceholderText("Name (e.g., VAT 7.5%)");
     fireEvent.change(taxNameInput, { target: { value: "Federal Tax Draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Tax Rule" }));
 
@@ -231,7 +231,7 @@ describe("BookingPricingRulesPanel", () => {
     render(<BookingPricingRulesPanel role="operations" />);
     await screen.findByText("Platform Fee");
 
-    const feeNameInput = screen.getAllByPlaceholderText("Name")[1];
+    const feeNameInput = screen.getByPlaceholderText("Name (e.g., Platform Service Fee 2%)");
     fireEvent.change(feeNameInput, { target: { value: "Gateway Fee Draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Fee Rule" }));
 

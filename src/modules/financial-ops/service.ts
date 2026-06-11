@@ -10,6 +10,8 @@ import type {
 
 function buildActionSummary(actor: string, action: FinancialOpsAction, title: string) {
   const labels: Record<FinancialOpsAction, string> = {
+    start_settlement_processing: "started settlement processing for",
+    mark_settlement_paid: "marked paid",
     retry_settlement: "queued a settlement retry for",
     reconcile_case: "reconciled",
     notify_partner_refund: "queued refund follow-up for",
@@ -22,6 +24,8 @@ function buildActionSummary(actor: string, action: FinancialOpsAction, title: st
 
 function buildActivityTitle(action: FinancialOpsAction) {
   const labels: Record<FinancialOpsAction, string> = {
+    start_settlement_processing: "Settlement processing started",
+    mark_settlement_paid: "Settlement marked paid",
     retry_settlement: "Settlement retry queued",
     reconcile_case: "Case reconciled",
     notify_partner_refund: "Partner refund follow-up queued",
@@ -82,14 +86,18 @@ export const mockFinancialOpsRepository: FinancialOpsRepository = {
     const updatedRecord: FinancialOpsRecord = {
       ...record,
       adminRunStatus:
-        payload.action === "retry_settlement"
+        payload.action === "start_settlement_processing" || payload.action === "retry_settlement"
           ? "processing"
+          : payload.action === "mark_settlement_paid"
+            ? "completed"
           : payload.action === "reconcile_case" && record.adminRunStatus === "partial"
             ? "completed"
             : record.adminRunStatus,
       partnerSettlementStatus:
-        payload.action === "retry_settlement"
+        payload.action === "start_settlement_processing" || payload.action === "retry_settlement"
           ? "processing"
+          : payload.action === "mark_settlement_paid"
+            ? "paid"
           : payload.action === "reconcile_case" && record.partnerSettlementStatus === "failed"
             ? "processing"
             : record.partnerSettlementStatus,
@@ -141,7 +149,11 @@ export const mockFinancialOpsRepository: FinancialOpsRepository = {
           id: `financial-ops-activity-${record.id}-${Date.now()}`,
           title: buildActivityTitle(payload.action),
           detail:
-            payload.action === "retry_settlement"
+            payload.action === "start_settlement_processing"
+              ? `${payload.actor} released the reserve window and moved the settlement into processing.`
+              : payload.action === "mark_settlement_paid"
+                ? `${payload.actor} completed the settlement run and marked the settlement paid.`
+              : payload.action === "retry_settlement"
               ? `${payload.actor} queued a settlement retry after documenting the reconciliation exception.`
               : payload.action === "reconcile_case"
                 ? `${payload.actor} balanced the settlement delta and prepared the case for finance visibility.`

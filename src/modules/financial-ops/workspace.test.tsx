@@ -15,6 +15,8 @@ describe("FinancialOpsWorkspace", () => {
 
     expect(screen.getByLabelText("Admin settlement run status")).toHaveValue("failed");
     expect(screen.getAllByText("Settlement run failed for Nairobi premium-stay payout batch").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Payment Succeeded").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Service Completed").length).toBeGreaterThan(0);
   });
 
   it("handles settlement retry and reconciliation with audit feedback", async () => {

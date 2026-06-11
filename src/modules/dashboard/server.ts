@@ -181,12 +181,21 @@ export async function getDashboardModelFromApi(role: AdminRole): Promise<{ model
 
   for (const item of finance.records.slice(0, 20)) {
     const ts = parseDate(item.activity[0]?.time);
+    const lifecycleSummary = [
+      item.bookingStatus ? `booking ${item.bookingStatus.replace(/_/g, " ")}` : null,
+      item.paymentStatus ? `payment ${item.paymentStatus.replace(/_/g, " ")}` : null,
+      item.fulfillmentStatus ? `service ${item.fulfillmentStatus.replace(/_/g, " ")}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
     activityCandidates.push({
       ts,
       item: {
         id: `act-finance-${item.id}`,
-        title: `Settlement ${item.adminRunStatus}`,
-        detail: `${item.partnerName} · ${item.bookingReference}`,
+        title: `Settlement ${item.adminRunStatus}${item.paymentStatus ? ` · ${item.paymentStatus}` : ""}`,
+        detail: lifecycleSummary
+          ? `${item.partnerName} · ${item.bookingReference} · ${lifecycleSummary}`
+          : `${item.partnerName} · ${item.bookingReference}`,
         time: relativeTimeFromNow(ts),
         tone: item.adminRunStatus === "failed" || item.adminRunStatus === "partial" ? "danger" : "info",
         href: "/financial-ops",

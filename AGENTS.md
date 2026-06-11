@@ -50,7 +50,7 @@ Use these terms consistently across code, UI text, and docs:
 - Verification statuses: `pending`, `in_review`, `approved`, `rejected`
 - Verification-to-lifecycle mapping: verification `approved` -> partner lifecycle `verified`; verification `rejected` -> partner lifecycle `rejected`; `suspended` is an admin lifecycle state, not a verification status
 - Partner lifecycle admin states: `pending`, `verified`, `rejected`, `suspended`
-- Listing statuses: `draft`, `pending`, `approved`, `live`, `paused`, `rejected`, `archived`
+- Listing statuses: `draft`, `pending`, `approved`, `live`, `paused`, `paused_by_admin`, `rejected`, `archived`
 - Partner-facing settlement statuses: `pending_completion`, `processing`, `paid`, `failed`, `reversed`
 - Admin settlement run statuses: `queued`, `processing`, `completed`, `partial`, `failed`
 - Refund statuses: `requested`, `partner_notified`, `refunded`, `disputed`, `recovered`

@@ -1,6 +1,9 @@
 import type { AdminRole } from "@/modules/auth/types";
 import type {
   AdminSettlementRunStatus,
+  FinanceBookingLifecycleStatus,
+  FinanceFulfillmentLifecycleStatus,
+  FinancePaymentLifecycleStatus,
   FinancialOpsAction,
   FinancialOpsFilterState,
   FinancialOpsPolicy,
@@ -29,6 +32,18 @@ export function getFinancialOpsPolicy(role: AdminRole): FinancialOpsPolicy {
 export function getAvailableFinancialOpsActions(record: FinancialOpsRecord, role: AdminRole): FinancialOpsAction[] {
   const policy = getFinancialOpsPolicy(role);
   const actions: FinancialOpsAction[] = [];
+
+  if (policy.canRetryRun && record.partnerSettlementStatus === "pending_completion") {
+    actions.push("start_settlement_processing");
+  }
+
+  if (
+    policy.canRetryRun &&
+    record.partnerSettlementStatus === "processing" &&
+    record.reconciliationDeltaAmount === 0
+  ) {
+    actions.push("mark_settlement_paid");
+  }
 
   if (policy.canRetryRun && (record.adminRunStatus === "failed" || record.adminRunStatus === "partial")) {
     actions.push("retry_settlement");
@@ -60,6 +75,8 @@ export function validateFinancialOpsAction(record: FinancialOpsRecord, action: F
     return "Add an audit note of at least 12 characters before applying this finance action.";
   }
 
+  if (action === "start_settlement_processing" && !policy.canRetryRun) return "This role cannot start settlement processing.";
+  if (action === "mark_settlement_paid" && !policy.canRetryRun) return "This role cannot mark settlements paid.";
   if (action === "retry_settlement" && !policy.canRetryRun) return "This role cannot retry settlement runs.";
   if (action === "reconcile_case" && !policy.canReconcile) return "This role cannot reconcile settlement deltas.";
   if ((action === "notify_partner_refund" || action === "recover_refund") && !policy.canFollowRefunds) {
@@ -67,6 +84,18 @@ export function validateFinancialOpsAction(record: FinancialOpsRecord, action: F
   }
   if (action === "generate_statement" && !policy.canGenerateStatements) {
     return "This role cannot generate settlement statements.";
+  }
+
+  if (action === "start_settlement_processing" && record.partnerSettlementStatus !== "pending_completion") {
+    return "Only pending-completion settlements can move into processing.";
+  }
+
+  if (action === "mark_settlement_paid" && record.partnerSettlementStatus !== "processing") {
+    return "Only processing settlements can be marked paid.";
+  }
+
+  if (action === "mark_settlement_paid" && record.reconciliationDeltaAmount !== 0) {
+    return "Reconcile the settlement delta before marking this settlement paid.";
   }
 
   if (action === "retry_settlement" && record.adminRunStatus !== "failed" && record.adminRunStatus !== "partial") {
@@ -154,6 +183,35 @@ export function formatRefundStatusLabel(status: RefundStatus) {
   return labels[status];
 }
 
+export function formatBookingLifecycleStatusLabel(status: FinanceBookingLifecycleStatus) {
+  const labels: Record<FinanceBookingLifecycleStatus, string> = {
+    confirmed: "Booking Confirmed",
+    amended: "Booking Amended",
+    cancelled: "Booking Cancelled",
+    completed: "Booking Completed",
+    payment_failed: "Payment Failed",
+    refunded: "Booking Refunded",
+  };
+  return labels[status];
+}
+
+export function formatPaymentLifecycleStatusLabel(status: FinancePaymentLifecycleStatus) {
+  const labels: Record<FinancePaymentLifecycleStatus, string> = {
+    pending: "Payment Pending",
+    failed: "Payment Failed",
+    succeeded: "Payment Succeeded",
+  };
+  return labels[status];
+}
+
+export function formatFulfillmentLifecycleStatusLabel(status: FinanceFulfillmentLifecycleStatus) {
+  const labels: Record<FinanceFulfillmentLifecycleStatus, string> = {
+    pending_completion: "Service Pending Completion",
+    completed: "Service Completed",
+  };
+  return labels[status];
+}
+
 export function partnerSettlementTone(status: PartnerSettlementStatus) {
   switch (status) {
     case "paid":
@@ -190,6 +248,40 @@ export function refundTone(status: RefundStatus) {
       return "info" as const;
     case "requested":
     case "disputed":
+      return "warning" as const;
+  }
+}
+
+export function bookingLifecycleTone(status: FinanceBookingLifecycleStatus) {
+  switch (status) {
+    case "completed":
+    case "refunded":
+      return "success" as const;
+    case "confirmed":
+    case "amended":
+      return "info" as const;
+    case "cancelled":
+    case "payment_failed":
+      return "danger" as const;
+  }
+}
+
+export function paymentLifecycleTone(status: FinancePaymentLifecycleStatus) {
+  switch (status) {
+    case "succeeded":
+      return "success" as const;
+    case "pending":
+      return "warning" as const;
+    case "failed":
+      return "danger" as const;
+  }
+}
+
+export function fulfillmentLifecycleTone(status: FinanceFulfillmentLifecycleStatus) {
+  switch (status) {
+    case "completed":
+      return "success" as const;
+    case "pending_completion":
       return "warning" as const;
   }
 }

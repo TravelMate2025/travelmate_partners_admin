@@ -2,9 +2,15 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { SurfaceState } from "@/components/common/surface-state";
 import {
   adminRunTone,
+  bookingLifecycleTone,
+  formatBookingLifecycleStatusLabel,
   formatAdminRunStatusLabel,
+  formatFulfillmentLifecycleStatusLabel,
+  formatPaymentLifecycleStatusLabel,
   formatPartnerSettlementStatusLabel,
   formatRefundStatusLabel,
+  fulfillmentLifecycleTone,
+  paymentLifecycleTone,
   partnerSettlementTone,
   refundTone,
 } from "@/modules/financial-ops/rules";
@@ -171,6 +177,24 @@ export function FinancialOpsQueuePanel({
               </div>
               <p className="tm-muted mt-3 text-sm">{record.summary}</p>
               <div className="mt-4 flex flex-wrap gap-2">
+                {record.bookingStatus ? (
+                  <StatusBadge
+                    label={formatBookingLifecycleStatusLabel(record.bookingStatus)}
+                    tone={bookingLifecycleTone(record.bookingStatus)}
+                  />
+                ) : null}
+                {record.paymentStatus ? (
+                  <StatusBadge
+                    label={formatPaymentLifecycleStatusLabel(record.paymentStatus)}
+                    tone={paymentLifecycleTone(record.paymentStatus)}
+                  />
+                ) : null}
+                {record.fulfillmentStatus ? (
+                  <StatusBadge
+                    label={formatFulfillmentLifecycleStatusLabel(record.fulfillmentStatus)}
+                    tone={fulfillmentLifecycleTone(record.fulfillmentStatus)}
+                  />
+                ) : null}
                 <StatusBadge
                   label={formatPartnerSettlementStatusLabel(record.partnerSettlementStatus)}
                   tone={partnerSettlementTone(record.partnerSettlementStatus)}

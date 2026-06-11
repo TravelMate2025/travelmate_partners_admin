@@ -4,7 +4,18 @@ import type { AdminRole } from "@/modules/auth/types";
 export type PartnerSettlementStatus = "pending_completion" | "processing" | "paid" | "failed" | "reversed";
 export type AdminSettlementRunStatus = "queued" | "processing" | "completed" | "partial" | "failed";
 export type RefundStatus = "requested" | "partner_notified" | "refunded" | "disputed" | "recovered";
+export type FinanceBookingLifecycleStatus =
+  | "confirmed"
+  | "amended"
+  | "cancelled"
+  | "completed"
+  | "payment_failed"
+  | "refunded";
+export type FinancePaymentLifecycleStatus = "pending" | "failed" | "succeeded";
+export type FinanceFulfillmentLifecycleStatus = "pending_completion" | "completed";
 export type FinancialOpsAction =
+  | "start_settlement_processing"
+  | "mark_settlement_paid"
   | "retry_settlement"
   | "reconcile_case"
   | "notify_partner_refund"
@@ -56,6 +67,10 @@ export type FinancialOpsRecord = {
   riskWindowLabel: string;
   failureReason: string | null;
   operationalNote: string;
+  bookingStatus: FinanceBookingLifecycleStatus | null;
+  paymentStatus: FinancePaymentLifecycleStatus | null;
+  serviceStatus?: FinanceFulfillmentLifecycleStatus | null;
+  fulfillmentStatus: FinanceFulfillmentLifecycleStatus | null;
   linkedContext: FinancialOpsLinkedContext[];
   evidence: SettlementEvidenceRecord[];
   statements: SettlementStatementRecord[];

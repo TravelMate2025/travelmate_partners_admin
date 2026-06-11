@@ -245,6 +245,10 @@
 - Admin approves/rejects payout methods, triggers re-verification, or places manual settlement holds when verification is incomplete.
 - System records decision history and enforces role-restricted visibility of sensitive data.
 
+### 2.18 Settlement/Disbursement Hardening Dependency Note
+- Admin finance and payout-review hardening is defined canonically in `api/plan.md` under Phase 16 (`130.1a`–`130.5a`).
+- `admin_dashboard/plan.md` should track only admin-facing workflow behavior, operator acceptance, and rollout notes for that backend work.
+
 ### 2.17 Admin User Management and Access Governance Flow
 - Super admin opens admin access management.
 - System shows internal admin accounts, pending invites, assigned roles, MFA state, recent session signals, and access-policy context.
@@ -317,7 +321,7 @@
 - Flow 2.13 System Configuration and Master Data: `Completed`
 - Flow 2.14 Support and Incident Tools: `Completed`
 - Flow 2.15 Financial Operations and Settlement Management: `Completed`
-- Flow 2.16 Settlement Account (Payout Method) Review and Security Controls: `Not started`
+- Flow 2.16 Settlement Account (Payout Method) Review and Security Controls: `Completed`
 - Flow 2.17 Admin User Management and Access Governance: `In progress` (real API wiring is active for core governance workflows; final end-to-end signoff and any residual acceptance-invite hardening remain open)
 
 Current planning note:
