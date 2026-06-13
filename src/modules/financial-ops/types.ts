@@ -191,7 +191,7 @@ export type EligibleDisbursementSettlement = {
   amount: number;
   currency: string;
   status: "paid";
-  disbursementState: "not_disbursed";
+  disbursementState: "not_disbursed" | "failed" | "cancelled";
   label: string;
   updatedAt: string | null;
 };

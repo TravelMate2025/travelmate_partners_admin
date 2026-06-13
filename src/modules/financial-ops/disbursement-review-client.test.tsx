@@ -27,8 +27,8 @@ function makeEligibleSettlements(): EligibleDisbursementSettlementListResult {
         amount: 96000,
         currency: "NGN",
         status: "paid",
-        disbursementState: "not_disbursed",
-        label: "BK-002 · Lagoon Suites · NGN 96,000.00 · paid · not disbursed",
+        disbursementState: "failed",
+        label: "BK-002 · Lagoon Suites · NGN 96,000.00 · paid · failed",
         updatedAt: "2026-06-11T11:00:00Z",
       },
     ],
@@ -135,6 +135,6 @@ describe("DisbursementReviewClient", () => {
       />,
     );
 
-    expect(screen.getByText("No paid, undisbursed settlements are available right now.")).toBeInTheDocument();
+    expect(screen.getByText("No paid settlements with no active disbursement are available right now.")).toBeInTheDocument();
   });
 });

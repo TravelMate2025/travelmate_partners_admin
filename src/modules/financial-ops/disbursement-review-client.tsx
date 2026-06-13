@@ -180,13 +180,13 @@ export function DisbursementReviewClient({
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
           {eligibleSettlementsError ? <span className="text-amber-700">{eligibleSettlementsError}</span> : null}
           {balanceCheckError ? <span className="text-amber-700">{balanceCheckError}</span> : null}
-          {!eligibleSettlementsError ? <span>Only paid settlements that have not been disbursed yet appear here.</span> : null}
+          {!eligibleSettlementsError ? <span>Only paid settlements with no active disbursement appear here.</span> : null}
         </div>
       </section>
 
       {eligibleSettlements.length === 0 ? (
         <section className="tm-panel p-6">
-          <p className="text-sm text-slate-500">No paid, undisbursed settlements are available right now.</p>
+          <p className="text-sm text-slate-500">No paid settlements with no active disbursement are available right now.</p>
         </section>
       ) : (
         <section className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
