@@ -7,6 +7,7 @@ import type {
   DisbursementBalanceCheck,
   DisbursementRecord,
   BatchDisbursementResult,
+  EligibleDisbursementSettlementListResult,
 } from "@/modules/financial-ops/types";
 
 type Envelope<T> = { data?: T; message?: string; error?: { message?: string } };
@@ -143,6 +144,33 @@ export async function getDisbursementsFromApi(page = 1, pageSize = 50): Promise<
     return { data: body.data, error: null };
   } catch {
     return { data: null, error: "Unable to load disbursements." };
+  }
+}
+
+export async function getEligibleDisbursementSettlementsFromApi(page = 1, pageSize = 50): Promise<{
+  data: EligibleDisbursementSettlementListResult | null;
+  error: string | null;
+}> {
+  const session = await getStoredAdminSession();
+  if (!session) {
+    return { data: null, error: "Admin session is not available." };
+  }
+  try {
+    const response = await fetch(
+      `${getAdminApiBaseUrl()}/admin/financial-ops/disbursements/eligible-settlements?page=${page}&pageSize=${pageSize}`,
+      {
+        method: "GET",
+        headers: { Cookie: `${ADMIN_API_SESSION_COOKIE}=${session.backendSessionKey}` },
+        cache: "no-store",
+      },
+    );
+    const body = (await response.json().catch(() => null)) as Envelope<EligibleDisbursementSettlementListResult> | null;
+    if (!response.ok || !body?.data) {
+      return { data: null, error: body?.message ?? "Unable to load eligible settlements." };
+    }
+    return { data: body.data, error: null };
+  } catch {
+    return { data: null, error: "Unable to load eligible settlements." };
   }
 }
 

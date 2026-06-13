@@ -183,6 +183,27 @@ export type DisbursementListResult = {
   totalPages: number;
 };
 
+export type EligibleDisbursementSettlement = {
+  id: string;
+  settlementId: string;
+  bookingReference: string;
+  partnerName: string;
+  amount: number;
+  currency: string;
+  status: "paid";
+  disbursementState: "not_disbursed";
+  label: string;
+  updatedAt: string | null;
+};
+
+export type EligibleDisbursementSettlementListResult = {
+  results: EligibleDisbursementSettlement[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type DisbursementBalanceCheck = {
   currency: string;
   platformBalance: number | null;

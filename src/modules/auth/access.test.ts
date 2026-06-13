@@ -70,6 +70,10 @@ describe("resolveAdminAccess", () => {
       label: "System Config",
       roles: ["super_admin", "operations"],
     });
+    expect(getAdminRouteDefinition("/financial-ops/disbursements")).toMatchObject({
+      label: "Disbursements",
+      roles: ["finance", "super_admin"],
+    });
   });
 
   it("builds forbidden redirects with required role context", () => {

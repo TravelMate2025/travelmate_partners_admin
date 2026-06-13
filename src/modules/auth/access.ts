@@ -143,6 +143,14 @@ export const adminRouteDefinitions: AdminRouteDefinition[] = [
     showInNav: true,
   },
   {
+    prefix: "/financial-ops/disbursements",
+    label: "Disbursements",
+    shortLabel: "Disburse",
+    section: "finance",
+    description: "Review eligible settlements and execute disbursements from a dedicated screen.",
+    roles: ["finance", "super_admin"],
+  },
+  {
     prefix: "/fx-rates",
     label: "FX Rates",
     shortLabel: "FX",
@@ -180,7 +188,11 @@ export function isPublicAdminPath(pathname: string) {
 }
 
 export function getAdminRouteDefinition(pathname: string) {
-  return adminRouteDefinitions.find((route) => isSameOrNestedPath(pathname, route.prefix)) ?? null;
+  return (
+    adminRouteDefinitions
+      .filter((route) => isSameOrNestedPath(pathname, route.prefix))
+      .sort((left, right) => right.prefix.length - left.prefix.length)[0] ?? null
+  );
 }
 
 export function canAccessAdminRoute(pathname: string, role?: AdminRole | null) {

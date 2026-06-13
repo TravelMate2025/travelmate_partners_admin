@@ -19,6 +19,14 @@ import {
 } from "@/modules/financial-ops/rules";
 import type { FinancialOpsAction, FinancialOpsRecord } from "@/modules/financial-ops/types";
 
+function formatCurrencyAmount(amount: number, currency: string) {
+  const formatted = Math.abs(amount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${amount < 0 ? "-" : ""}${currency} ${formatted}`;
+}
+
 function formatSupplyTypeLabel(supplyType: FinancialOpsRecord["supplyType"]) {
   const labels: Record<FinancialOpsRecord["supplyType"], string> = {
     stay: "Stay",
@@ -170,21 +178,15 @@ export function FinancialOpsDetailPanel({
         </div>
         <div className="tm-soft-band">
           <p className="tm-label">Expected payout</p>
-          <p className="mt-2 text-sm text-slate-900">
-            {selectedRecord.currency} {selectedRecord.expectedPayoutAmount.toFixed(2)}
-          </p>
+          <p className="mt-2 text-sm text-slate-900">{formatCurrencyAmount(selectedRecord.expectedPayoutAmount, selectedRecord.currency)}</p>
         </div>
         <div className="tm-soft-band">
           <p className="tm-label">Current payout</p>
-          <p className="mt-2 text-sm text-slate-900">
-            {selectedRecord.currency} {selectedRecord.netPayoutAmount.toFixed(2)}
-          </p>
+          <p className="mt-2 text-sm text-slate-900">{formatCurrencyAmount(selectedRecord.netPayoutAmount, selectedRecord.currency)}</p>
         </div>
         <div className="tm-soft-band">
           <p className="tm-label">Reconciliation delta</p>
-          <p className="mt-2 text-sm text-slate-900">
-            {selectedRecord.currency} {selectedRecord.reconciliationDeltaAmount.toFixed(2)}
-          </p>
+          <p className="mt-2 text-sm text-slate-900">{formatCurrencyAmount(selectedRecord.reconciliationDeltaAmount, selectedRecord.currency)}</p>
         </div>
         <div className="tm-soft-band">
           <p className="tm-label">Settlement period</p>
@@ -197,11 +199,11 @@ export function FinancialOpsDetailPanel({
         <div className="tm-soft-band">
           <p className="tm-label">Refund exposure</p>
           <p className="mt-2 text-sm text-slate-900">
-            Total {selectedRecord.currency} {selectedRecord.refundAmountTotal.toFixed(2)}
+            Total {formatCurrencyAmount(selectedRecord.refundAmountTotal, selectedRecord.currency)}
             {" · "}
-            Recovered {selectedRecord.currency} {selectedRecord.refundRecoveredAmount.toFixed(2)}
+            Recovered {formatCurrencyAmount(selectedRecord.refundRecoveredAmount, selectedRecord.currency)}
             {" · "}
-            Outstanding {selectedRecord.currency} {selectedRecord.refundOutstandingAmount.toFixed(2)}
+            Outstanding {formatCurrencyAmount(selectedRecord.refundOutstandingAmount, selectedRecord.currency)}
           </p>
         </div>
       </div>

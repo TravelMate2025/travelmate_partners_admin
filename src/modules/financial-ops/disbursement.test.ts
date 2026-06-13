@@ -16,6 +16,7 @@ import type {
   DisbursementListResult,
   DisbursementRecord,
   DisbursementStatus,
+  EligibleDisbursementSettlementListResult,
 } from "@/modules/financial-ops/types";
 
 // ---------------------------------------------------------------------------
@@ -75,6 +76,32 @@ function makeBatchDisbursementResult(overrides: Partial<BatchDisbursementResult>
       { settlementId: "s-001", result: makeDisbursementRecord(), error: null },
       { settlementId: "s-002", result: makeDisbursementRecord({ id: "disb-002", settlementId: "s-002" }), error: null },
     ],
+    ...overrides,
+  };
+}
+
+function makeEligibleDisbursementSettlementListResult(
+  overrides: Partial<EligibleDisbursementSettlementListResult> = {},
+): EligibleDisbursementSettlementListResult {
+  return {
+    results: [
+      {
+        id: "settle-eligible-001",
+        settlementId: "settle-eligible-001",
+        bookingReference: "BK-ELIGIBLE-001",
+        partnerName: "Safari Crest Residences",
+        amount: 130890,
+        currency: "NGN",
+        status: "paid",
+        disbursementState: "not_disbursed",
+        label: "BK-ELIGIBLE-001 · Safari Crest Residences · NGN 130,890.00 · paid · not disbursed",
+        updatedAt: "2026-06-11T10:00:00Z",
+      },
+    ],
+    total: 1,
+    page: 1,
+    pageSize: 50,
+    totalPages: 1,
     ...overrides,
   };
 }
@@ -278,6 +305,36 @@ describe("getDisbursementBalanceCheckFromApi", () => {
     const result = await getDisbursementBalanceCheckFromApi();
     expect(result.data).toBeNull();
     expect(result.error).toBe("Forbidden");
+  });
+});
+
+describe("getEligibleDisbursementSettlementsFromApi", () => {
+  beforeEach(() => {
+    global.fetch = vi.fn();
+  });
+
+  it("returns eligible settlements on success", async () => {
+    const listResult = makeEligibleDisbursementSettlementListResult();
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: listResult }),
+    });
+
+    const { getEligibleDisbursementSettlementsFromApi } = await import("@/modules/financial-ops/server");
+    const result = await getEligibleDisbursementSettlementsFromApi(1, 50);
+    expect(result.error).toBeNull();
+    expect(result.data?.total).toBe(1);
+    expect(result.data?.results[0].label).toContain("not disbursed");
+  });
+
+  it("returns error when fetch fails", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network down"));
+
+    const { getEligibleDisbursementSettlementsFromApi } = await import("@/modules/financial-ops/server");
+    const result = await getEligibleDisbursementSettlementsFromApi();
+    expect(result.data).toBeNull();
+    expect(result.error).toBeTruthy();
   });
 });
 

@@ -247,6 +247,8 @@
 
 ### 2.18 Settlement/Disbursement Hardening Dependency Note
 - Admin finance and payout-review hardening is defined canonically in `api/plan.md` under Phase 16 (`130.1a`–`130.5a`).
+- A follow-up admin UX slice (`130.5b`) moves disbursement execution to a dedicated review screen so the main finance ops page stays uncluttered.
+- The slice must leave platform balance, failed payments, reconciliation evidence, refund follow-up, and payout review unchanged.
 - `admin_dashboard/plan.md` should track only admin-facing workflow behavior, operator acceptance, and rollout notes for that backend work.
 
 ### 2.17 Admin User Management and Access Governance Flow
