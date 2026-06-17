@@ -96,6 +96,12 @@ export type ModerationCityContext = {
   recommendedAction: "approve" | "merge" | "review";
 };
 
+export type ModerationTransferRoute = {
+  destinationCity: string;
+  destinationArea: string;
+  destinationSubArea?: string;
+};
+
 export type ModerationListingRecord = {
   id: string;
   kind: ModerationListingKind;
@@ -104,6 +110,14 @@ export type ModerationListingRecord = {
   partnerUserId: string;
   title: string;
   locationLabel: string;
+  pickupPoint?: string;
+  dropoffPoint?: string;
+  city?: string;
+  area?: string;
+  destinationRoutes?: ModerationTransferRoute[];
+  destinationCity?: string;
+  destinationArea?: string;
+  destinationSubArea?: string;
   status: ListingLifecycleStatus;
   submittedAt: string;
   lastReviewedAt: string;

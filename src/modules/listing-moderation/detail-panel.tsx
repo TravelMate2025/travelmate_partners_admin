@@ -21,6 +21,18 @@ function toneForStatus(status: ModerationListingRecord["status"]) {
   return "warning" as const;
 }
 
+function routeValue(value?: string | null) {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : "Not provided";
+}
+
+function routeSummary(
+  route: { destinationCity?: string; destinationArea?: string; destinationSubArea?: string },
+): string {
+  const base = [route.destinationCity, route.destinationArea].filter(Boolean).join(" — ");
+  return `${base || "Not provided"}${route.destinationSubArea ? ` — ${route.destinationSubArea}` : ""}`;
+}
+
 export function ListingModerationDetailPanel({
   selectedRecord,
   activeMediaId,
@@ -84,6 +96,18 @@ export function ListingModerationDetailPanel({
   const formattedSubmittedAt = selectedRecord.submittedAt
     ? selectedRecord.submittedAt.slice(0, 16).replace("T", " ")
     : "Not available";
+  const transferRoutes =
+    selectedRecord.kind === "transfer"
+      ? (selectedRecord.destinationRoutes?.length
+          ? selectedRecord.destinationRoutes
+          : [
+              {
+                destinationCity: selectedRecord.destinationCity ?? "",
+                destinationArea: selectedRecord.destinationArea ?? "",
+                destinationSubArea: selectedRecord.destinationSubArea ?? "",
+              },
+            ]).filter((route) => route.destinationCity || route.destinationArea || route.destinationSubArea)
+      : [];
   const noSingleListingActions =
     !!allowedActions &&
     !allowedActions.approve &&
@@ -128,6 +152,55 @@ export function ListingModerationDetailPanel({
           <p className="mt-2 text-sm text-slate-900">{selectedRecord.reviewSignals.priorityLabel}</p>
         </div>
       </div>
+
+      {selectedRecord.kind === "transfer" ? (
+        <div className="mt-5">
+          <p className="tm-label">Route</p>
+          <div className="mt-3 grid gap-4 xl:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">Pickup note (as entered by partner)</p>
+              <div className="mt-3 grid gap-3 text-sm text-slate-900">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Pickup point</p>
+                  <p className="mt-1 font-medium">{routeValue(selectedRecord.pickupPoint)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-slate-950">Canonical Route</p>
+                <span className="rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-700">
+                  Structured data
+                </span>
+              </div>
+              <div className="mt-3 grid gap-3 text-sm text-slate-900">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Origin</p>
+                  <p className="mt-1 font-medium">
+                    {routeValue(selectedRecord.city)} — {routeValue(selectedRecord.area)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Destination routes</p>
+                  <div className="mt-2 space-y-2">
+                    {transferRoutes.length > 0 ? (
+                      transferRoutes.map((route, index) => (
+                        <div key={`${route.destinationCity}-${route.destinationArea}-${index}`} className="rounded-lg border border-blue-200 bg-white px-3 py-2">
+                          <p className="text-xs uppercase tracking-wide text-blue-700">Route {index + 1}</p>
+                          <p className="mt-1 font-medium">{routeSummary(route)}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="mt-1 text-sm text-slate-700">Not provided</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {selectedRecord.cityReviewStatus && selectedRecord.cityReviewStatus !== "approved" ? (
         <div className="tm-soft-band mt-5">

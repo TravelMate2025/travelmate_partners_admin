@@ -1,5 +1,10 @@
 # TravelMate Admin Dashboard Implementation Plan
 
+## Local Development
+- Start the app with `npm run dev`.
+- The default dev script uses a launcher that prefers webpack, clears only stale dev servers for this app, and leaves other apps alone when another project already owns port `3000`.
+- Use `npm run dev:turbopack` only if you explicitly want the raw Next.js dev server.
+
 ## 1. Admin App Features (Copied Baseline)
 
 ### 1.1 Admin Authentication and Access Control
