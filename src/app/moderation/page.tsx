@@ -3,6 +3,7 @@ import { requireAdminRouteAccess } from "@/modules/auth/access.server";
 import { getAdminSession } from "@/modules/auth/session";
 import { getModerationListingsFromApi } from "@/modules/listing-moderation/server";
 import { ListingModerationWorkspace } from "@/modules/listing-moderation/workspace";
+import Link from "next/link";
 
 export default async function ModerationPage() {
   const session = await getAdminSession();
@@ -14,6 +15,11 @@ export default async function ModerationPage() {
     <AdminShell
       title="Listing Moderation"
       description="Review stay and transfer submissions, approve or reject listings, handle corrections, and manage emergency takedowns."
+      headerAside={
+        <Link className="tm-btn tm-btn-outline" href="/moderation/locality-suggestions">
+          City suggestions
+        </Link>
+      }
     >
       {error ? (
         <section className="tm-panel p-6">
