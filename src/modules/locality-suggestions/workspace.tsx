@@ -36,7 +36,10 @@ export function LocalitySuggestionsWorkspace({
   );
 
   const filteredRecords = records;
-  const selectedCityMatches = canonicalCities.filter((city) => city.toLowerCase().includes(cityQuery.trim().toLowerCase()));
+  const query = cityQuery.trim().toLowerCase();
+  const selectedCityMatches = query
+    ? canonicalCities.filter((city) => city.toLowerCase().includes(query))
+    : [];
   const exactMatchExists =
     selectedRecord !== null &&
     canonicalCities.some((city) => city.toLowerCase() === selectedRecord.city.toLowerCase());
@@ -234,9 +237,9 @@ export function LocalitySuggestionsWorkspace({
             </div>
 
             <div className="mt-5 tm-soft-band">
-              <p className="tm-label">Canonical cities in scope</p>
+              <p className="tm-label">Approved cities in scope</p>
               <p className="mt-2 text-sm text-slate-900">
-                Search approved cities in the same state/region before approving or merging this suggestion.
+                Search approved cities in the same state/region, then select one target city for merge or review.
               </p>
               <input
                 className="tm-input mt-3"
@@ -244,47 +247,42 @@ export function LocalitySuggestionsWorkspace({
                 placeholder="Search approved cities"
                 value={cityQuery}
               />
-              {canonicalCitiesLoading ? <p className="mt-2 text-xs text-slate-500">Loading canonical cities…</p> : null}
+              {canonicalCitiesLoading ? <p className="mt-2 text-xs text-slate-500">Loading approved cities…</p> : null}
               {canonicalCitiesError ? <p className="mt-2 text-xs text-rose-700">{canonicalCitiesError}</p> : null}
               {exactMatchExists ? (
                 <p className="mt-2 text-xs font-semibold text-rose-700">
                   Exact match already exists in the approved catalog. Use Merge or Reject instead of Approve.
                 </p>
               ) : null}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedCityMatches.length > 0 ? (
-                  selectedCityMatches.map((city) => (
-                    <button
-                      key={city}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                        city === selectedRecord.city
-                          ? "border-rose-300 bg-rose-50 text-rose-700"
-                          : "border-slate-200 bg-white text-slate-700"
-                      }`}
-                      onClick={() => setMergeTargetCity(city)}
-                      type="button"
-                    >
-                      {city}
-                    </button>
-                  ))
+              <div className="mt-3 grid gap-2">
+                {query ? (
+                  selectedCityMatches.length > 0 ? (
+                    selectedCityMatches.map((city) => (
+                      <button
+                        key={city}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition ${
+                          city === mergeTargetCity
+                            ? "border-[#033D89] bg-[#033D89]/5 text-slate-950"
+                            : "border-slate-200 bg-white text-slate-700"
+                        }`}
+                        onClick={() => setMergeTargetCity(city)}
+                        type="button"
+                      >
+                        <span>{city}</span>
+                        {city === mergeTargetCity ? <span className="text-xs font-medium text-[#033D89]">Selected</span> : null}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-600">No approved cities found for this scope.</p>
+                  )
                 ) : (
-                  <p className="text-sm text-slate-600">No approved cities found for this scope.</p>
+                  <p className="text-sm text-slate-600">Type to search approved cities in this state/region.</p>
                 )}
               </div>
+              <p className="mt-3 text-xs text-slate-500">
+                Selected target: {mergeTargetCity || "None"}
+              </p>
             </div>
-
-            {selectedRecord.duplicateCityHints?.length ? (
-              <div className="mt-5 tm-soft-band">
-                <p className="tm-label">Possible duplicate cities</p>
-                <p className="mt-2 text-sm text-slate-900">{selectedRecord.duplicateCityHints.join(", ")}</p>
-                <input
-                  className="tm-input mt-3"
-                  onChange={(event) => setMergeTargetCity(event.target.value)}
-                  placeholder="Merge target city"
-                  value={mergeTargetCity}
-                />
-              </div>
-            ) : null}
 
             <div className="mt-5 flex flex-wrap gap-3">
               <button className="tm-btn tm-btn-primary" onClick={() => void applyAction("approve")} type="button">

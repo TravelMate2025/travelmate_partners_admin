@@ -30,7 +30,8 @@ describe("LocalitySuggestionsWorkspace", () => {
     expect(screen.getByText("Pending city suggestions")).toBeInTheDocument();
     expect(screen.getAllByText("Unknown City").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Edo · Nigeria/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Possible duplicate cities/i)).toBeInTheDocument();
+    expect(screen.getByText(/Approved cities in scope/i)).toBeInTheDocument();
+    expect(screen.getByText(/Type to search approved cities in this state\/region/i)).toBeInTheDocument();
   });
 
   it("allows reviewing the selected city suggestion", async () => {
@@ -65,9 +66,11 @@ describe("LocalitySuggestionsWorkspace", () => {
 
     render(<LocalitySuggestionsWorkspace initialRecords={[baseSuggestion]} />);
 
+    fireEvent.change(screen.getByPlaceholderText("Search approved cities"), { target: { value: "be" } });
+
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining("/api/backend/locality-catalog/cities?country=Nigeria&state=Edo"),
+        expect.stringContaining("/api/backend/locality-catalog/cities?country=Nigeria&state=Edo&q=be"),
         expect.objectContaining({ method: "GET" }),
       );
     });
