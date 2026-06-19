@@ -57,6 +57,46 @@ describe("LocalitySuggestionsWorkspace", () => {
     vi.unstubAllGlobals();
   });
 
+  it("allows merging an area suggestion under an already approved city", async () => {
+    const fetchSpy = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: ["Ajah"] }),
+    });
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    render(
+      <LocalitySuggestionsWorkspace
+        initialRecords={[
+          {
+            ...baseSuggestion,
+            id: "loc-2",
+            city: "Ajah",
+            area: "Oke Ira",
+            normalizedSlug: "nigeria/edo/ajah/oke-ira",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByText("Ajah")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Merge" }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/backend/locality-suggestions/loc-2/decision",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
+
+    vi.unstubAllGlobals();
+  });
+
   it("loads canonical cities for the selected scope", async () => {
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,

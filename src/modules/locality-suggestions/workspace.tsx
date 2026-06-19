@@ -40,8 +40,13 @@ export function LocalitySuggestionsWorkspace({
   const selectedCityMatches = query
     ? canonicalCities.filter((city) => city.toLowerCase().includes(query))
     : [];
+  const isCityLevelSuggestion =
+    selectedRecord !== null &&
+    selectedRecord.city.trim().toLowerCase() === selectedRecord.area.trim().toLowerCase() &&
+    !selectedRecord.subArea.trim();
   const exactMatchExists =
     selectedRecord !== null &&
+    isCityLevelSuggestion &&
     canonicalCities.some((city) => city.toLowerCase() === selectedRecord.city.toLowerCase());
 
   function syncSelection(record: LocalitySuggestionRecord | undefined) {
