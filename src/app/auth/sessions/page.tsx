@@ -26,8 +26,12 @@ export default async function AdminSessionsPage({ searchParams }: AdminSessionsP
     redirect("/auth/login?error=session_expired");
   }
 
-  const inventory = await getAdminSessionInventoryFromApi(storedSession);
-  const sessions = inventory?.sessions ?? [];
+  const inventoryResult = await getAdminSessionInventoryFromApi(storedSession);
+  if (inventoryResult.authFailure) {
+    redirect("/auth/login?error=session_expired");
+  }
+
+  const sessions = inventoryResult.inventory?.sessions ?? [];
 
   return (
     <AdminShell

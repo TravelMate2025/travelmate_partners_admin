@@ -55,6 +55,13 @@ type AdminLoginApiBody = {
   };
 };
 
+type AdminSessionInventory = NonNullable<Awaited<ReturnType<typeof readAdminSessionInventoryFromResponse>>>;
+
+type AdminSessionInventoryResult = {
+  inventory: AdminSessionInventory | null;
+  authFailure: boolean;
+};
+
 function mapAdminRole(role: string): AdminRole {
   return role as AdminRole;
 }
@@ -263,10 +270,15 @@ export async function getAdminSession() {
     return null;
   }
 
-  const inventory = await getAdminSessionInventoryFromApi(session);
+  const inventoryResult = await getAdminSessionInventoryFromApi(session);
+  if (inventoryResult.authFailure) {
+    await clearAdminSessionCookie();
+    return null;
+  }
+
   // Staging/network hiccups should not hard-drop authenticated users to guest UI.
   // Fall back to the signed local session when live inventory refresh is temporarily unavailable.
-  return inventory ? toPublicAdminSession(inventory.storedSession) : toPublicAdminSession(session);
+  return inventoryResult.inventory ? toPublicAdminSession(inventoryResult.inventory.storedSession) : toPublicAdminSession(session);
 }
 
 export async function getStoredAdminSession() {
@@ -473,7 +485,7 @@ export function isAdminChallengeExpired(challenge: AdminChallenge | null) {
   return !isFutureIsoTimestamp(challenge.expiresAt);
 }
 
-export async function getAdminSessionInventoryFromApi(session: StoredAdminSession) {
+export async function getAdminSessionInventoryFromApi(session: StoredAdminSession): Promise<AdminSessionInventoryResult> {
   try {
     const response = await fetch(`${getAdminApiBaseUrl()}/admin-auth/sessions`, {
       method: "GET",
@@ -483,13 +495,20 @@ export async function getAdminSessionInventoryFromApi(session: StoredAdminSessio
       cache: "no-store",
     });
 
-    if (!response.ok) {
-      return null;
+    if (response.status === 401 || response.status === 403) {
+      return { inventory: null, authFailure: true };
     }
 
-    return await readAdminSessionInventoryFromResponse(response, session.backendSessionKey);
+    if (!response.ok) {
+      return { inventory: null, authFailure: false };
+    }
+
+    return {
+      inventory: await readAdminSessionInventoryFromResponse(response, session.backendSessionKey),
+      authFailure: false,
+    };
   } catch {
-    return null;
+    return { inventory: null, authFailure: false };
   }
 }
 

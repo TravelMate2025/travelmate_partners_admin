@@ -1,7 +1,10 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+
 import {
   acceptAdminInvitation,
   authenticateAdminCredentials,
   createChallengeForAdmin,
+  getAdminSession,
   logoutAdminSession,
   getAdminSessionInventoryFromApi,
   isAdminChallengeExpired,
@@ -11,6 +14,16 @@ import {
   serializeAdminSession,
   verifyAdminMfaCode,
 } from "@/modules/auth/session";
+
+const cookieStore = {
+  get: vi.fn(),
+  set: vi.fn(),
+  delete: vi.fn(),
+};
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => cookieStore),
+}));
 
 const loginResponse = {
   data: {
@@ -102,6 +115,9 @@ const mfaRequiredResponse = {
 describe("admin auth session helpers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    cookieStore.get.mockReset();
+    cookieStore.set.mockReset();
+    cookieStore.delete.mockReset();
   });
 
   it("maps authenticated API login responses into signed dashboard sessions", async () => {
@@ -265,8 +281,27 @@ describe("admin auth session helpers", () => {
     );
 
     const inventory = await getAdminSessionInventoryFromApi(storedSession);
-    expect(inventory?.sessions).toHaveLength(2);
-    expect(inventory?.storedSession.currentSessionId).toBe(9);
+    expect(inventory.inventory?.sessions).toHaveLength(2);
+    expect(inventory.inventory?.storedSession.currentSessionId).toBe(9);
+    expect(inventory.authFailure).toBe(false);
+  });
+
+  it("clears a stale admin session cookie when the backend rejects the session", async () => {
+    const serializedSession = await serializeAdminSession(storedSession);
+    cookieStore.get.mockReturnValue({ value: serializedSession });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: "Authentication required." }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(getAdminSession()).resolves.toBeNull();
+    expect(cookieStore.delete).toHaveBeenCalledWith("tm_admin_session");
   });
 
   it("rotates the current admin session and reads the new backend session key", async () => {

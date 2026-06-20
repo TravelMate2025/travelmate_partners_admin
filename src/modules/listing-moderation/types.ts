@@ -111,13 +111,9 @@ export type ModerationListingRecord = {
   title: string;
   locationLabel: string;
   pickupPoint?: string;
-  dropoffPoint?: string;
   city?: string;
   area?: string;
   destinationRoutes?: ModerationTransferRoute[];
-  destinationCity?: string;
-  destinationArea?: string;
-  destinationSubArea?: string;
   status: ListingLifecycleStatus;
   submittedAt: string;
   lastReviewedAt: string;

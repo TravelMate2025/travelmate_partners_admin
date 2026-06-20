@@ -98,15 +98,9 @@ export function ListingModerationDetailPanel({
     : "Not available";
   const transferRoutes =
     selectedRecord.kind === "transfer"
-      ? (selectedRecord.destinationRoutes?.length
-          ? selectedRecord.destinationRoutes
-          : [
-              {
-                destinationCity: selectedRecord.destinationCity ?? "",
-                destinationArea: selectedRecord.destinationArea ?? "",
-                destinationSubArea: selectedRecord.destinationSubArea ?? "",
-              },
-            ]).filter((route) => route.destinationCity || route.destinationArea || route.destinationSubArea)
+      ? (selectedRecord.destinationRoutes ?? []).filter(
+          (route) => route.destinationCity || route.destinationArea || route.destinationSubArea,
+        )
       : [];
   const noSingleListingActions =
     !!allowedActions &&

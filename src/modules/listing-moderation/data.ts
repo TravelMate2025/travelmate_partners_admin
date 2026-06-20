@@ -66,7 +66,6 @@ export const listingModerationSeed: ModerationListingRecord[] = [
     title: "Accra Executive Airport Pickup",
     locationLabel: "Accra, Ghana",
     pickupPoint: "Kotoka International Airport",
-    dropoffPoint: "Airport Residential Area",
     city: "Accra",
     area: "Airport City",
     destinationRoutes: [
@@ -81,9 +80,6 @@ export const listingModerationSeed: ModerationListingRecord[] = [
         destinationSubArea: "Cantonments",
       },
     ],
-    destinationCity: "Accra",
-    destinationArea: "Airport Road",
-    destinationSubArea: "Airport Residential District",
     status: "pending",
     submittedAt: "2026-04-17T07:45:00.000Z",
     lastReviewedAt: "2026-04-17T08:15:00.000Z",
