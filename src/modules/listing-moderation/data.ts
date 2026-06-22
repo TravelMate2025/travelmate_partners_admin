@@ -80,6 +80,13 @@ export const listingModerationSeed: ModerationListingRecord[] = [
         destinationSubArea: "Cantonments",
       },
     ],
+    provider: {
+      displayName: "Accra Executive Transfers",
+      contactPhone: "+233 24 000 0000",
+      contactWhatsApp: "+233 24 000 0000",
+      supportEmail: "support@accraexec.com",
+      arrivalInstructions: "Driver will be at Arrivals exit with a name board. Call on landing.",
+    },
     status: "pending",
     submittedAt: "2026-04-17T07:45:00.000Z",
     lastReviewedAt: "2026-04-17T08:15:00.000Z",

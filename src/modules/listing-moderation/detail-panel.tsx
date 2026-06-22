@@ -196,6 +196,48 @@ export function ListingModerationDetailPanel({
         </div>
       ) : null}
 
+      {selectedRecord.kind === "transfer" && selectedRecord.provider ? (
+        <div className="mt-5">
+          <p className="tm-label">Provider Contact</p>
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="grid gap-3 text-sm text-slate-900 sm:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">Display Name</p>
+                <p className="mt-1 font-medium">{routeValue(selectedRecord.provider.displayName)}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">Contact Phone</p>
+                <p className="mt-1 font-medium">{routeValue(selectedRecord.provider.contactPhone)}</p>
+              </div>
+              {selectedRecord.provider.contactWhatsApp ? (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">WhatsApp</p>
+                  <p className="mt-1 font-medium">{selectedRecord.provider.contactWhatsApp}</p>
+                </div>
+              ) : null}
+              {selectedRecord.provider.supportEmail ? (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Support Email</p>
+                  <p className="mt-1 font-medium">{selectedRecord.provider.supportEmail}</p>
+                </div>
+              ) : null}
+              {selectedRecord.provider.websiteUrl ? (
+                <div className="sm:col-span-2">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Website</p>
+                  <p className="mt-1 font-medium">{selectedRecord.provider.websiteUrl}</p>
+                </div>
+              ) : null}
+              {selectedRecord.provider.arrivalInstructions ? (
+                <div className="sm:col-span-2">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Arrival Instructions</p>
+                  <p className="mt-1 font-medium">{selectedRecord.provider.arrivalInstructions}</p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {selectedRecord.cityReviewStatus && selectedRecord.cityReviewStatus !== "approved" ? (
         <div className="tm-soft-band mt-5">
           <p className="tm-label">City moderation</p>

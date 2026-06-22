@@ -102,6 +102,15 @@ export type ModerationTransferRoute = {
   destinationSubArea?: string;
 };
 
+export type ModerationTransferProvider = {
+  displayName: string;
+  contactPhone: string;
+  contactWhatsApp?: string;
+  supportEmail?: string;
+  websiteUrl?: string;
+  arrivalInstructions?: string;
+};
+
 export type ModerationListingRecord = {
   id: string;
   kind: ModerationListingKind;
@@ -127,6 +136,7 @@ export type ModerationListingRecord = {
   cityReviewStatus?: "pending" | "approved" | "rejected" | "merged" | "blacklisted" | null;
   citySuggestionId?: string | null;
   cityContext?: ModerationCityContext;
+  provider?: ModerationTransferProvider;
   latestAuditRecord?: ModerationAuditRecord;
   latestPartnerNotification?: ModerationPartnerNotification;
 };
