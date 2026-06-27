@@ -43,6 +43,25 @@ describe("api clients rules", () => {
     expect(validateApiRateLimit("growth", 180)).toBeNull();
   });
 
+  it("accepts reviews.write as a valid policy scope", () => {
+    expect(
+      validateApiClientActionPayload({
+        actor: "Operations Admin",
+        clientId: "api-client-002",
+        action: "approve_client",
+        note: "Approved with reviews scope for post-booking review submission.",
+        plan: "starter",
+        rateLimitPerMinute: 80,
+        policyEnvironment: "production",
+        policyTier: "standard",
+        policyScopes: ["inventory.read", "bookings.write", "reviews.write"],
+        policyProducts: ["stays"],
+        policyAlertProfile: "balanced",
+        reasonCode: "",
+      }),
+    ).toBeNull();
+  });
+
   it("requires review note for review decisions", () => {
     expect(
       validateApiClientActionPayload({

@@ -210,7 +210,7 @@ export function ApiClientsDetailPanel({
           <label className="block mt-4">
             <span className="tm-label">Policy scopes</span>
             <div className="mt-3 grid gap-2">
-              {(["inventory.read", "pricing.read", "bookings.read", "bookings.write", "payments.read", "payments.write"] as ApiPolicyScope[]).map((scope) => (
+              {(["inventory.read", "pricing.read", "bookings.read", "bookings.write", "payments.read", "payments.write", "reviews.write"] as ApiPolicyScope[]).map((scope) => (
                 <label className="inline-flex items-center gap-2 text-sm text-slate-800" key={scope}>
                   <input
                     checked={policyScopes.includes(scope)}

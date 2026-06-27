@@ -13,7 +13,8 @@ export type ApiPolicyScope =
   | "bookings.read"
   | "bookings.write"
   | "payments.read"
-  | "payments.write";
+  | "payments.write"
+  | "reviews.write";
 export type ApiPolicyProduct = "stays" | "transfers";
 export type ApiClientAction =
   | "start_review"

@@ -95,6 +95,50 @@ describe("mockApiClientsRepository", () => {
     expect(result.updatedRecord.history[0]?.action).toBe("Key regenerated");
   });
 
+  it("approves a client with reviews.write scope and persists the scope on the record", async () => {
+    const reviewResult = await mockApiClientsRepository.applyAction(
+      getApiClientRecords(),
+      {
+        actor: "Operations Admin",
+        clientId: "api-client-001",
+        action: "start_review",
+        note: "Initial intake review started after basic compliance checks.",
+        plan: "starter",
+        rateLimitPerMinute: 120,
+        policyEnvironment: "sandbox",
+        policyTier: "standard",
+        policyScopes: ["inventory.read"],
+        policyProducts: ["stays"],
+        policyAlertProfile: "balanced",
+        reasonCode: "",
+      },
+      "operations",
+    );
+
+    const result = await mockApiClientsRepository.applyAction(
+      reviewResult.records,
+      {
+        actor: "Operations Admin",
+        clientId: "api-client-001",
+        action: "approve_client",
+        note: "Approved with reviews.write scope for post-booking guest review submission.",
+        plan: "starter",
+        rateLimitPerMinute: 120,
+        policyEnvironment: "production",
+        policyTier: "standard",
+        policyScopes: ["inventory.read", "bookings.write", "reviews.write"],
+        policyProducts: ["stays"],
+        policyAlertProfile: "balanced",
+        reasonCode: "",
+      },
+      "operations",
+    );
+
+    expect(result.updatedRecord.status).toBe("approved");
+    expect(result.updatedRecord.policy.scopes).toContain("reviews.write");
+    expect(result.auditRecord.status).toBe("queued_for_backend");
+  });
+
   it("rejects ineligible plans before mutating state", async () => {
     await expect(
       mockApiClientsRepository.applyAction(
