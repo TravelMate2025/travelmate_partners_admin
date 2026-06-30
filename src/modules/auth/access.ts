@@ -58,6 +58,15 @@ export const adminRouteDefinitions: AdminRouteDefinition[] = [
     showInNav: true,
   },
   {
+    prefix: "/moderation/reviews",
+    label: "Review Moderation",
+    shortLabel: "Reviews",
+    section: "operations",
+    description: "Inspect submitted guest reviews and publish or reject them before they appear on listings.",
+    roles: ["super_admin", "operations"],
+    showInNav: true,
+  },
+  {
     prefix: "/catalog-controls",
     label: "Catalog Controls",
     shortLabel: "Catalog",
