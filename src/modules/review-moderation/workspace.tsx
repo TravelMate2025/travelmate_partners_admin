@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { SurfaceState } from "@/components/common/surface-state";
+import type { AdminRole } from "@/modules/auth/types";
 import { ReviewDetailPanel } from "@/modules/review-moderation/detail-panel";
 import { ReviewQueuePanel } from "@/modules/review-moderation/queue-panel";
 import { applyReviewDecision, fetchReviewQueue } from "@/modules/review-moderation/service";
@@ -13,6 +14,8 @@ import type {
   ReviewQueueFilterState,
   ReviewStatus,
 } from "@/modules/review-moderation/types";
+
+const REVIEW_MODERATOR_ROLES: AdminRole[] = ["super_admin", "operations"];
 
 function matchesFilter(record: AdminReviewRecord, filters: ReviewQueueFilterState) {
   const query = filters.query.trim().toLowerCase();
@@ -31,9 +34,12 @@ function matchesFilter(record: AdminReviewRecord, filters: ReviewQueueFilterStat
 
 export function ReviewModerationWorkspace({
   initialRecords,
+  role,
 }: {
   initialRecords: AdminReviewRecord[];
+  role: AdminRole;
 }) {
+  const canModerate = REVIEW_MODERATOR_ROLES.includes(role);
   const [records, setRecords] = useState(initialRecords);
   const [filters, setFilters] = useState<ReviewQueueFilterState>({
     query: "",
@@ -60,7 +66,7 @@ export function ReviewModerationWorkspace({
   }
 
   async function handleAction(action: ReviewDecisionAction, reason?: string) {
-    if (!selectedRecord) return;
+    if (!selectedRecord || !canModerate) return;
     setPending(action);
     setFeedback(null);
 
@@ -132,6 +138,7 @@ export function ReviewModerationWorkspace({
         selectedId={selectedId}
       />
       <ReviewDetailPanel
+        canModerate={canModerate}
         feedback={feedback}
         onAction={(action, reason) => void handleAction(action, reason)}
         pending={pending}

@@ -22,7 +22,7 @@ export default async function ReviewModerationPage() {
           <p className="tm-muted mt-2 text-sm">{error}</p>
         </section>
       ) : (
-        <ReviewModerationWorkspace initialRecords={records} />
+        <ReviewModerationWorkspace initialRecords={records} role={session.user.role} />
       )}
     </AdminShell>
   );

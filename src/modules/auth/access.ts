@@ -63,7 +63,7 @@ export const adminRouteDefinitions: AdminRouteDefinition[] = [
     shortLabel: "Reviews",
     section: "operations",
     description: "Inspect submitted guest reviews and publish or reject them before they appear on listings.",
-    roles: ["super_admin", "operations"],
+    roles: ["super_admin", "operations", "reviewer"],
     showInNav: true,
   },
   {

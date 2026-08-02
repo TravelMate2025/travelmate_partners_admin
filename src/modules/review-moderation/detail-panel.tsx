@@ -44,11 +44,13 @@ export function ReviewDetailPanel({
   pending,
   feedback,
   onAction,
+  canModerate,
 }: {
   record: AdminReviewRecord | null;
   pending: ReviewDecisionAction | null;
   feedback: { tone: "success" | "error"; message: string } | null;
   onAction: (action: ReviewDecisionAction, reason?: string) => void;
+  canModerate: boolean;
 }) {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -185,7 +187,16 @@ export function ReviewDetailPanel({
         </div>
       )}
 
-      {isPending && (
+      {isPending && !canModerate && (
+        <div className="border-t border-slate-100 p-5">
+          <p className="text-sm text-slate-500">
+            Your role has view-only access to review moderation. Publishing and rejecting reviews requires the
+            operations or super admin role.
+          </p>
+        </div>
+      )}
+
+      {isPending && canModerate && (
         <div className="border-t border-slate-100 p-5">
           {showRejectForm ? (
             <div className="grid gap-3">
